@@ -106,7 +106,7 @@
                 });
                 const data = await res.json();
                 if(res.ok) {
-                    currentUser = { username: u, points: data.points };
+                currentUser = { username: u, points: data.points, token: data.token };
                     showDashboard();
                 } else {
                     showMessage(data.error || 'Login failed', 'error');
@@ -187,7 +187,7 @@
             try {
                 const res = await fetch(`${API_URL}/add-points`, {
                     method: 'POST',
-                    body: JSON.stringify({ username: currentUser.username, amount: 10 })
+                    body: JSON.stringify({ username: currentUser.username, amount: 10, token: currentUser.token })
                 });
                 const data = await res.json();
                 if (res.ok) {

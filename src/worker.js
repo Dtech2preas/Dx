@@ -7,7 +7,7 @@
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export default {
@@ -40,6 +40,13 @@ export default {
 
 // --- Handlers ---
 
+async function hashPassword(password) {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function handleRegister(request, env) {
   const { username, password } = await request.json();
 
@@ -53,9 +60,11 @@ async function handleRegister(request, env) {
     return new Response(JSON.stringify({ error: 'Username already taken' }), { status: 409, headers: CORS_HEADERS });
   }
 
+  const passwordHash = await hashPassword(password);
+
   // Create new user
   const userData = {
-    password: password, // In production, this should be hashed!
+    passwordHash: passwordHash,
     points: 0,
     created_at: new Date().toISOString()
   };
@@ -78,20 +87,35 @@ async function handleLogin(request, env) {
   }
 
   const user = JSON.parse(userJson);
-  if (user.password !== password) {
-    return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
+  const inputHash = await hashPassword(password);
+
+  // Check password (support legacy plain text if needed, but primarily hash)
+  if (user.passwordHash !== inputHash) {
+      if (user.password && user.password === password) {
+          // Auto-upgrade legacy user
+          user.passwordHash = await hashPassword(password);
+          delete user.password;
+          // We'll save this update when we save the token
+      } else {
+          return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
+      }
   }
 
-  return new Response(JSON.stringify({ message: 'Login successful', points: user.points }), { status: 200, headers: CORS_HEADERS });
+  // Generate and store session token
+  const token = crypto.randomUUID();
+  user.token = token;
+  await env.USERS.put(username, JSON.stringify(user));
+
+  return new Response(JSON.stringify({ message: 'Login successful', points: user.points, token: token }), { status: 200, headers: CORS_HEADERS });
 }
 
 async function handleAddPoints(request, env) {
-  const { username, amount } = await request.json();
-  // Note: amount is optional, defaults to 10 if not provided, but capped for safety in this demo
+  const { username, amount, token } = await request.json();
+  // Note: amount is optional, defaults to 10 if not provided
   const pointsToAdd = amount ? parseInt(amount) : 10;
 
-  if (!username) {
-    return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: CORS_HEADERS });
+  if (!username || !token) {
+    return new Response(JSON.stringify({ error: 'Missing username or token' }), { status: 401, headers: CORS_HEADERS });
   }
 
   const userJson = await env.USERS.get(username);
@@ -100,6 +124,12 @@ async function handleAddPoints(request, env) {
   }
 
   const user = JSON.parse(userJson);
+
+  // Verify Token
+  if (!user.token || user.token !== token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), { status: 403, headers: CORS_HEADERS });
+  }
+
   user.points = (user.points || 0) + pointsToAdd;
 
   await env.USERS.put(username, JSON.stringify(user));
