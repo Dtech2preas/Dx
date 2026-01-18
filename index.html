@@ -6,170 +6,320 @@
   <title>Ad Watcher Rewards — MVP</title>
   <style>
     :root {
-      --accent: #007bff;
-      --card-bg: #fff;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
       --muted: #6b7280;
-      --danger: #dc2626;
-      --success: #16a34a;
-      color-scheme: light;
+      --success: #10b981;
+      --danger: #ef4444;
+      --border: #e5e7eb;
     }
 
     body {
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      max-width: 720px;
-      margin: 24px auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
       padding: 20px;
-      background: #f3f4f6;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
       color: #111827;
+      margin-bottom: 0.5rem;
       text-align: center;
     }
 
-    h1 { margin: 6px 0 12px; font-size: 26px; }
-    h2 { margin: 0 0 8px; font-size: 20px; }
+    p.subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
 
     .card {
       background: var(--card-bg);
-      border-radius: 10px;
-      padding: 16px;
-      margin: 16px 0;
-      box-shadow: 0 6px 20px rgba(2,6,23,0.06);
-      border: 1px solid rgba(15,23,42,0.03);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border);
+    }
+
+    h2, h3 {
+      margin-top: 0;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
     }
 
     input[type="text"], input[type="password"] {
-      width: calc(100% - 22px);
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      border-radius: 6px;
       border: 1px solid #d1d5db;
-      font-size: 15px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-group.center {
+        justify-content: center;
     }
 
     button {
-      background: var(--accent);
+      background: var(--primary);
       color: white;
       border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 10px 20px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 15px;
-      margin: 6px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: background 0.2s;
     }
 
-    button.secondary {
-      background: #111827;
-      opacity: .85;
+    button:hover {
+      background: var(--primary-dark);
     }
 
     button:disabled {
-      background: #c7c7c7;
+      background: #9ca3af;
       cursor: not-allowed;
-      opacity: 0.9;
     }
 
-    #message { margin-top: 10px; min-height: 20px; font-weight: 600; }
-    .success { color: var(--success); }
-    .error { color: var(--danger); }
-    .muted { color: var(--muted); font-weight: 500; }
+    button.secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid #d1d5db;
+    }
 
-    small.note { color: var(--muted); display:block; margin-top:6px; }
+    button.secondary:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
 
-    #certCanvas { display:none; }
-    .row { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+    .alert {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .alert.success { background: #d1fae5; color: #065f46; display: block; }
+    .alert.error { background: #fee2e2; color: #991b1b; display: block; }
+    .alert.info { background: #dbeafe; color: #1e40af; display: block; }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    #certCanvas { display: none; }
+
+    /* Admin Section */
+    .admin-toggle {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    #admin-section {
+        display: none;
+        border-top: 4px solid var(--text);
+    }
   </style>
 </head>
 <body>
 
-  <h1>Student Rewards Program — MVP</h1>
-  <p class="muted">Watch short ads to earn points. This is a testing MVP — secure flows will come next.</p>
+  <h1>Student Rewards</h1>
+  <p class="subtitle">Watch ads, earn points, get certified.</p>
 
-  <!-- AUTH -->
+  <!-- AUTH SECTION -->
   <div id="auth-section" class="card">
     <h2>Login or Register</h2>
-    <input id="username" type="text" placeholder="Username" />
-    <input id="password" type="password" placeholder="Password" />
-    <div class="row" style="margin-top:8px;">
-      <button id="btn-login" onclick="handleLogin()">Login</button>
-      <button id="btn-register" onclick="handleRegister()" class="secondary">Register</button>
+    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:16px;">Create an account to start earning.</p>
+
+    <label for="username">Username</label>
+    <input id="username" type="text" placeholder="Enter your username" />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="Enter your password" />
+
+    <div class="btn-group">
+      <button onclick="handleRegister()" class="secondary">Register</button>
+      <button onclick="handleLogin()">Login</button>
     </div>
-    <small class="note">For demo only: passwords are stored in plain text on the worker. Do not use a real password.</small>
   </div>
 
-  <!-- DASHBOARD -->
+  <!-- DASHBOARD SECTION -->
   <div id="dashboard-section" class="card" style="display:none;">
-    <h2>Welcome, <span id="display-username"></span>!</h2>
-    <p>Your Balance: <strong id="display-points">0</strong> Points</p>
-    <div class="row" style="justify-content:center;">
-      <button onclick="logout()" class="secondary">Logout</button>
-      <button onclick="refreshPoints()">Refresh</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2>Dashboard</h2>
+        <button onclick="logout()" class="secondary" style="padding:4px 10px; font-size:0.8rem;">Logout</button>
+    </div>
+
+    <p>Welcome back, <strong id="display-username"></strong>!</p>
+
+    <div class="stats">
+        <span>Current Balance</span>
+        <span class="stat-val"><span id="display-points">0</span> pts</span>
+    </div>
+
+    <div class="btn-group center">
+        <button onclick="refreshPoints()" class="secondary">Refresh Balance</button>
     </div>
   </div>
 
-  <!-- EARN -->
+  <!-- EARN SECTION -->
   <div id="earn-section" class="card" style="display:none;">
     <h3>Earn Points</h3>
-    <p class="muted">Open an ad in a new tab, keep it open for <strong>15 seconds</strong>, then come back to this tab to receive points.</p>
-    <div class="row">
-      <button id="watch-btn" onclick="startAdWatch()">Watch Ad & Earn 10 pts</button>
-      <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary">Cancel</button>
+    <p style="color:var(--muted); font-size:0.9rem;">
+        Click the button below to open an ad. Keep the tab open for <strong>15 seconds</strong> to earn 10 points.
+    </p>
+
+    <div style="text-align:center; margin: 20px 0;">
+        <button id="watch-btn" onclick="startAdWatch()" style="width:100%; padding: 14px; font-size:1.1rem;">
+            Watch Ad (+10 pts)
+        </button>
+        <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary" style="margin-top:8px;">
+            Cancel
+        </button>
     </div>
-    <p id="timer-status" class="muted"></p>
+
+    <p id="timer-status" style="text-align:center; font-weight:600; color:var(--primary); height:24px;"></p>
   </div>
 
-  <!-- REDEEM -->
+  <!-- REDEEM SECTION -->
   <div id="redeem-section" class="card" style="display:none;">
     <h3>Redeem Rewards</h3>
-    <p class="muted">100 points = Certificate of Worthy (downloadable PNG)</p>
-    <div class="row">
-      <button id="redeem-btn" onclick="redeemCertificate()" disabled>Claim Certificate</button>
+    <p style="color:var(--muted); font-size:0.9rem;">
+        Exchange your points for an official certificate.
+    </p>
+    <div class="stats">
+        <span>Cost</span>
+        <span class="stat-val">20 pts</span>
     </div>
+
+    <button id="redeem-btn" onclick="redeemCertificate()" style="width:100%;" disabled>
+        Claim Certificate
+    </button>
   </div>
 
-  <div id="message" aria-live="polite"></div>
+  <!-- GLOBAL MESSAGE -->
+  <div id="message" class="alert"></div>
 
-  <canvas id="certCanvas" width="800" height="600"></canvas>
+  <!-- CANVAS FOR GENERATION -->
+  <canvas id="certCanvas" width="1000" height="700"></canvas>
+
+  <!-- ADMIN SECTION -->
+  <div class="admin-toggle" onclick="toggleAdmin()">Admin Panel</div>
+  <div id="admin-section" class="card">
+      <h3>Admin Tools</h3>
+      <p style="font-size:0.85rem; color:var(--muted);">Verify certificates and mark them as paid.</p>
+
+      <label>Certificate ID</label>
+      <input id="admin-cert-id" type="text" placeholder="CERT-XXXX-XXXX" />
+
+      <label>Admin Secret</label>
+      <input id="admin-secret-input" type="password" placeholder="Enter Admin Secret" />
+
+      <div class="btn-group">
+          <button onclick="verifyCert()" class="secondary">Verify</button>
+          <button onclick="markPaid()">Mark Paid</button>
+      </div>
+
+      <div id="admin-result" style="margin-top:12px; padding:10px; background:#f9fafb; border-radius:4px; display:none; font-family:monospace; font-size:0.85rem;"></div>
+  </div>
 
   <script>
     // ---------- CONFIG ----------
-    // Remove trailing slash from the worker URL
     const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-    const AD_LINK = "https://otieu.com/4/10205357"; // Example ad landing
+    // const API_URL = "http://localhost:8000"; // Uncomment for local dev
+    const AD_LINK = "https://otieu.com/4/10205357";
 
     // ---------- STATE ----------
-    let currentUser = null;    // { username, points }
+    let currentUser = null;
     let adStartTime = null;
     let adWindow = null;
 
     // ---------- UTILS ----------
-    function showMessage(msg = '', type = '') {
+    function showMessage(msg, type = 'info') {
       const el = document.getElementById('message');
       el.innerText = msg;
-      el.className = type;
+      el.className = `alert ${type}`;
+      el.style.display = 'block';
+      setTimeout(() => {
+          if(type === 'success') el.style.display = 'none';
+      }, 5000);
+    }
+
+    function toggleAdmin() {
+        const el = document.getElementById('admin-section');
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
     async function fetchJson(path, opts = {}) {
-      const url = path.startsWith('http') ? path : `${API_URL}${path}`;
-      const defaultHeaders = {
-        'Content-Type': 'application/json'
-      };
+      // Auto-detect local dev or use Cloudflare
+      const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                      ? 'http://localhost:8000'
+                      : API_URL;
 
-      const safeOpts = Object.assign({
-        headers: defaultHeaders
-      }, opts);
+      const url = `${baseUrl}${path}`;
+      const defaultHeaders = { 'Content-Type': 'application/json' };
+      const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
 
-      // Ensure headers include Content-Type if body present
       if (safeOpts.body && !safeOpts.headers['Content-Type']) {
         safeOpts.headers['Content-Type'] = 'application/json';
       }
 
-      const res = await fetch(url, safeOpts);
-      let data = null;
       try {
-        data = await res.json();
+        const res = await fetch(url, safeOpts);
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        return { ok: res.ok, status: res.status, data, res };
       } catch (e) {
-        data = null;
+        console.error(e);
+        return { ok: false, status: 0, data: null };
       }
-      return { ok: res.ok, status: res.status, data, res };
     }
 
     function setAuthUI(loggedIn) {
@@ -177,275 +327,293 @@
       document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
       document.getElementById('earn-section').style.display = loggedIn ? 'block' : 'none';
       document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
+
       if (!loggedIn) {
         document.getElementById('display-username').innerText = '';
         document.getElementById('display-points').innerText = '0';
       }
     }
 
-    // ---------- AUTH HANDLERS ----------
+    // ---------- AUTH ----------
     async function handleRegister() {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value.trim();
-      if (!u || !p) return showMessage('Please enter username and password', 'error');
+      if (!u || !p) return showMessage('Enter username and password', 'error');
 
-      toggleButtons(true);
-      try {
-        const res = await fetchJson('/register', {
-          method: 'POST',
-          body: JSON.stringify({ username: u, password: p })
-        });
+      const res = await fetchJson('/register', {
+        method: 'POST',
+        body: JSON.stringify({ username: u, password: p })
+      });
 
-        if (res.ok) {
-          showMessage('Registration successful — please login.', 'success');
-        } else {
-          const err = (res.data && res.data.error) ? res.data.error : `Registration failed (${res.status})`;
-          showMessage(err, 'error');
-        }
-      } catch (e) {
-        console.error(e);
-        showMessage('Connection error while registering', 'error');
-      } finally {
-        toggleButtons(false);
-      }
+      if (res.ok) showMessage('Registered! Please login.', 'success');
+      else showMessage(res.data?.error || 'Registration failed', 'error');
     }
 
     async function handleLogin() {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value.trim();
-      if (!u || !p) return showMessage('Please enter username and password', 'error');
+      if (!u || !p) return showMessage('Enter username and password', 'error');
 
-      toggleButtons(true);
-      try {
-        const res = await fetchJson('/login', {
-          method: 'POST',
-          body: JSON.stringify({ username: u, password: p })
-        });
+      const res = await fetchJson('/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: u, password: p })
+      });
 
-        if (res.ok && res.data) {
-          currentUser = { username: u, points: res.data.points || 0 };
-          document.getElementById('display-username').innerText = currentUser.username;
-          document.getElementById('display-points').innerText = currentUser.points;
-          setAuthUI(true);
-          updatePointsDisplay();
-          showMessage('Login successful', 'success');
-        } else {
-          const err = (res.data && res.data.error) ? res.data.error : `Login failed (${res.status})`;
-          showMessage(err, 'error');
-        }
-      } catch (e) {
-        console.error(e);
-        showMessage('Connection error while logging in', 'error');
-      } finally {
-        toggleButtons(false);
+      if (res.ok && res.data) {
+        currentUser = {
+          username: u,
+          points: res.data.points || 0,
+          token: res.data.token
+        };
+        sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+        updateUI();
+        showMessage('Login successful', 'success');
+      } else {
+        showMessage(res.data?.error || 'Login failed', 'error');
       }
     }
 
     function logout() {
       currentUser = null;
-      setAuthUI(false);
-      document.getElementById('username').value = '';
-      document.getElementById('password').value = '';
-      showMessage('Logged out', 'success');
+      sessionStorage.removeItem('ad_user');
+      updateUI();
+      showMessage('Logged out', 'info');
     }
 
     async function refreshPoints() {
       if (!currentUser) return;
-      try {
-        const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
-        if (res.ok && res.data) {
-          currentUser.points = res.data.points || 0;
-          updatePointsDisplay();
-          showMessage('Points refreshed', 'success');
-        } else {
-          showMessage('Could not fetch user data', 'error');
-        }
-      } catch (e) {
-        console.error(e);
-        showMessage('Network error while fetching user', 'error');
+      const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
+      if (res.ok && res.data) {
+        currentUser.points = res.data.points;
+        sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+        updateUI();
       }
     }
 
-    function toggleButtons(disable) {
-      document.getElementById('btn-login').disabled = disable;
-      document.getElementById('btn-register').disabled = disable;
-      document.getElementById('watch-btn').disabled = disable;
-      document.getElementById('redeem-btn').disabled = disable;
-    }
+    function updateUI() {
+      if (currentUser) {
+        setAuthUI(true);
+        document.getElementById('display-username').innerText = currentUser.username;
+        document.getElementById('display-points').innerText = currentUser.points;
 
-    function updatePointsDisplay() {
-      const el = document.getElementById('display-points');
-      el.innerText = currentUser ? currentUser.points : 0;
-
-      const redeemBtn = document.getElementById('redeem-btn');
-      if (currentUser && currentUser.points >= 100) {
-        redeemBtn.disabled = false;
-        redeemBtn.innerText = "Claim Certificate (100 pts)";
+        const redeemBtn = document.getElementById('redeem-btn');
+        if (currentUser.points >= 20) {
+            redeemBtn.disabled = false;
+            redeemBtn.innerText = "Claim Certificate (20 pts)";
+        } else {
+            redeemBtn.disabled = true;
+            redeemBtn.innerText = `Need ${20 - currentUser.points} more pts`;
+        }
       } else {
-        redeemBtn.disabled = true;
-        if (currentUser) {
-          redeemBtn.innerText = `Need ${100 - (currentUser.points||0)} more points`;
-        } else {
-          redeemBtn.innerText = "Claim Certificate";
-        }
+        setAuthUI(false);
       }
     }
 
-    // ---------- AD WATCH LOGIC ----------
+    // ---------- ADS ----------
     function startAdWatch() {
-      if (!currentUser) return showMessage('Please login first', 'error');
+      if (!currentUser) return showMessage('Please login', 'error');
 
-      showMessage('Opening ad in a new tab. Keep it open for 15 seconds.', 'success');
+      showMessage('Opening ad... Keep it open for 15s.', 'info');
       adStartTime = Date.now();
-
-      // Open ad in new window/tab
       adWindow = window.open(AD_LINK, '_blank');
 
-      // UI changes
-      const watchBtn = document.getElementById('watch-btn');
-      watchBtn.disabled = true;
-      watchBtn.innerText = 'Watching...';
+      document.getElementById('watch-btn').disabled = true;
+      document.getElementById('watch-btn').innerText = 'Watching...';
       document.getElementById('cancel-ad-btn').disabled = false;
-      document.getElementById('timer-status').innerText = 'Waiting for you to return...';
+      document.getElementById('timer-status').innerText = 'Timer running...';
     }
 
     function cancelAdWatch() {
       adStartTime = null;
-      if (adWindow && !adWindow.closed) try { adWindow.close(); } catch(e){}
-      adWindow = null;
-      document.getElementById('watch-btn').disabled = false;
-      document.getElementById('watch-btn').innerText = 'Watch Ad & Earn 10 pts';
-      document.getElementById('cancel-ad-btn').disabled = true;
-      document.getElementById('timer-status').innerText = '';
-      showMessage('Ad watch cancelled', 'muted');
+      if (adWindow) adWindow.close();
+      resetAdUI();
+      showMessage('Cancelled.', 'info');
     }
 
-    // When the tab becomes visible again, check elapsed time
-    document.addEventListener('visibilitychange', async () => {
-      if (document.visibilityState === 'visible' && adStartTime) {
-        const now = Date.now();
-        const elapsedSeconds = Math.floor((now - adStartTime) / 1000);
-
-        // Reset UI
+    function resetAdUI() {
         document.getElementById('watch-btn').disabled = false;
-        document.getElementById('watch-btn').innerText = 'Watch Ad & Earn 10 pts';
+        document.getElementById('watch-btn').innerText = 'Watch Ad (+10 pts)';
         document.getElementById('cancel-ad-btn').disabled = true;
         document.getElementById('timer-status').innerText = '';
+    }
 
-        // Close popup if still open
-        if (adWindow && !adWindow.closed) try { adWindow.close(); } catch(e){}
-
-        const seconds = elapsedSeconds;
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && adStartTime) {
+        const elapsed = (Date.now() - adStartTime) / 1000;
         adStartTime = null;
-        adWindow = null;
+        if (adWindow) adWindow.close();
 
-        if (seconds >= 15) {
-          // Award points via backend
-          await addPoints(10);
+        resetAdUI();
+
+        if (elapsed >= 15) {
+            await addPoints(10);
         } else {
-          showMessage(`Watched ${seconds}s — need 15s to earn points. Try again.`, 'error');
+            showMessage(`Only watched for ${Math.floor(elapsed)}s. Need 15s.`, 'error');
         }
       }
     });
 
-    async function addPoints(amount = 10) {
-      if (!currentUser) return showMessage('Not logged in', 'error');
+    async function addPoints(amt) {
+      const res = await fetchJson('/add-points', {
+        method: 'POST',
+        body: JSON.stringify({
+            username: currentUser.username,
+            amount: amt,
+            token: currentUser.token
+        })
+      });
 
-      try {
-        const res = await fetchJson('/add-points', {
-          method: 'POST',
-          body: JSON.stringify({ username: currentUser.username, amount: amount })
-        });
-
-        if (res.ok && res.data) {
+      if (res.ok) {
           currentUser.points = res.data.points;
-          updatePointsDisplay();
-          showMessage(`Success! ${amount} points added.`, 'success');
-        } else {
-          const err = (res.data && res.data.error) ? res.data.error : 'Error adding points';
-          showMessage(err, 'error');
-        }
-      } catch (e) {
-        console.error(e);
-        showMessage('Network error while adding points', 'error');
+          sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+          updateUI();
+          showMessage(`Success! +${amt} points.`, 'success');
+      } else {
+          showMessage(res.data?.error || 'Error adding points', 'error');
       }
     }
 
-    // ---------- REDEEM / CERTIFICATE ----------
+    // ---------- REDEEM ----------
     async function redeemCertificate() {
-      if (!currentUser) return showMessage('Login required', 'error');
-      if (currentUser.points < 100) return showMessage('Not enough points', 'error');
+        if (!confirm("Spend 20 points for a certificate?")) return;
 
-      // Deduct points on server-side by adding negative points (the worker accepts this)
-      try {
-        const deduct = -100;
-        const res = await fetchJson('/add-points', {
-          method: 'POST',
-          body: JSON.stringify({ username: currentUser.username, amount: deduct })
+        const res = await fetchJson('/redeem', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: currentUser.username,
+                token: currentUser.token
+            })
         });
 
-        if (!res.ok) {
-          const err = (res.data && res.data.error) ? res.data.error : 'Redemption failed';
-          return showMessage(err, 'error');
+        if (res.ok) {
+            currentUser.points = res.data.points;
+            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+            updateUI();
+            generateCertificate(currentUser.username, res.data.cert_id);
+            showMessage('Certificate Generated!', 'success');
+        } else {
+            showMessage(res.data?.error || 'Redemption failed', 'error');
         }
-
-        // Update local points
-        currentUser.points = res.data.points;
-        updatePointsDisplay();
-
-        // Generate certificate and trigger download
-        generateCertificate(currentUser.username);
-        showMessage('Certificate generated and downloaded. Send to admin to claim reward.', 'success');
-
-      } catch (e) {
-        console.error(e);
-        showMessage('Network error while redeeming', 'error');
-      }
     }
 
-    function generateCertificate(username) {
+    // ---------- ADMIN ----------
+    async function verifyCert() {
+        const id = document.getElementById('admin-cert-id').value.trim();
+        if(!id) return;
+
+        const res = await fetchJson(`/certificate?id=${id}`, { method: 'GET' });
+        const out = document.getElementById('admin-result');
+        out.style.display = 'block';
+
+        if (res.ok) {
+            out.innerHTML = `
+                <strong style="color:green">VALID</strong><br>
+                User: ${res.data.username}<br>
+                Date: ${new Date(res.data.date).toLocaleString()}<br>
+                Status: <strong>${res.data.status}</strong>
+            `;
+        } else {
+            out.innerHTML = `<strong style="color:red">INVALID</strong>`;
+        }
+    }
+
+    async function markPaid() {
+        const id = document.getElementById('admin-cert-id').value.trim();
+        const secret = document.getElementById('admin-secret-input').value.trim();
+        if(!id || !secret) return showMessage('Enter ID and Secret', 'error');
+
+        const res = await fetchJson('/mark-cert-paid', {
+            method: 'POST',
+            body: JSON.stringify({
+                id: id,
+                admin_secret: secret
+            })
+        });
+
+        const out = document.getElementById('admin-result');
+        out.style.display = 'block';
+
+        if (res.ok) {
+            out.innerHTML = `Success: Marked as PAID.`;
+            verifyCert(); // Refresh details
+        } else {
+            out.innerText = `Error: ${res.data?.error}`;
+        }
+    }
+
+    // ---------- CERTIFICATE GENERATION ----------
+    function generateCertificate(username, certId) {
       const canvas = document.getElementById('certCanvas');
       const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Clear
+      ctx.clearRect(0,0,w,h);
 
       // Background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
 
-      // Gold border
-      ctx.lineWidth = 12;
-      ctx.strokeStyle = '#D4AF37';
-      ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+      // Border
+      ctx.lineWidth = 20;
+      ctx.strokeStyle = '#1e3a8a'; // Dark Blue
+      ctx.strokeRect(30, 30, w-60, h-60);
 
-      // Title
-      ctx.fillStyle = '#111827';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#D4AF37'; // Gold
+      ctx.strokeRect(55, 55, w-110, h-110);
+
+      // Header
+      ctx.fillStyle = '#1e3a8a';
       ctx.textAlign = 'center';
-      ctx.font = 'bold 36px serif';
-      ctx.fillText('CERTIFICATE OF WORTHY', canvas.width / 2, 120);
+      ctx.font = 'bold 50px Serif';
+      ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 160);
 
-      // Subtitle
-      ctx.font = '18px sans-serif';
-      ctx.fillText('This certifies that', canvas.width / 2, 200);
+      // Sub
+      ctx.font = '24px Sans-Serif';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText('This certificate is proudly presented to', w/2, 230);
 
       // Name
-      ctx.font = 'italic bold 48px serif';
-      ctx.fillText(username, canvas.width / 2, 270);
+      ctx.font = 'bold italic 60px Serif';
+      ctx.fillStyle = '#111827';
+      ctx.fillText(username, w/2, 320);
 
-      // Body
-      ctx.font = '18px sans-serif';
-      ctx.fillText('has successfully completed the requirements.', canvas.width / 2, 330);
+      // Line under name
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 200, 340);
+      ctx.lineTo(w/2 + 200, 340);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#9ca3af';
+      ctx.stroke();
 
-      // Date
-      const dateStr = new Date().toLocaleDateString();
-      ctx.font = '16px sans-serif';
-      ctx.fillText(`Date: ${dateStr}`, canvas.width / 2, 420);
+      // Text
+      ctx.font = '20px Sans-Serif';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText('For successfully completing the task requirements of the Student Rewards Program.', w/2, 400);
 
-      // Footer
-      ctx.font = '14px sans-serif';
-      ctx.fillText('Send this file to Admin to claim your reward.', canvas.width / 2, 470);
+      // Footer Info
+      ctx.font = '16px Monospace';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText(`Certificate ID: ${certId}`, w/2, 600);
+      ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, w/2, 625);
 
-      // Download trigger
+      // "Seal"
+      ctx.beginPath();
+      ctx.arc(w - 120, h - 120, 60, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.2)'; // Gold transparent
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#D4AF37';
+      ctx.stroke();
+      ctx.font = 'bold 16px Sans-Serif';
+      ctx.fillStyle = '#b45309';
+      ctx.fillText("OFFICIAL", w - 120, h - 115);
+
+      // Download
       const link = document.createElement('a');
-      link.download = `Certificate_${username}.png`;
+      link.download = `Certificate_${username}_${certId}.png`;
       link.href = canvas.toDataURL('image/png');
       document.body.appendChild(link);
       link.click();
@@ -453,50 +621,18 @@
     }
 
     // ---------- INIT ----------
-    // If the user refreshes the page while logged in, you could use sessionStorage to persist username.
     (function init() {
-      const maybeUser = sessionStorage.getItem('ad_mvp_user');
-      if (maybeUser) {
+      const saved = sessionStorage.getItem('ad_user');
+      if (saved) {
         try {
-          currentUser = JSON.parse(maybeUser);
-          // Attempt to refresh authoritative points value
-          refreshPoints();
-          setAuthUI(true);
-          document.getElementById('display-username').innerText = currentUser.username;
-          updatePointsDisplay();
-        } catch (e) {
-          sessionStorage.removeItem('ad_mvp_user');
+            currentUser = JSON.parse(saved);
+            updateUI();
+            refreshPoints();
+        } catch(e) {
+            sessionStorage.removeItem('ad_user');
         }
-      } else {
-        setAuthUI(false);
       }
     })();
-
-    // Persist currentUser to sessionStorage when login state changes
-    // We'll patch handleLogin to store session; do that by wrapping the function return
-    const originalHandleLogin = handleLogin;
-    handleLogin = async function() {
-      await originalHandleLogin();
-      if (currentUser) {
-        sessionStorage.setItem('ad_mvp_user', JSON.stringify(currentUser));
-      }
-    };
-
-    // When logging out, remove session
-    const originalLogout = logout;
-    logout = function() {
-      originalLogout();
-      sessionStorage.removeItem('ad_mvp_user');
-    };
-
-    // Keep UI consistent when points change
-    // Hook updatePointsDisplay to store updated points in session
-    const originalUpdatePointsDisplay = updatePointsDisplay;
-    updatePointsDisplay = function() {
-      originalUpdatePointsDisplay();
-      if (currentUser) sessionStorage.setItem('ad_mvp_user', JSON.stringify(currentUser));
-    };
-
   </script>
 </body>
 </html>
