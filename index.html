@@ -1,529 +1,1088 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ad Watcher Rewards — Premium MVP</title>  <!-- Fonts -->  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">  <style>
-    :root{
-      --bg:#0f1724;
-      --surface:#0b1220;
-      --muted:#9aa4b2;
-      --text:#e6eef8;
-      --accent:#2563eb; /* blue */
-      --accent-2:#D4AF37; /* gold */
-      --glass: rgba(255,255,255,0.04);
-      --card-gradient: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(212,175,55,0.03));
-      --radius:14px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Rewards Program | Ad Watcher</title>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --primary-dark: #1e429f;
+            --primary-light: #e0e7ff;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            --shadow-hover: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+        }
 
-    /* Reset + layout */
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Poppins', Arial;
-      background: radial-gradient(1200px 700px at 10% 20%, rgba(37,99,235,0.06), transparent),
-                  radial-gradient(900px 500px at 90% 80%, rgba(212,175,55,0.03), transparent),
-                  var(--bg);
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding:32px;
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .container{
-      width:100%;
-      max-width:980px;
-      margin:0 auto;
-    }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-    header{
-      display:flex;
-      align-items:center;
-      gap:16px;
-      margin-bottom:22px;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
 
-    .logo{
-      width:68px;
-      height:68px;
-      border-radius:14px;
-      background: linear-gradient(135deg,var(--accent),#7c3aed);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow: 0 8px 30px rgba(2,6,23,0.6), 0 1px 0 rgba(255,255,255,0.02) inset;
-      font-weight:700;
-      color:#fff;
-      font-family:'Poppins';
-      font-size:18px;
-    }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
 
-    h1{font-family:'Poppins'; font-size:22px; margin:0}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
+        .tagline {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:20px;
-      align-items:start;
-    }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
 
-    /* Cards */
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:var(--radius);
-      padding:20px;
-      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-      border:1px solid rgba(255,255,255,0.04);
-    }
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-    .card.padded{padding:28px}
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
 
-    input[type="text"], input[type="password"]{
-      width:100%;
-      padding:12px 14px;
-      border-radius:10px;
-      border:none;
-      background:var(--glass);
-      color:var(--text);
-      font-size:15px;
-      outline: none;
-      box-shadow: 0 6px 14px rgba(2,6,23,0.5) inset;
-    }
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            color: var(--text);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
 
-    input::placeholder{color:rgba(255,255,255,0.38)}
+        .card-title i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
 
-    .muted{color:var(--muted);font-size:13px}
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .row{display:flex;gap:12px;align-items:center}
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
 
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);color:white;box-shadow:0 8px 24px rgba(37,99,235,0.14)}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.04)}
-    .btn.warn{background:linear-gradient(90deg,var(--accent-2),#f59e0b);color:#0b1220}
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
 
-    .btn:disabled{opacity:0.5;cursor:not-allowed}
+        .balance {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
 
-    .statbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02)}
-    .stat{display:flex;flex-direction:column}
-    .stat .label{font-size:12px;color:var(--muted)}
-    .stat .value{font-size:20px;font-weight:700;color:var(--accent)}
+        .balance-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-    /* Center area */
-    .center-card{min-height:220px}
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 50px;
+        }
 
-    .watch-area{display:flex;flex-direction:column;gap:14px}
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: white;
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
 
-    #watch-btn{width:100%;padding:14px;border-radius:12px;font-size:16px}
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
 
-    .info{font-size:13px;color:var(--muted)}
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
 
-    /* Redeem section */
-    .redeem-cost{font-size:14px;color:var(--muted)}
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
 
-    /* Message */
-    .message{padding:12px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
-    .message.info{background:linear-gradient(90deg, rgba(37,99,235,0.08), rgba(37,99,235,0.02));color:var(--accent)}
-    .message.success{background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02));color:var(--success)}
-    .message.error{background:linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));color:var(--danger)}
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
-    /* Admin */
-    .admin-toggle{font-size:13px;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:10px;text-align:center}
-    #admin-section{display:none;margin-top:12px}
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
 
-    /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:60}
-    .modal{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:22px;border-radius:12px;width:min(540px,92vw);box-shadow:0 18px 60px rgba(2,6,23,0.7)}
+        .btn-secondary:hover {
+            border-color: var(--primary);
+        }
 
-    /* small screens */
-    @media (max-width:880px){
-      .grid{grid-template-columns:1fr;}
-      header{align-items:flex-start}
-      .logo{width:56px;height:56px}
-    }
+        .btn-success {
+            background: var(--success);
+        }
 
-    /* small helper styles */
-    .muted-2{color:rgba(255,255,255,0.6)}
-    .gold{color:var(--accent-2)}
-  </style></head>
+        .btn-accent {
+            background: var(--accent);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .ad-watch-container {
+            text-align: center;
+            padding: 20px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .timer-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .certificate-preview {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+            border: 2px dashed #f59e0b;
+        }
+
+        .certificate-preview h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .alert.info {
+            background: #dbeafe;
+            color: #1e40af;
+            display: block;
+        }
+
+        .admin-section {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 40px;
+            border-top: 4px solid var(--text);
+        }
+
+        .admin-toggle {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .admin-toggle button {
+            background: transparent;
+            color: var(--text-light);
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+        }
+
+        .section-divider {
+            text-align: center;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .section-divider span {
+            background: var(--bg);
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .certificate-canvas {
+            display: none;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .instructions {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo">DT</div>
-        <div>
-          <h1>Ad Watcher — Student Rewards</h1>
-          <p class="lead">Earn small payouts by watching ads. Convert points to certificates.</p>
-        </div>
-      </div>
-      <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
-        <button class="btn ghost" onclick="refreshPoints()">Refresh</button>
-        <button class="btn" id="logout-btn" style="display:none" onclick="logout()">Logout</button>
-      </div>
-    </header><main class="grid">
-  <!-- LEFT: Primary app -->
-  <section>
-    <!-- AUTH CARD -->
-    <div id="auth-section" class="card card padded">
-      <h3 style="margin-top:0">Login / Register</h3>
-      <p class="muted">Create an account so we can track your points and issue certificates.</p>
-
-      <div style="margin-top:14px">
-        <label for="username">Username</label>
-        <input id="username" type="text" placeholder="e.g. thabo22" />
-
-        <label for="password" style="margin-top:8px">Password</label>
-        <input id="password" type="password" placeholder="Your secure password" />
-
-        <div style="display:flex;gap:10px;margin-top:14px">
-          <button class="btn primary" onclick="handleLogin()">Login</button>
-          <button class="btn ghost" onclick="handleRegister()">Create account</button>
+    <div class="container">
+        <div class="header">
+            <div class="logo">StudentRewards+</div>
+            <p class="tagline">Watch educational ads, earn points, and redeem for valuable certificates. Transform your time into tangible achievements.</p>
         </div>
 
-        <div id="auth-message" class="message info" style="display:none; margin-top:12px"></div>
-      </div>
+        <!-- Message Display -->
+        <div id="message" class="alert"></div>
+
+        <!-- Auth Section -->
+        <div id="auth-section" class="card">
+            <h2 class="card-title"><i class="fas fa-sign-in-alt"></i> Account Access</h2>
+            <div class="input-group">
+                <label class="input-label">Username</label>
+                <input id="username" type="text" class="input" placeholder="Enter your student ID or username">
+            </div>
+            <div class="input-group">
+                <label class="input-label">Password</label>
+                <input id="password" type="password" class="input" placeholder="Enter your secure password">
+            </div>
+            <div class="action-grid">
+                <button onclick="handleRegister()" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+                <button onclick="handleLogin()" class="btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" style="display: none;">
+            <div class="stats-card card">
+                <div class="stats-header">
+                    <div>
+                        <div class="balance-label">Your Balance</div>
+                        <div class="balance"><span id="display-points">0</span> Points</div>
+                    </div>
+                    <div class="user-info">
+                        <div class="avatar" id="avatar-letter">U</div>
+                        <span id="display-username">User</span>
+                        <button onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px;">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="progress-text">0/20 points to certificate</span>
+                </div>
+            </div>
+
+            <div class="section-divider">
+                <span>Earning Activities</span>
+            </div>
+
+            <div class="main-grid">
+                <!-- Earn Points Card -->
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-play-circle"></i> Watch & Earn</h2>
+                    <p>Watch educational content and earn 10 points per viewing session. Keep the ad open for 15 seconds to qualify.</p>
+                    
+                    <div class="ad-watch-container">
+                        <button id="watch-btn" onclick="startAdWatch()" class="btn" style="width: 100%; padding: 16px;">
+                            <i class="fas fa-play"></i> Start Watching (+10 pts)
+                        </button>
+                        
+                        <div id="timer-display" class="timer-display" style="display: none;">
+                            15s
+                        </div>
+                        
+                        <button id="cancel-ad-btn" onclick="cancelAdWatch()" class="btn btn-secondary" disabled style="margin-top: 10px;">
+                            <i class="fas fa-times"></i> Cancel Session
+                        </button>
+                    </div>
+                    
+                    <div class="instructions">
+                        <strong>How it works:</strong>
+                        <ol>
+                            <li>Click "Start Watching" to open educational content</li>
+                            <li>Keep the window open for 15 seconds</li>
+                            <li>Return to this tab to collect your points</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Redeem Card -->
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-award"></i> Certificate Redemption</h2>
+                    <p>Redeem your hard-earned points for an official certificate of achievement.</p>
+                    
+                    <div class="certificate-preview">
+                        <i class="fas fa-certificate" style="font-size: 3rem; color: #f59e0b; margin-bottom: 15px;"></i>
+                        <h4>Certificate of Achievement</h4>
+                        <p>Official recognition of participation and completion</p>
+                        <div style="margin-top: 15px;">
+                            <span class="badge badge-success">Cost: 20 points</span>
+                        </div>
+                    </div>
+                    
+                    <button id="redeem-btn" onclick="redeemCertificate()" class="btn btn-success" disabled style="width: 100%; padding: 16px;">
+                        <i class="fas fa-download"></i> Generate Certificate
+                    </button>
+                    
+                    <div id="redeem-status" style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--text-light);"></div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="feature-grid">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure & Private</h3>
+                    <p>Your data is protected with enterprise-grade security</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Instant Processing</h3>
+                    <p>Points added immediately after verification</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Student Support</h3>
+                    <p>Dedicated support for certificate processing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div class="admin-toggle">
+            <button onclick="toggleAdmin()">
+                <i class="fas fa-cog"></i> Administrator Panel
+            </button>
+        </div>
+        
+        <div id="admin-section" class="admin-section" style="display: none;">
+            <h2 class="card-title"><i class="fas fa-user-shield"></i> Certificate Verification System</h2>
+            <p>Verify certificates and update payment status for redemption processing.</p>
+            
+            <div class="input-group">
+                <label class="input-label">Certificate ID</label>
+                <input id="admin-cert-id" type="text" class="input" placeholder="CERT-XXXX-XXXX-XXXX">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Administrator Key</label>
+                <input id="admin-secret-input" type="password" class="input" placeholder="Enter secure access key">
+            </div>
+            
+            <div class="action-grid">
+                <button onclick="verifyCert()" class="btn btn-secondary">
+                    <i class="fas fa-search"></i> Verify Certificate
+                </button>
+                <button onclick="markPaid()" class="btn">
+                    <i class="fas fa-check-circle"></i> Mark as Processed
+                </button>
+            </div>
+            
+            <div id="admin-result" class="card" style="margin-top: 20px; display: none;"></div>
+        </div>
+
+        <!-- Hidden Canvas for Certificate -->
+        <canvas id="certCanvas" width="1200" height="800" class="certificate-canvas"></canvas>
+
+        <div class="footer">
+            <p>© 2024 StudentRewards+ Program. All rights reserved.</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">
+                This system is designed for educational purposes and legitimate certificate issuance.
+                Certificates can be submitted for processing and verification.
+            </p>
+        </div>
     </div>
 
-    <!-- EARN CARD -->
-    <div id="earn-section" class="card card padded center-card" style="display:none;margin-top:16px;">
-      <h3 style="margin:0">Earn Points</h3>
-      <p class="muted" style="margin-top:6px">Open an ad and keep it open for <strong>15 seconds</strong> to earn points.</p>
-
-      <div class="watch-area" style="margin-top:16px">
-        <div class="statbar">
-          <div class="stat">
-            <span class="label">Per Ad</span>
-            <span class="value">+10 pts</span>
-          </div>
-          <div class="stat" style="text-align:right">
-            <span class="label">Daily limit</span>
-            <span class="value muted-2">TBD</span>
-          </div>
-        </div>
-
-        <div>
-          <button id="watch-btn" class="btn primary" onclick="startAdWatch()">Watch Ad — +10 pts</button>
-          <button id="cancel-ad-btn" class="btn ghost" onclick="cancelAdWatch()" disabled style="margin-top:10px">Cancel</button>
-        </div>
-
-        <div id="timer-status" style="font-weight:600;color:var(--accent);height:22px"></div>
-      </div>
-    </div>
-
-    <!-- REDEEM CARD -->
-    <div id="redeem-section" class="card card padded" style="display:none;margin-top:16px;">
-      <h3 style="margin:0">Redeem — Certificate</h3>
-      <p class="muted" style="margin-top:6px">Exchange points for an official printable certificate.</p>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
-        <div>
-          <div class="redeem-cost">Cost</div>
-          <div style="font-weight:800;font-size:18px;color:var(--accent)">20 pts</div>
-        </div>
-        <div>
-          <button id="redeem-btn" class="btn warn" onclick="openRedeemModal()" disabled>Claim Certificate</button>
-        </div>
-      </div>
-
-      <div id="redeem-note" class="muted" style="margin-top:12px;font-size:13px">A generated certificate will be downloadable as a PNG. Keep a copy and send to the administrator for payout processing.</div>
-    </div>
-
-    <!-- Certificate Canvas hidden (used for generation) -->
-    <canvas id="certCanvas" width="1400" height="1000" style="display:none"></canvas>
-
-  </section>
-
-  <!-- RIGHT: Sidebar -->
-  <aside>
-    <div class="card padded">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="muted">Welcome back,</div>
-          <div id="display-username" style="font-weight:700;font-size:16px;margin-top:4px">Guest</div>
-        </div>
-        <div style="text-align:right">
-          <div class="muted">Balance</div>
-          <div id="display-points" style="font-weight:800;font-size:20px;color:var(--accent);margin-top:6px">0 pts</div>
-        </div>
-      </div>
-
-      <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn ghost" onclick="refreshPoints()">Refresh</button>
-        <button class="btn" id="download-last" style="display:none" onclick="downloadLastCert()">Download last cert</button>
-      </div>
-
-      <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
-
-      <div style="font-size:13px;color:var(--muted);">
-        <div style="margin-bottom:8px"><strong class="gold">How it works</strong></div>
-        <ol style="padding-left:18px;margin:0;line-height:1.5">
-          <li>Register / Login.</li>
-          <li>Open an ad and keep the tab open for 15 seconds.</li>
-          <li>Earn points and redeem for a certificate.</li>
-        </ol>
-      </div>
-
-      <div class="admin-toggle" onclick="toggleAdmin()">Admin Panel</div>
-
-      <div id="admin-section">
-        <div style="margin-top:10px">
-          <label>Certificate ID</label>
-          <input id="admin-cert-id" type="text" placeholder="CERT-XXXX-XXXX" />
-          <label style="margin-top:8px">Admin Secret</label>
-          <input id="admin-secret-input" type="password" placeholder="secret" />
-
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn ghost" onclick="verifyCert()">Verify</button>
-            <button class="btn primary" onclick="markPaid()">Mark Paid</button>
-          </div>
-
-          <pre id="admin-result" style="display:none;margin-top:12px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;font-family:monospace;font-size:13px;color:var(--muted)"></pre>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="card" style="margin-top:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="muted">Support</div>
-          <div style="font-weight:600;margin-top:6px">@kay01TN</div>
-        </div>
-        <div style="font-size:12px;color:var(--muted)">v1.0</div>
-      </div>
-    </div>
-  </aside>
-</main>
-
-<!-- Modal: Confirm Redeem -->
-<div id="modal-backdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h3 style="margin-top:0">Confirm Redemption</h3>
-    <p class="muted">Spend <strong>20 points</strong> to generate a printable certificate? This will deduct points from your balance.</p>
-
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
-      <button class="btn ghost" onclick="closeRedeemModal()">Cancel</button>
-      <button class="btn warn" onclick="redeemCertificate()">Confirm</button>
-    </div>
-  </div>
-</div>
-
-  </div>  <script>
-    // ---------- CONFIG ----------
-    const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-    const AD_LINK = "https://otieu.com/4/10205357";
-
-    // ---------- STATE ----------
-    let currentUser = null;
-    let adStartTime = null;
-    let adWindow = null;
-    let lastCertId = null;
-
-    // ---------- UTIL ----------
-    function el(id){return document.getElementById(id)}
-    function showMsg(id, text, cls='info'){
-      const elmsg = id ? el(id) : null;
-      if(!elmsg) return;
-      elmsg.innerText = text;
-      elmsg.className = `message ${cls}`;
-      elmsg.style.display = 'block';
-      setTimeout(()=>{ if(cls!=='error') elmsg.style.display='none'; }, 4000);
-    }
-
-    function toggleAdmin(){
-      const s = el('admin-section');
-      s.style.display = s.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // ---------- FETCH HELPER ----------
-    async function fetchJson(path, opts = {}) {
-      const baseUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8000' : API_URL;
-      const url = `${baseUrl}${path}`;
-      const defaultHeaders = { 'Content-Type': 'application/json' };
-      const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-      try{
-        const res = await fetch(url, safeOpts);
-        let data = null;
-        try{ data = await res.json(); }catch(e){}
-        return { ok: res.ok, status: res.status, data, res };
-      }catch(e){ console.error(e); return { ok:false, status:0, data:null } }
-    }
-
-    // ---------- AUTH ----------
-    async function handleRegister(){
-      const u = el('username').value.trim();
-      const p = el('password').value.trim();
-      if(!u||!p) return showMsg('auth-message','Enter username & password','error');
-      const res = await fetchJson('/register',{method:'POST',body:JSON.stringify({username:u,password:p})});
-      if(res.ok) showMsg('auth-message','Registered. Please login.','success');
-      else showMsg('auth-message',res.data?.error||'Registration failed','error');
-    }
-
-    async function handleLogin(){
-      const u = el('username').value.trim();
-      const p = el('password').value.trim();
-      if(!u||!p) return showMsg('auth-message','Enter username & password','error');
-      const res = await fetchJson('/login',{method:'POST',body:JSON.stringify({username:u,password:p})});
-      if(res.ok && res.data){
-        currentUser = { username:u, points:res.data.points||0, token:res.data.token };
-        sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-        updateUI();
-        showMsg('auth-message','Login successful','success');
-        el('logout-btn').style.display = 'inline-flex';
-      } else showMsg('auth-message',res.data?.error||'Login failed','error');
-    }
-
-    function logout(){
-      currentUser=null; sessionStorage.removeItem('ad_user'); updateUI(); el('logout-btn').style.display='none'; showMsg('auth-message','Logged out','info');
-    }
-
-    async function refreshPoints(){
-      if(!currentUser) return;
-      const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`);
-      if(res.ok && res.data){ currentUser.points = res.data.points; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); }
-    }
-
-    function updateUI(){
-      if(currentUser){
-        el('auth-section').style.display='none';
-        el('earn-section').style.display='block';
-        el('redeem-section').style.display='block';
-        el('display-username').innerText = currentUser.username;
-        el('display-points').innerText = `${currentUser.points} pts`;
-        el('logout-btn').style.display='inline-flex';
-
-        const redeemBtn = el('redeem-btn');
-        if(currentUser.points >= 20){ redeemBtn.disabled = false; redeemBtn.innerText = 'Claim Certificate'; }
-        else { redeemBtn.disabled = true; redeemBtn.innerText = `Need ${20 - currentUser.points} pts`; }
-      } else {
-        el('auth-section').style.display='block';
-        el('earn-section').style.display='none';
-        el('redeem-section').style.display='none';
-        el('display-username').innerText = 'Guest';
-        el('display-points').innerText = '0 pts';
-        el('logout-btn').style.display='none';
-      }
-    }
-
-    // ---------- ADS ----------
-    function startAdWatch(){
-      if(!currentUser) return showMsg('auth-message','Please login first','error');
-      showMsg('auth-message','Opening ad... keep the tab open for 15s','info');
-      adStartTime = Date.now();
-      adWindow = window.open(AD_LINK, '_blank');
-      el('watch-btn').disabled = true; el('watch-btn').innerText = 'Watching...';
-      el('cancel-ad-btn').disabled = false; el('timer-status').innerText = 'Timer running...';
-    }
-
-    function cancelAdWatch(){
-      adStartTime = null; if(adWindow) adWindow.close(); resetAdUI(); showMsg('auth-message','Cancelled','info');
-    }
-
-    function resetAdUI(){
-      el('watch-btn').disabled = false; el('watch-btn').innerText = 'Watch Ad — +10 pts';
-      el('cancel-ad-btn').disabled = true; el('timer-status').innerText = '';
-    }
-
-    document.addEventListener('visibilitychange', async ()=>{
-      if(document.visibilityState === 'visible' && adStartTime){
-        const elapsed = (Date.now() - adStartTime)/1000; adStartTime=null; if(adWindow) adWindow.close(); resetAdUI();
-        if(elapsed >= 15) await addPoints(10);
-        else showMsg('auth-message',`Only watched ${Math.floor(elapsed)}s — need 15s`,'error');
-      }
-    });
-
-    async function addPoints(amt){
-      const res = await fetchJson('/add-points',{method:'POST',body:JSON.stringify({username:currentUser.username,amount:amt,token:currentUser.token})});
-      if(res.ok){ currentUser.points = res.data.points; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); showMsg('auth-message',`+${amt} points`,'success'); }
-      else showMsg('auth-message',res.data?.error||'Error adding points','error');
-    }
-
-    // ---------- REDEEM (modal flow) ----------
-    function openRedeemModal(){ el('modal-backdrop').style.display='flex'; }
-    function closeRedeemModal(){ el('modal-backdrop').style.display='none'; }
-
-    async function redeemCertificate(){
-      closeRedeemModal();
-      if(!currentUser) return showMsg('auth-message','Please login','error');
-      // call redeem endpoint
-      const res = await fetchJson('/redeem',{method:'POST',body:JSON.stringify({username:currentUser.username,token:currentUser.token})});
-      if(res.ok){ currentUser.points = res.data.points; lastCertId = res.data.cert_id; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); generateCertificate(currentUser.username, res.data.cert_id); showMsg('auth-message','Certificate generated','success'); }
-      else showMsg('auth-message', res.data?.error || 'Redemption failed','error');
-    }
-
-    // ---------- ADMIN ----------
-    async function verifyCert(){
-      const id = el('admin-cert-id').value.trim(); if(!id) return;
-      const res = await fetchJson(`/certificate?id=${encodeURIComponent(id)}`);
-      const out = el('admin-result'); out.style.display='block';
-      if(res.ok && res.data){ out.textContent = `VALID\nUser: ${res.data.username}\nDate: ${new Date(res.data.date).toLocaleString()}\nStatus: ${res.data.status}`; }
-      else out.textContent = 'INVALID OR NOT FOUND';
-    }
-
-    async function markPaid(){
-      const id = el('admin-cert-id').value.trim(); const secret = el('admin-secret-input').value.trim(); if(!id||!secret) return showMsg('auth-message','Enter ID & Secret','error');
-      const res = await fetchJson('/mark-cert-paid',{method:'POST',body:JSON.stringify({id:id,admin_secret:secret})});
-      const out = el('admin-result'); out.style.display='block';
-      if(res.ok){ out.textContent = 'Marked PAID'; verifyCert(); } else out.textContent = `Error: ${res.data?.error || 'Failed'}`;
-    }
-
-    // ---------- Certificate generation ----------
-    function generateCertificate(username, certId){
-      const canvas = el('certCanvas'); const ctx = canvas.getContext('2d'); const w = canvas.width; const h = canvas.height;
-      // background
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
-
-      // outer border
-      ctx.fillStyle = '#0f1724'; ctx.fillRect(40,40,w-80,160);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 42px Poppins'; ctx.textAlign='center'; ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 120);
-
-      // body card
-      ctx.fillStyle = '#f8fafc'; ctx.fillRect(80,180,w-160,h-360);
-      // golden accent stripe
-      ctx.fillStyle = '#D4AF37'; ctx.fillRect(120,220,w-240,8);
-
-      // recipient
-      ctx.fillStyle = '#0b1220'; ctx.font = '700 56px Poppins'; ctx.fillText(username, w/2, 340);
-
-      ctx.font = '16px Inter'; ctx.fillStyle='#334155'; ctx.fillText('For successfully completing the Student Rewards requirement and demonstrating participation.', w/2, 420);
-
-      ctx.font = '14px monospace'; ctx.fillStyle='#475569'; ctx.fillText(`Certificate ID: ${certId}`, w/2, h-160);
-      ctx.fillText(`Issued: ${new Date().toLocaleDateString()}`, w/2, h-130);
-
-      // seal
-      ctx.beginPath(); ctx.arc(w-160,h-160,70,0,Math.PI*2); ctx.fillStyle='rgba(212,175,55,0.12)'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#D4AF37'; ctx.stroke();
-      ctx.fillStyle='#7c3aed'; ctx.font='700 18px Inter'; ctx.fillText('AD WATCH', w-160, h-155);
-
-      // download
-      const link = document.createElement('a'); link.download = `Certificate_${username}_${certId}.png`;
-      link.href = canvas.toDataURL('image/png'); document.body.appendChild(link); link.click(); link.remove();
-
-      // expose last cert download button
-      el('download-last').style.display = 'inline-flex'; el('download-last').dataset.url = canvas.toDataURL('image/png');
-    }
-
-    function downloadLastCert(){ const url = el('download-last').dataset.url; if(!url) return; const a = document.createElement('a'); a.href = url; a.download = `certificate_${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); }
-
-    // ---------- INIT ----------
-    (function init(){
-      const saved = sessionStorage.getItem('ad_user');
-      if(saved){ try{ currentUser = JSON.parse(saved); updateUI(); refreshPoints(); }catch(e){ sessionStorage.removeItem('ad_user'); }}
-    })();
-
-  </script></body>
+    <!-- JavaScript remains mostly the same, just updating UI functions -->
+    <script>
+        // ---------- CONFIG ----------
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const AD_LINK = "https://otieu.com/4/10205357";
+        
+        // ---------- STATE ----------
+        let currentUser = null;
+        let adStartTime = null;
+        let adWindow = null;
+        let countdownInterval = null;
+        
+        // ---------- UTILS ----------
+        function showMessage(msg, type = 'info') {
+            const el = document.getElementById('message');
+            el.innerText = msg;
+            el.className = `alert ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => {
+                if(type === 'success') el.style.display = 'none';
+            }, 5000);
+        }
+        
+        function toggleAdmin() {
+            const el = document.getElementById('admin-section');
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+        
+        async function fetchJson(path, opts = {}) {
+            const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:8000' 
+                : API_URL;
+            
+            const url = `${baseUrl}${path}`;
+            const defaultHeaders = { 'Content-Type': 'application/json' };
+            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
+            
+            if (safeOpts.body && !safeOpts.headers['Content-Type']) {
+                safeOpts.headers['Content-Type'] = 'application/json';
+            }
+            
+            try {
+                const res = await fetch(url, safeOpts);
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {}
+                return { ok: res.ok, status: res.status, data, res };
+            } catch (e) {
+                console.error(e);
+                return { ok: false, status: 0, data: null };
+            }
+        }
+        
+        function setAuthUI(loggedIn) {
+            document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
+            document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
+            
+            if (!loggedIn) {
+                document.getElementById('display-username').innerText = '';
+                document.getElementById('display-points').innerText = '0';
+            }
+        }
+        
+        // ---------- AUTH ----------
+        async function handleRegister() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            
+            if (!u || !p) return showMessage('Please enter a username and password', 'error');
+            
+            const res = await fetchJson('/register', {
+                method: 'POST',
+                body: JSON.stringify({ username: u, password: p })
+            });
+            
+            if (res.ok) {
+                showMessage('Account created successfully! Please sign in.', 'success');
+            } else {
+                showMessage(res.data?.error || 'Registration failed', 'error');
+            }
+        }
+        
+        async function handleLogin() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            
+            if (!u || !p) return showMessage('Please enter your credentials', 'error');
+            
+            const res = await fetchJson('/login', {
+                method: 'POST',
+                body: JSON.stringify({ username: u, password: p })
+            });
+            
+            if (res.ok && res.data) {
+                currentUser = {
+                    username: u,
+                    points: res.data.points || 0,
+                    token: res.data.token
+                };
+                
+                // Set avatar initial
+                document.getElementById('avatar-letter').innerText = u.charAt(0).toUpperCase();
+                
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                updateUI();
+                showMessage('Welcome back! Ready to earn points.', 'success');
+            } else {
+                showMessage(res.data?.error || 'Login failed', 'error');
+            }
+        }
+        
+        function logout() {
+            currentUser = null;
+            sessionStorage.removeItem('ad_user');
+            updateUI();
+            showMessage('Signed out successfully', 'info');
+        }
+        
+        async function refreshPoints() {
+            if (!currentUser) return;
+            
+            const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, {
+                method: 'GET'
+            });
+            
+            if (res.ok && res.data) {
+                currentUser.points = res.data.points;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                updateUI();
+                showMessage('Balance updated', 'success');
+            }
+        }
+        
+        function updateUI() {
+            if (currentUser) {
+                setAuthUI(true);
+                document.getElementById('display-username').innerText = currentUser.username;
+                document.getElementById('display-points').innerText = currentUser.points;
+                
+                // Update progress bar
+                const progress = Math.min((currentUser.points / 20) * 100, 100);
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+                document.getElementById('progress-text').innerText = 
+                    `${currentUser.points}/20 points needed for certificate`;
+                
+                // Update redeem button
+                const redeemBtn = document.getElementById('redeem-btn');
+                if (currentUser.points >= 20) {
+                    redeemBtn.disabled = false;
+                    redeemBtn.innerHTML = '<i class="fas fa-download"></i> Generate Certificate (20 pts)';
+                    document.getElementById('redeem-status').innerHTML = 
+                        '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Ready to redeem!</span>';
+                } else {
+                    redeemBtn.disabled = true;
+                    const needed = 20 - currentUser.points;
+                    redeemBtn.innerHTML = `<i class="fas fa-lock"></i> Need ${needed} more points`;
+                    document.getElementById('redeem-status').innerHTML = 
+                        `${needed} more points needed for certificate`;
+                }
+            } else {
+                setAuthUI(false);
+            }
+        }
+        
+        // ---------- ADS ----------
+        function startAdWatch() {
+            if (!currentUser) return showMessage('Please sign in first', 'error');
+            
+            showMessage('Opening educational content... Please keep it open for 15 seconds.', 'info');
+            
+            adStartTime = Date.now();
+            adWindow = window.open(AD_LINK, '_blank', 'width=800,height=600');
+            
+            document.getElementById('watch-btn').disabled = true;
+            document.getElementById('watch-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Watching...';
+            document.getElementById('cancel-ad-btn').disabled = false;
+            document.getElementById('timer-display').style.display = 'block';
+            
+            let secondsLeft = 15;
+            countdownInterval = setInterval(() => {
+                document.getElementById('timer-display').innerText = `${secondsLeft}s`;
+                secondsLeft--;
+                
+                if (secondsLeft < 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+        
+        function cancelAdWatch() {
+            adStartTime = null;
+            if (adWindow) adWindow.close();
+            if (countdownInterval) clearInterval(countdownInterval);
+            resetAdUI();
+            showMessage('Viewing session cancelled', 'info');
+        }
+        
+        function resetAdUI() {
+            document.getElementById('watch-btn').disabled = false;
+            document.getElementById('watch-btn').innerHTML = '<i class="fas fa-play"></i> Start Watching (+10 pts)';
+            document.getElementById('cancel-ad-btn').disabled = true;
+            document.getElementById('timer-display').style.display = 'none';
+            if (countdownInterval) clearInterval(countdownInterval);
+        }
+        
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && adStartTime) {
+                const elapsed = (Date.now() - adStartTime) / 1000;
+                adStartTime = null;
+                if (adWindow) adWindow.close();
+                if (countdownInterval) clearInterval(countdownInterval);
+                resetAdUI();
+                
+                if (elapsed >= 15) {
+                    await addPoints(10);
+                } else {
+                    showMessage(`Viewing time: ${Math.floor(elapsed)}s (15s required)`, 'error');
+                }
+            }
+        });
+        
+        async function addPoints(amt) {
+            const res = await fetchJson('/add-points', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    amount: amt,
+                    token: currentUser.token
+                })
+            });
+            
+            if (res.ok) {
+                currentUser.points = res.data.points;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                updateUI();
+                showMessage(`✅ +${amt} points added to your balance!`, 'success');
+            } else {
+                showMessage(res.data?.error || 'Error adding points', 'error');
+            }
+        }
+        
+        // ---------- REDEEM ----------
+        async function redeemCertificate() {
+            if (!confirm("Redeem 20 points for an official certificate?")) return;
+            
+            const res = await fetchJson('/redeem', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    token: currentUser.token
+                })
+            });
+            
+            if (res.ok) {
+                currentUser.points = res.data.points;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                updateUI();
+                generateCertificate(currentUser.username, res.data.cert_id);
+                showMessage('🎉 Certificate generated successfully!', 'success');
+            } else {
+                showMessage(res.data?.error || 'Redemption failed', 'error');
+            }
+        }
+        
+        // ---------- ADMIN ----------
+        async function verifyCert() {
+            const id = document.getElementById('admin-cert-id').value.trim();
+            if(!id) return showMessage('Enter certificate ID', 'error');
+            
+            const res = await fetchJson(`/certificate?id=${id}`, { method: 'GET' });
+            const out = document.getElementById('admin-result');
+            out.style.display = 'block';
+            
+            if (res.ok) {
+                out.innerHTML = `
+                    <div style="color: var(--success); margin-bottom: 10px;">
+                        <i class="fas fa-check-circle"></i> <strong>VALID CERTIFICATE</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace;">
+                        User: ${res.data.username}<br>
+                        Certificate ID: ${res.data.cert_id}<br>
+                        Date: ${new Date(res.data.date).toLocaleString()}<br>
+                        Status: <span class="badge ${res.data.status === 'PAID' ? 'badge-success' : 'badge-warning'}">${res.data.status}</span>
+                    </div>
+                `;
+            } else {
+                out.innerHTML = `
+                    <div style="color: var(--danger);">
+                        <i class="fas fa-times-circle"></i> <strong>INVALID CERTIFICATE</strong>
+                    </div>
+                    <p>Certificate not found or invalid.</p>
+                `;
+            }
+        }
+        
+        async function markPaid() {
+            const id = document.getElementById('admin-cert-id').value.trim();
+            const secret = document.getElementById('admin-secret-input').value.trim();
+            
+            if(!id || !secret) return showMessage('Enter certificate ID and admin key', 'error');
+            
+            const res = await fetchJson('/mark-cert-paid', {
+                method: 'POST',
+                body: JSON.stringify({
+                    id: id,
+                    admin_secret: secret
+                })
+            });
+            
+            const out = document.getElementById('admin-result');
+            out.style.display = 'block';
+            
+            if (res.ok) {
+                out.innerHTML = `
+                    <div style="color: var(--success);">
+                        <i class="fas fa-check-circle"></i> <strong>SUCCESS</strong>
+                    </div>
+                    <p>Certificate marked as PROCESSED for payment.</p>
+                `;
+                setTimeout(() => verifyCert(), 1000);
+            } else {
+                out.innerHTML = `
+                    <div style="color: var(--danger);">
+                        <i class="fas fa-times-circle"></i> <strong>ERROR</strong>
+                    </div>
+                    <p>${res.data?.error || 'Operation failed'}</p>
+                `;
+            }
+        }
+        
+        // ---------- CERTIFICATE GENERATION ----------
+        function generateCertificate(username, certId) {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            // Clear
+            ctx.clearRect(0, 0, w, h);
+            
+            // Gradient Background
+            const gradient = ctx.createLinearGradient(0, 0, w, h);
+            gradient.addColorStop(0, '#f8fafc');
+            gradient.addColorStop(1, '#e0e7ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, w, h);
+            
+            // Decorative elements
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.05)';
+            ctx.beginPath();
+            ctx.arc(w - 100, 100, 150, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(100, h - 100, 100, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Border
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#1a56db';
+            ctx.strokeRect(40, 40, w - 80, h - 80);
+            
+            // Header
+            ctx.fillStyle = '#1a56db';
+            ctx.font = 'bold 60px "Georgia", serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 150);
+            
+            // Subtitle
+            ctx.font = '24px "Arial", sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText('This certifies that', w/2, 220);
+            
+            // Name
+            ctx.font = 'bold 72px "Georgia", serif';
+            ctx.fillStyle = '#1f2937';
+            ctx.fillText(username.toUpperCase(), w/2, 320);
+            
+            // Achievement
+            ctx.font = '28px "Arial", sans-serif';
+            ctx.fillStyle = '#4b5563';
+            ctx.fillText('has successfully completed the Student Rewards Program', w/2, 400);
+            ctx.fillText('by demonstrating commitment through educational content engagement', w/2, 440);
+            
+            // Date and ID
+            ctx.font = '20px "Courier New", monospace';
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText(`Certificate ID: ${certId}`, w/2, 550);
+            ctx.fillText(`Date of Issue: ${new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            })}`, w/2, 580);
+            
+            // Official Seal
+            ctx.beginPath();
+            ctx.arc(w/2, h - 150, 80, 0, Math.PI * 2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#d4af37';
+            ctx.stroke();
+            
+            ctx.font = 'bold 16px "Arial", sans-serif';
+            ctx.fillStyle = '#b45309';
+            ctx.textAlign = 'center';
+            ctx.fillText('OFFICIAL SEAL', w/2, h - 145);
+            ctx.font = '14px "Arial", sans-serif';
+            ctx.fillText('StudentRewards+', w/2, h - 125);
+            
+            // Signatures
+            ctx.font = '18px "Brush Script MT", cursive';
+            ctx.fillStyle = '#1f2937';
+            ctx.textAlign = 'left';
+            ctx.fillText('Program Director', 150, h - 80);
+            
+            ctx.textAlign = 'right';
+            ctx.fillText('Academic Coordinator', w - 150, h - 80);
+            
+            // Lines for signatures
+            ctx.beginPath();
+            ctx.moveTo(150, h - 85);
+            ctx.lineTo(300, h - 85);
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(w - 300, h - 85);
+            ctx.lineTo(w - 150, h - 85);
+            ctx.stroke();
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `Certificate_${username}_${certId}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            // Show success message in UI
+            document.getElementById('redeem-status').innerHTML = 
+                '<span style="color: var(--success);"><i class="fas fa-check-circle"></i> Certificate downloaded! Submit for processing.</span>';
+        }
+        
+        // ---------- INIT ----------
+        (function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                    document.getElementById('avatar-letter').innerText = 
+                        currentUser.username.charAt(0).toUpperCase();
+                    updateUI();
+                    refreshPoints();
+                } catch(e) {
+                    sessionStorage.removeItem('ad_user');
+                }
+            }
+        })();
+    </script>
+</body>
 </html>
