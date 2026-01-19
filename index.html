@@ -1,638 +1,529 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ad Watcher Rewards — MVP</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --bg: #f3f4f6;
-      --card-bg: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --success: #10b981;
-      --danger: #ef4444;
-      --border: #e5e7eb;
+  <title>Ad Watcher Rewards — Premium MVP</title>  <!-- Fonts -->  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">  <style>
+    :root{
+      --bg:#0f1724;
+      --surface:#0b1220;
+      --muted:#9aa4b2;
+      --text:#e6eef8;
+      --accent:#2563eb; /* blue */
+      --accent-2:#D4AF37; /* gold */
+      --glass: rgba(255,255,255,0.04);
+      --card-gradient: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(212,175,55,0.03));
+      --radius:14px;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
+    /* Reset + layout */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Poppins', Arial;
+      background: radial-gradient(1200px 700px at 10% 20%, rgba(37,99,235,0.06), transparent),
+                  radial-gradient(900px 500px at 90% 80%, rgba(212,175,55,0.03), transparent),
+                  var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:32px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
     }
 
-    h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #111827;
-      margin-bottom: 0.5rem;
-      text-align: center;
+    .container{
+      width:100%;
+      max-width:980px;
+      margin:0 auto;
     }
 
-    p.subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin-bottom: 2rem;
+    header{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:22px;
     }
 
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      border: 1px solid var(--border);
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
     }
 
-    h2, h3 {
-      margin-top: 0;
-      color: #111827;
-      font-weight: 600;
+    .logo{
+      width:68px;
+      height:68px;
+      border-radius:14px;
+      background: linear-gradient(135deg,var(--accent),#7c3aed);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6), 0 1px 0 rgba(255,255,255,0.02) inset;
+      font-weight:700;
+      color:#fff;
+      font-family:'Poppins';
+      font-size:18px;
     }
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      font-size: 0.9rem;
+    h1{font-family:'Poppins'; font-size:22px; margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:20px;
+      align-items:start;
     }
 
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 16px;
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      font-size: 1rem;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
+    /* Cards */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.04);
     }
 
-    input:focus {
+    .card.padded{padding:28px}
+
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+    input[type="text"], input[type="password"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:none;
+      background:var(--glass);
+      color:var(--text);
+      font-size:15px;
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 6px 14px rgba(2,6,23,0.5) inset;
     }
 
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
+    input::placeholder{color:rgba(255,255,255,0.38)}
+
+    .muted{color:var(--muted);font-size:13px}
+
+    .row{display:flex;gap:12px;align-items:center}
+
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#7c3aed);color:white;box-shadow:0 8px 24px rgba(37,99,235,0.14)}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.04)}
+    .btn.warn{background:linear-gradient(90deg,var(--accent-2),#f59e0b);color:#0b1220}
+
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+    .statbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02)}
+    .stat{display:flex;flex-direction:column}
+    .stat .label{font-size:12px;color:var(--muted)}
+    .stat .value{font-size:20px;font-weight:700;color:var(--accent)}
+
+    /* Center area */
+    .center-card{min-height:220px}
+
+    .watch-area{display:flex;flex-direction:column;gap:14px}
+
+    #watch-btn{width:100%;padding:14px;border-radius:12px;font-size:16px}
+
+    .info{font-size:13px;color:var(--muted)}
+
+    /* Redeem section */
+    .redeem-cost{font-size:14px;color:var(--muted)}
+
+    /* Message */
+    .message{padding:12px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
+    .message.info{background:linear-gradient(90deg, rgba(37,99,235,0.08), rgba(37,99,235,0.02));color:var(--accent)}
+    .message.success{background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02));color:var(--success)}
+    .message.error{background:linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));color:var(--danger)}
+
+    /* Admin */
+    .admin-toggle{font-size:13px;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:10px;text-align:center}
+    #admin-section{display:none;margin-top:12px}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:22px;border-radius:12px;width:min(540px,92vw);box-shadow:0 18px 60px rgba(2,6,23,0.7)}
+
+    /* small screens */
+    @media (max-width:880px){
+      .grid{grid-template-columns:1fr;}
+      header{align-items:flex-start}
+      .logo{width:56px;height:56px}
     }
 
-    .btn-group.center {
-        justify-content: center;
-    }
-
-    button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: var(--primary-dark);
-    }
-
-    button:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-    }
-
-    button.secondary {
-      background: white;
-      color: var(--text);
-      border: 1px solid #d1d5db;
-    }
-
-    button.secondary:hover {
-      background: #f9fafb;
-      border-color: #9ca3af;
-    }
-
-    .alert {
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 16px;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .alert.success { background: #d1fae5; color: #065f46; display: block; }
-    .alert.error { background: #fee2e2; color: #991b1b; display: block; }
-    .alert.info { background: #dbeafe; color: #1e40af; display: block; }
-
-    .stats {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      margin: 16px 0;
-    }
-
-    .stat-val {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    #certCanvas { display: none; }
-
-    /* Admin Section */
-    .admin-toggle {
-        text-align: center;
-        margin-top: 40px;
-        font-size: 0.8rem;
-        color: var(--muted);
-        cursor: pointer;
-        text-decoration: underline;
-    }
-
-    #admin-section {
-        display: none;
-        border-top: 4px solid var(--text);
-    }
-  </style>
-</head>
+    /* small helper styles */
+    .muted-2{color:rgba(255,255,255,0.6)}
+    .gold{color:var(--accent-2)}
+  </style></head>
 <body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">DT</div>
+        <div>
+          <h1>Ad Watcher — Student Rewards</h1>
+          <p class="lead">Earn small payouts by watching ads. Convert points to certificates.</p>
+        </div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+        <button class="btn ghost" onclick="refreshPoints()">Refresh</button>
+        <button class="btn" id="logout-btn" style="display:none" onclick="logout()">Logout</button>
+      </div>
+    </header><main class="grid">
+  <!-- LEFT: Primary app -->
+  <section>
+    <!-- AUTH CARD -->
+    <div id="auth-section" class="card card padded">
+      <h3 style="margin-top:0">Login / Register</h3>
+      <p class="muted">Create an account so we can track your points and issue certificates.</p>
 
-  <h1>Student Rewards</h1>
-  <p class="subtitle">Watch ads, earn points, get certified.</p>
+      <div style="margin-top:14px">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="e.g. thabo22" />
 
-  <!-- AUTH SECTION -->
-  <div id="auth-section" class="card">
-    <h2>Login or Register</h2>
-    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:16px;">Create an account to start earning.</p>
+        <label for="password" style="margin-top:8px">Password</label>
+        <input id="password" type="password" placeholder="Your secure password" />
 
-    <label for="username">Username</label>
-    <input id="username" type="text" placeholder="Enter your username" />
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn primary" onclick="handleLogin()">Login</button>
+          <button class="btn ghost" onclick="handleRegister()">Create account</button>
+        </div>
 
-    <label for="password">Password</label>
-    <input id="password" type="password" placeholder="Enter your password" />
-
-    <div class="btn-group">
-      <button onclick="handleRegister()" class="secondary">Register</button>
-      <button onclick="handleLogin()">Login</button>
-    </div>
-  </div>
-
-  <!-- DASHBOARD SECTION -->
-  <div id="dashboard-section" class="card" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h2>Dashboard</h2>
-        <button onclick="logout()" class="secondary" style="padding:4px 10px; font-size:0.8rem;">Logout</button>
-    </div>
-
-    <p>Welcome back, <strong id="display-username"></strong>!</p>
-
-    <div class="stats">
-        <span>Current Balance</span>
-        <span class="stat-val"><span id="display-points">0</span> pts</span>
-    </div>
-
-    <div class="btn-group center">
-        <button onclick="refreshPoints()" class="secondary">Refresh Balance</button>
-    </div>
-  </div>
-
-  <!-- EARN SECTION -->
-  <div id="earn-section" class="card" style="display:none;">
-    <h3>Earn Points</h3>
-    <p style="color:var(--muted); font-size:0.9rem;">
-        Click the button below to open an ad. Keep the tab open for <strong>15 seconds</strong> to earn 10 points.
-    </p>
-
-    <div style="text-align:center; margin: 20px 0;">
-        <button id="watch-btn" onclick="startAdWatch()" style="width:100%; padding: 14px; font-size:1.1rem;">
-            Watch Ad (+10 pts)
-        </button>
-        <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary" style="margin-top:8px;">
-            Cancel
-        </button>
+        <div id="auth-message" class="message info" style="display:none; margin-top:12px"></div>
+      </div>
     </div>
 
-    <p id="timer-status" style="text-align:center; font-weight:600; color:var(--primary); height:24px;"></p>
-  </div>
+    <!-- EARN CARD -->
+    <div id="earn-section" class="card card padded center-card" style="display:none;margin-top:16px;">
+      <h3 style="margin:0">Earn Points</h3>
+      <p class="muted" style="margin-top:6px">Open an ad and keep it open for <strong>15 seconds</strong> to earn points.</p>
 
-  <!-- REDEEM SECTION -->
-  <div id="redeem-section" class="card" style="display:none;">
-    <h3>Redeem Rewards</h3>
-    <p style="color:var(--muted); font-size:0.9rem;">
-        Exchange your points for an official certificate.
-    </p>
-    <div class="stats">
-        <span>Cost</span>
-        <span class="stat-val">20 pts</span>
+      <div class="watch-area" style="margin-top:16px">
+        <div class="statbar">
+          <div class="stat">
+            <span class="label">Per Ad</span>
+            <span class="value">+10 pts</span>
+          </div>
+          <div class="stat" style="text-align:right">
+            <span class="label">Daily limit</span>
+            <span class="value muted-2">TBD</span>
+          </div>
+        </div>
+
+        <div>
+          <button id="watch-btn" class="btn primary" onclick="startAdWatch()">Watch Ad — +10 pts</button>
+          <button id="cancel-ad-btn" class="btn ghost" onclick="cancelAdWatch()" disabled style="margin-top:10px">Cancel</button>
+        </div>
+
+        <div id="timer-status" style="font-weight:600;color:var(--accent);height:22px"></div>
+      </div>
     </div>
 
-    <button id="redeem-btn" onclick="redeemCertificate()" style="width:100%;" disabled>
-        Claim Certificate
-    </button>
-  </div>
+    <!-- REDEEM CARD -->
+    <div id="redeem-section" class="card card padded" style="display:none;margin-top:16px;">
+      <h3 style="margin:0">Redeem — Certificate</h3>
+      <p class="muted" style="margin-top:6px">Exchange points for an official printable certificate.</p>
 
-  <!-- GLOBAL MESSAGE -->
-  <div id="message" class="alert"></div>
-
-  <!-- CANVAS FOR GENERATION -->
-  <canvas id="certCanvas" width="1000" height="700"></canvas>
-
-  <!-- ADMIN SECTION -->
-  <div class="admin-toggle" onclick="toggleAdmin()">Admin Panel</div>
-  <div id="admin-section" class="card">
-      <h3>Admin Tools</h3>
-      <p style="font-size:0.85rem; color:var(--muted);">Verify certificates and mark them as paid.</p>
-
-      <label>Certificate ID</label>
-      <input id="admin-cert-id" type="text" placeholder="CERT-XXXX-XXXX" />
-
-      <label>Admin Secret</label>
-      <input id="admin-secret-input" type="password" placeholder="Enter Admin Secret" />
-
-      <div class="btn-group">
-          <button onclick="verifyCert()" class="secondary">Verify</button>
-          <button onclick="markPaid()">Mark Paid</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+        <div>
+          <div class="redeem-cost">Cost</div>
+          <div style="font-weight:800;font-size:18px;color:var(--accent)">20 pts</div>
+        </div>
+        <div>
+          <button id="redeem-btn" class="btn warn" onclick="openRedeemModal()" disabled>Claim Certificate</button>
+        </div>
       </div>
 
-      <div id="admin-result" style="margin-top:12px; padding:10px; background:#f9fafb; border-radius:4px; display:none; font-family:monospace; font-size:0.85rem;"></div>
-  </div>
+      <div id="redeem-note" class="muted" style="margin-top:12px;font-size:13px">A generated certificate will be downloadable as a PNG. Keep a copy and send to the administrator for payout processing.</div>
+    </div>
 
-  <script>
+    <!-- Certificate Canvas hidden (used for generation) -->
+    <canvas id="certCanvas" width="1400" height="1000" style="display:none"></canvas>
+
+  </section>
+
+  <!-- RIGHT: Sidebar -->
+  <aside>
+    <div class="card padded">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="muted">Welcome back,</div>
+          <div id="display-username" style="font-weight:700;font-size:16px;margin-top:4px">Guest</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">Balance</div>
+          <div id="display-points" style="font-weight:800;font-size:20px;color:var(--accent);margin-top:6px">0 pts</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn ghost" onclick="refreshPoints()">Refresh</button>
+        <button class="btn" id="download-last" style="display:none" onclick="downloadLastCert()">Download last cert</button>
+      </div>
+
+      <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+
+      <div style="font-size:13px;color:var(--muted);">
+        <div style="margin-bottom:8px"><strong class="gold">How it works</strong></div>
+        <ol style="padding-left:18px;margin:0;line-height:1.5">
+          <li>Register / Login.</li>
+          <li>Open an ad and keep the tab open for 15 seconds.</li>
+          <li>Earn points and redeem for a certificate.</li>
+        </ol>
+      </div>
+
+      <div class="admin-toggle" onclick="toggleAdmin()">Admin Panel</div>
+
+      <div id="admin-section">
+        <div style="margin-top:10px">
+          <label>Certificate ID</label>
+          <input id="admin-cert-id" type="text" placeholder="CERT-XXXX-XXXX" />
+          <label style="margin-top:8px">Admin Secret</label>
+          <input id="admin-secret-input" type="password" placeholder="secret" />
+
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn ghost" onclick="verifyCert()">Verify</button>
+            <button class="btn primary" onclick="markPaid()">Mark Paid</button>
+          </div>
+
+          <pre id="admin-result" style="display:none;margin-top:12px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;font-family:monospace;font-size:13px;color:var(--muted)"></pre>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="muted">Support</div>
+          <div style="font-weight:600;margin-top:6px">@kay01TN</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">v1.0</div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- Modal: Confirm Redeem -->
+<div id="modal-backdrop" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3 style="margin-top:0">Confirm Redemption</h3>
+    <p class="muted">Spend <strong>20 points</strong> to generate a printable certificate? This will deduct points from your balance.</p>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+      <button class="btn ghost" onclick="closeRedeemModal()">Cancel</button>
+      <button class="btn warn" onclick="redeemCertificate()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+  </div>  <script>
     // ---------- CONFIG ----------
     const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-    // const API_URL = "http://localhost:8000"; // Uncomment for local dev
     const AD_LINK = "https://otieu.com/4/10205357";
 
     // ---------- STATE ----------
     let currentUser = null;
     let adStartTime = null;
     let adWindow = null;
+    let lastCertId = null;
 
-    // ---------- UTILS ----------
-    function showMessage(msg, type = 'info') {
-      const el = document.getElementById('message');
-      el.innerText = msg;
-      el.className = `alert ${type}`;
-      el.style.display = 'block';
-      setTimeout(() => {
-          if(type === 'success') el.style.display = 'none';
-      }, 5000);
+    // ---------- UTIL ----------
+    function el(id){return document.getElementById(id)}
+    function showMsg(id, text, cls='info'){
+      const elmsg = id ? el(id) : null;
+      if(!elmsg) return;
+      elmsg.innerText = text;
+      elmsg.className = `message ${cls}`;
+      elmsg.style.display = 'block';
+      setTimeout(()=>{ if(cls!=='error') elmsg.style.display='none'; }, 4000);
     }
 
-    function toggleAdmin() {
-        const el = document.getElementById('admin-section');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    function toggleAdmin(){
+      const s = el('admin-section');
+      s.style.display = s.style.display === 'block' ? 'none' : 'block';
     }
 
+    // ---------- FETCH HELPER ----------
     async function fetchJson(path, opts = {}) {
-      // Auto-detect local dev or use Cloudflare
-      const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                      ? 'http://localhost:8000'
-                      : API_URL;
-
+      const baseUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8000' : API_URL;
       const url = `${baseUrl}${path}`;
       const defaultHeaders = { 'Content-Type': 'application/json' };
       const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-
-      if (safeOpts.body && !safeOpts.headers['Content-Type']) {
-        safeOpts.headers['Content-Type'] = 'application/json';
-      }
-
-      try {
+      try{
         const res = await fetch(url, safeOpts);
         let data = null;
-        try { data = await res.json(); } catch (e) {}
+        try{ data = await res.json(); }catch(e){}
         return { ok: res.ok, status: res.status, data, res };
-      } catch (e) {
-        console.error(e);
-        return { ok: false, status: 0, data: null };
-      }
-    }
-
-    function setAuthUI(loggedIn) {
-      document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
-      document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
-      document.getElementById('earn-section').style.display = loggedIn ? 'block' : 'none';
-      document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
-
-      if (!loggedIn) {
-        document.getElementById('display-username').innerText = '';
-        document.getElementById('display-points').innerText = '0';
-      }
+      }catch(e){ console.error(e); return { ok:false, status:0, data:null } }
     }
 
     // ---------- AUTH ----------
-    async function handleRegister() {
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value.trim();
-      if (!u || !p) return showMessage('Enter username and password', 'error');
-
-      const res = await fetchJson('/register', {
-        method: 'POST',
-        body: JSON.stringify({ username: u, password: p })
-      });
-
-      if (res.ok) showMessage('Registered! Please login.', 'success');
-      else showMessage(res.data?.error || 'Registration failed', 'error');
+    async function handleRegister(){
+      const u = el('username').value.trim();
+      const p = el('password').value.trim();
+      if(!u||!p) return showMsg('auth-message','Enter username & password','error');
+      const res = await fetchJson('/register',{method:'POST',body:JSON.stringify({username:u,password:p})});
+      if(res.ok) showMsg('auth-message','Registered. Please login.','success');
+      else showMsg('auth-message',res.data?.error||'Registration failed','error');
     }
 
-    async function handleLogin() {
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value.trim();
-      if (!u || !p) return showMessage('Enter username and password', 'error');
-
-      const res = await fetchJson('/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: u, password: p })
-      });
-
-      if (res.ok && res.data) {
-        currentUser = {
-          username: u,
-          points: res.data.points || 0,
-          token: res.data.token
-        };
+    async function handleLogin(){
+      const u = el('username').value.trim();
+      const p = el('password').value.trim();
+      if(!u||!p) return showMsg('auth-message','Enter username & password','error');
+      const res = await fetchJson('/login',{method:'POST',body:JSON.stringify({username:u,password:p})});
+      if(res.ok && res.data){
+        currentUser = { username:u, points:res.data.points||0, token:res.data.token };
         sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
         updateUI();
-        showMessage('Login successful', 'success');
+        showMsg('auth-message','Login successful','success');
+        el('logout-btn').style.display = 'inline-flex';
+      } else showMsg('auth-message',res.data?.error||'Login failed','error');
+    }
+
+    function logout(){
+      currentUser=null; sessionStorage.removeItem('ad_user'); updateUI(); el('logout-btn').style.display='none'; showMsg('auth-message','Logged out','info');
+    }
+
+    async function refreshPoints(){
+      if(!currentUser) return;
+      const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`);
+      if(res.ok && res.data){ currentUser.points = res.data.points; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); }
+    }
+
+    function updateUI(){
+      if(currentUser){
+        el('auth-section').style.display='none';
+        el('earn-section').style.display='block';
+        el('redeem-section').style.display='block';
+        el('display-username').innerText = currentUser.username;
+        el('display-points').innerText = `${currentUser.points} pts`;
+        el('logout-btn').style.display='inline-flex';
+
+        const redeemBtn = el('redeem-btn');
+        if(currentUser.points >= 20){ redeemBtn.disabled = false; redeemBtn.innerText = 'Claim Certificate'; }
+        else { redeemBtn.disabled = true; redeemBtn.innerText = `Need ${20 - currentUser.points} pts`; }
       } else {
-        showMessage(res.data?.error || 'Login failed', 'error');
-      }
-    }
-
-    function logout() {
-      currentUser = null;
-      sessionStorage.removeItem('ad_user');
-      updateUI();
-      showMessage('Logged out', 'info');
-    }
-
-    async function refreshPoints() {
-      if (!currentUser) return;
-      const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
-      if (res.ok && res.data) {
-        currentUser.points = res.data.points;
-        sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-        updateUI();
-      }
-    }
-
-    function updateUI() {
-      if (currentUser) {
-        setAuthUI(true);
-        document.getElementById('display-username').innerText = currentUser.username;
-        document.getElementById('display-points').innerText = currentUser.points;
-
-        const redeemBtn = document.getElementById('redeem-btn');
-        if (currentUser.points >= 20) {
-            redeemBtn.disabled = false;
-            redeemBtn.innerText = "Claim Certificate (20 pts)";
-        } else {
-            redeemBtn.disabled = true;
-            redeemBtn.innerText = `Need ${20 - currentUser.points} more pts`;
-        }
-      } else {
-        setAuthUI(false);
+        el('auth-section').style.display='block';
+        el('earn-section').style.display='none';
+        el('redeem-section').style.display='none';
+        el('display-username').innerText = 'Guest';
+        el('display-points').innerText = '0 pts';
+        el('logout-btn').style.display='none';
       }
     }
 
     // ---------- ADS ----------
-    function startAdWatch() {
-      if (!currentUser) return showMessage('Please login', 'error');
-
-      showMessage('Opening ad... Keep it open for 15s.', 'info');
+    function startAdWatch(){
+      if(!currentUser) return showMsg('auth-message','Please login first','error');
+      showMsg('auth-message','Opening ad... keep the tab open for 15s','info');
       adStartTime = Date.now();
       adWindow = window.open(AD_LINK, '_blank');
-
-      document.getElementById('watch-btn').disabled = true;
-      document.getElementById('watch-btn').innerText = 'Watching...';
-      document.getElementById('cancel-ad-btn').disabled = false;
-      document.getElementById('timer-status').innerText = 'Timer running...';
+      el('watch-btn').disabled = true; el('watch-btn').innerText = 'Watching...';
+      el('cancel-ad-btn').disabled = false; el('timer-status').innerText = 'Timer running...';
     }
 
-    function cancelAdWatch() {
-      adStartTime = null;
-      if (adWindow) adWindow.close();
-      resetAdUI();
-      showMessage('Cancelled.', 'info');
+    function cancelAdWatch(){
+      adStartTime = null; if(adWindow) adWindow.close(); resetAdUI(); showMsg('auth-message','Cancelled','info');
     }
 
-    function resetAdUI() {
-        document.getElementById('watch-btn').disabled = false;
-        document.getElementById('watch-btn').innerText = 'Watch Ad (+10 pts)';
-        document.getElementById('cancel-ad-btn').disabled = true;
-        document.getElementById('timer-status').innerText = '';
+    function resetAdUI(){
+      el('watch-btn').disabled = false; el('watch-btn').innerText = 'Watch Ad — +10 pts';
+      el('cancel-ad-btn').disabled = true; el('timer-status').innerText = '';
     }
 
-    document.addEventListener('visibilitychange', async () => {
-      if (document.visibilityState === 'visible' && adStartTime) {
-        const elapsed = (Date.now() - adStartTime) / 1000;
-        adStartTime = null;
-        if (adWindow) adWindow.close();
-
-        resetAdUI();
-
-        if (elapsed >= 15) {
-            await addPoints(10);
-        } else {
-            showMessage(`Only watched for ${Math.floor(elapsed)}s. Need 15s.`, 'error');
-        }
+    document.addEventListener('visibilitychange', async ()=>{
+      if(document.visibilityState === 'visible' && adStartTime){
+        const elapsed = (Date.now() - adStartTime)/1000; adStartTime=null; if(adWindow) adWindow.close(); resetAdUI();
+        if(elapsed >= 15) await addPoints(10);
+        else showMsg('auth-message',`Only watched ${Math.floor(elapsed)}s — need 15s`,'error');
       }
     });
 
-    async function addPoints(amt) {
-      const res = await fetchJson('/add-points', {
-        method: 'POST',
-        body: JSON.stringify({
-            username: currentUser.username,
-            amount: amt,
-            token: currentUser.token
-        })
-      });
-
-      if (res.ok) {
-          currentUser.points = res.data.points;
-          sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-          updateUI();
-          showMessage(`Success! +${amt} points.`, 'success');
-      } else {
-          showMessage(res.data?.error || 'Error adding points', 'error');
-      }
+    async function addPoints(amt){
+      const res = await fetchJson('/add-points',{method:'POST',body:JSON.stringify({username:currentUser.username,amount:amt,token:currentUser.token})});
+      if(res.ok){ currentUser.points = res.data.points; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); showMsg('auth-message',`+${amt} points`,'success'); }
+      else showMsg('auth-message',res.data?.error||'Error adding points','error');
     }
 
-    // ---------- REDEEM ----------
-    async function redeemCertificate() {
-        if (!confirm("Spend 20 points for a certificate?")) return;
+    // ---------- REDEEM (modal flow) ----------
+    function openRedeemModal(){ el('modal-backdrop').style.display='flex'; }
+    function closeRedeemModal(){ el('modal-backdrop').style.display='none'; }
 
-        const res = await fetchJson('/redeem', {
-            method: 'POST',
-            body: JSON.stringify({
-                username: currentUser.username,
-                token: currentUser.token
-            })
-        });
-
-        if (res.ok) {
-            currentUser.points = res.data.points;
-            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-            updateUI();
-            generateCertificate(currentUser.username, res.data.cert_id);
-            showMessage('Certificate Generated!', 'success');
-        } else {
-            showMessage(res.data?.error || 'Redemption failed', 'error');
-        }
+    async function redeemCertificate(){
+      closeRedeemModal();
+      if(!currentUser) return showMsg('auth-message','Please login','error');
+      // call redeem endpoint
+      const res = await fetchJson('/redeem',{method:'POST',body:JSON.stringify({username:currentUser.username,token:currentUser.token})});
+      if(res.ok){ currentUser.points = res.data.points; lastCertId = res.data.cert_id; sessionStorage.setItem('ad_user', JSON.stringify(currentUser)); updateUI(); generateCertificate(currentUser.username, res.data.cert_id); showMsg('auth-message','Certificate generated','success'); }
+      else showMsg('auth-message', res.data?.error || 'Redemption failed','error');
     }
 
     // ---------- ADMIN ----------
-    async function verifyCert() {
-        const id = document.getElementById('admin-cert-id').value.trim();
-        if(!id) return;
-
-        const res = await fetchJson(`/certificate?id=${id}`, { method: 'GET' });
-        const out = document.getElementById('admin-result');
-        out.style.display = 'block';
-
-        if (res.ok) {
-            out.innerHTML = `
-                <strong style="color:green">VALID</strong><br>
-                User: ${res.data.username}<br>
-                Date: ${new Date(res.data.date).toLocaleString()}<br>
-                Status: <strong>${res.data.status}</strong>
-            `;
-        } else {
-            out.innerHTML = `<strong style="color:red">INVALID</strong>`;
-        }
+    async function verifyCert(){
+      const id = el('admin-cert-id').value.trim(); if(!id) return;
+      const res = await fetchJson(`/certificate?id=${encodeURIComponent(id)}`);
+      const out = el('admin-result'); out.style.display='block';
+      if(res.ok && res.data){ out.textContent = `VALID\nUser: ${res.data.username}\nDate: ${new Date(res.data.date).toLocaleString()}\nStatus: ${res.data.status}`; }
+      else out.textContent = 'INVALID OR NOT FOUND';
     }
 
-    async function markPaid() {
-        const id = document.getElementById('admin-cert-id').value.trim();
-        const secret = document.getElementById('admin-secret-input').value.trim();
-        if(!id || !secret) return showMessage('Enter ID and Secret', 'error');
-
-        const res = await fetchJson('/mark-cert-paid', {
-            method: 'POST',
-            body: JSON.stringify({
-                id: id,
-                admin_secret: secret
-            })
-        });
-
-        const out = document.getElementById('admin-result');
-        out.style.display = 'block';
-
-        if (res.ok) {
-            out.innerHTML = `Success: Marked as PAID.`;
-            verifyCert(); // Refresh details
-        } else {
-            out.innerText = `Error: ${res.data?.error}`;
-        }
+    async function markPaid(){
+      const id = el('admin-cert-id').value.trim(); const secret = el('admin-secret-input').value.trim(); if(!id||!secret) return showMsg('auth-message','Enter ID & Secret','error');
+      const res = await fetchJson('/mark-cert-paid',{method:'POST',body:JSON.stringify({id:id,admin_secret:secret})});
+      const out = el('admin-result'); out.style.display='block';
+      if(res.ok){ out.textContent = 'Marked PAID'; verifyCert(); } else out.textContent = `Error: ${res.data?.error || 'Failed'}`;
     }
 
-    // ---------- CERTIFICATE GENERATION ----------
-    function generateCertificate(username, certId) {
-      const canvas = document.getElementById('certCanvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
+    // ---------- Certificate generation ----------
+    function generateCertificate(username, certId){
+      const canvas = el('certCanvas'); const ctx = canvas.getContext('2d'); const w = canvas.width; const h = canvas.height;
+      // background
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
 
-      // Clear
-      ctx.clearRect(0,0,w,h);
+      // outer border
+      ctx.fillStyle = '#0f1724'; ctx.fillRect(40,40,w-80,160);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 42px Poppins'; ctx.textAlign='center'; ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 120);
 
-      // Background
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, w, h);
+      // body card
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(80,180,w-160,h-360);
+      // golden accent stripe
+      ctx.fillStyle = '#D4AF37'; ctx.fillRect(120,220,w-240,8);
 
-      // Border
-      ctx.lineWidth = 20;
-      ctx.strokeStyle = '#1e3a8a'; // Dark Blue
-      ctx.strokeRect(30, 30, w-60, h-60);
+      // recipient
+      ctx.fillStyle = '#0b1220'; ctx.font = '700 56px Poppins'; ctx.fillText(username, w/2, 340);
 
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = '#D4AF37'; // Gold
-      ctx.strokeRect(55, 55, w-110, h-110);
+      ctx.font = '16px Inter'; ctx.fillStyle='#334155'; ctx.fillText('For successfully completing the Student Rewards requirement and demonstrating participation.', w/2, 420);
 
-      // Header
-      ctx.fillStyle = '#1e3a8a';
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 50px Serif';
-      ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 160);
+      ctx.font = '14px monospace'; ctx.fillStyle='#475569'; ctx.fillText(`Certificate ID: ${certId}`, w/2, h-160);
+      ctx.fillText(`Issued: ${new Date().toLocaleDateString()}`, w/2, h-130);
 
-      // Sub
-      ctx.font = '24px Sans-Serif';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText('This certificate is proudly presented to', w/2, 230);
+      // seal
+      ctx.beginPath(); ctx.arc(w-160,h-160,70,0,Math.PI*2); ctx.fillStyle='rgba(212,175,55,0.12)'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#D4AF37'; ctx.stroke();
+      ctx.fillStyle='#7c3aed'; ctx.font='700 18px Inter'; ctx.fillText('AD WATCH', w-160, h-155);
 
-      // Name
-      ctx.font = 'bold italic 60px Serif';
-      ctx.fillStyle = '#111827';
-      ctx.fillText(username, w/2, 320);
+      // download
+      const link = document.createElement('a'); link.download = `Certificate_${username}_${certId}.png`;
+      link.href = canvas.toDataURL('image/png'); document.body.appendChild(link); link.click(); link.remove();
 
-      // Line under name
-      ctx.beginPath();
-      ctx.moveTo(w/2 - 200, 340);
-      ctx.lineTo(w/2 + 200, 340);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#9ca3af';
-      ctx.stroke();
-
-      // Text
-      ctx.font = '20px Sans-Serif';
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText('For successfully completing the task requirements of the Student Rewards Program.', w/2, 400);
-
-      // Footer Info
-      ctx.font = '16px Monospace';
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillText(`Certificate ID: ${certId}`, w/2, 600);
-      ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, w/2, 625);
-
-      // "Seal"
-      ctx.beginPath();
-      ctx.arc(w - 120, h - 120, 60, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(212, 175, 55, 0.2)'; // Gold transparent
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#D4AF37';
-      ctx.stroke();
-      ctx.font = 'bold 16px Sans-Serif';
-      ctx.fillStyle = '#b45309';
-      ctx.fillText("OFFICIAL", w - 120, h - 115);
-
-      // Download
-      const link = document.createElement('a');
-      link.download = `Certificate_${username}_${certId}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      // expose last cert download button
+      el('download-last').style.display = 'inline-flex'; el('download-last').dataset.url = canvas.toDataURL('image/png');
     }
+
+    function downloadLastCert(){ const url = el('download-last').dataset.url; if(!url) return; const a = document.createElement('a'); a.href = url; a.download = `certificate_${Date.now()}.png`; document.body.appendChild(a); a.click(); a.remove(); }
 
     // ---------- INIT ----------
-    (function init() {
+    (function init(){
       const saved = sessionStorage.getItem('ad_user');
-      if (saved) {
-        try {
-            currentUser = JSON.parse(saved);
-            updateUI();
-            refreshPoints();
-        } catch(e) {
-            sessionStorage.removeItem('ad_user');
-        }
-      }
+      if(saved){ try{ currentUser = JSON.parse(saved); updateUI(); refreshPoints(); }catch(e){ sessionStorage.removeItem('ad_user'); }}
     })();
-  </script>
-</body>
+
+  </script></body>
 </html>
