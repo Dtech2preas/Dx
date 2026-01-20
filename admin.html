@@ -331,7 +331,52 @@
                 const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                 
                 // --- JSQR SCAN ---
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const runScan = (data, w, h, label) => {
+                     const res = jsQR(data, w, h, { inversionAttempts: "dontInvert" });
+                     if (res) console.log(`QR Found via: ${label}`);
+                     return res;
+                };
+
+                // 1. Standard Scan (with library inversion)
+                let code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "attemptBoth"
+                });
+
+                // 2. Custom Preprocessing Strategies
+                if (!code) {
+                    console.log("Standard scan failed. Trying custom preprocessing...");
+                    const originalData = imageData.data; // Reference to original
+                    const len = originalData.length;
+
+                    // Strategy A: Threshold Invert (Dark -> White, Light -> Black)
+                    // Good for white QR on dark background
+                    const attemptThreshold = (threshold) => {
+                        const buffer = new Uint8ClampedArray(len);
+                        for (let i = 0; i < len; i += 4) {
+                            const avg = (originalData[i] + originalData[i+1] + originalData[i+2]) / 3;
+                            // If dark (bg), make white (255). If light (fg), make black (0).
+                            const val = avg < threshold ? 255 : 0;
+                            buffer[i] = buffer[i+1] = buffer[i+2] = val;
+                            buffer[i+3] = 255;
+                        }
+                        return runScan(buffer, imageData.width, imageData.height, `Threshold ${threshold}`);
+                    };
+
+                    // Try multiple thresholds
+                    code = attemptThreshold(60) || attemptThreshold(100) || attemptThreshold(150);
+
+                    // Strategy B: Pure Inversion (preserves gradients)
+                    if (!code) {
+                         const buffer = new Uint8ClampedArray(len);
+                         for (let i = 0; i < len; i += 4) {
+                            buffer[i] = 255 - originalData[i];
+                            buffer[i+1] = 255 - originalData[i+1];
+                            buffer[i+2] = 255 - originalData[i+2];
+                            buffer[i+3] = 255;
+                        }
+                        code = runScan(buffer, imageData.width, imageData.height, "Pure Inversion");
+                    }
+                }
 
                 if(code) {
                     // Success

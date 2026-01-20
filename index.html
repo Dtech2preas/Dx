@@ -867,11 +867,9 @@
                 value: certId,
                 size: 150,
                 background: 'white', // QR needs contrast to be scannable?
-                // Actually, if we use white background for QR, it stands out.
-                // Or transparent background with white foreground.
-                // Let's use white foreground on transparent, since bg is dark.
-                background: 'transparent',
-                foreground: '#ffffff'
+                // Use standard black on white for maximum compatibility
+                background: 'white',
+                foreground: 'black'
             });
             ctx.drawImage(qrCanvas, w - 190, h - 200);
 
