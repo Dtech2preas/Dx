@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
         :root {
@@ -237,6 +238,34 @@
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
             container.appendChild(img);
+
+            // Scan for QR
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const image = new Image();
+                image.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    context.drawImage(image, 0, 0);
+
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if(code) {
+                        console.log("QR Code found:", code.data);
+                        document.getElementById('cert-id').value = code.data;
+                        // Optional: automatically verify
+                        verifyCert();
+                        alert("QR Code Detected: " + code.data);
+                    } else {
+                        console.log("No QR Code found.");
+                    }
+                };
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
     }
 

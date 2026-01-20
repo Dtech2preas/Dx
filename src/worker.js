@@ -238,7 +238,6 @@ async function handleRedeem(request, env) {
 
   // Deduct from User
   user.balance = parseFloat((user.balance - amountR).toFixed(2));
-  await env.USERS.put(username, JSON.stringify(user));
 
   // Create Certificate
   // Liability does NOT change (it moves from User Wallet to Certificate Value)
@@ -253,6 +252,16 @@ async function handleRedeem(request, env) {
       status: 'issued' // status: issued, paid
   };
 
+  // Add to User History
+  if (!user.history) user.history = [];
+  user.history.unshift({
+      id: certId,
+      amount: amountR,
+      date: certData.date,
+      status: 'issued'
+  });
+
+  await env.USERS.put(username, JSON.stringify(user));
   await env.USERS.put(`CERT:${certId}`, JSON.stringify(certData));
 
   return new Response(JSON.stringify({
@@ -264,7 +273,13 @@ async function handleRedeem(request, env) {
 
 async function handleMarkCertPaid(request, env) {
   const { id, admin_secret } = await request.json();
-  const SECRET = env.ADMIN_SECRET || 'admin-secret-123';
+  const SECRET = env.ADMIN_SECRET;
+
+  if (!SECRET) {
+      // Security: If ADMIN_SECRET is not set in Cloudflare, fail open or closed?
+      // Fails closed for security.
+      return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: CORS_HEADERS });
+  }
 
   if (admin_secret !== SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
@@ -316,15 +331,20 @@ async function handleGetUser(request, env) {
   if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
 
   const user = JSON.parse(userJson);
-  return new Response(JSON.stringify({ username: username, balance: user.balance || 0 }), { status: 200, headers: CORS_HEADERS });
+  return new Response(JSON.stringify({
+      username: username,
+      balance: user.balance || 0,
+      history: user.history || []
+  }), { status: 200, headers: CORS_HEADERS });
 }
 
 async function handleGetStats(request, env) {
-    // Admin Only - check secret in header or similar?
-    // For now we'll rely on the client keeping the admin panel hidden,
-    // but ideally we should require the secret here too.
     const secret = request.headers.get('X-Admin-Secret');
-    const EXPECTED = env.ADMIN_SECRET || 'admin-secret-123';
+    const EXPECTED = env.ADMIN_SECRET;
+
+    if (!EXPECTED) {
+         return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: CORS_HEADERS });
+    }
 
     if (secret !== EXPECTED) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
