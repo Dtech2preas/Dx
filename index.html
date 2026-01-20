@@ -12,21 +12,21 @@
 
     <style>
         :root {
-            /* Brand Palette */
-            --primary: #0f172a;      /* Midnight Blue */
-            --primary-light: #1e293b;
+            /* Brand Palette - Blue & Black Theme */
+            --primary: #3b82f6;      /* Bright Tech Blue */
+            --primary-light: #60a5fa;
             --accent: #d4af37;       /* Metallic Gold */
             --accent-hover: #b5952f;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text-main: #334155;
-            --text-light: #64748b;
-            --success: #059669;
-            --danger: #dc2626;
-            --border: #e2e8f0;
+            --bg: #020617;           /* Deep Black/Blue */
+            --surface: #0f172a;      /* Slate 900 (Dark Blue) */
+            --text-main: #f8fafc;    /* White-ish */
+            --text-light: #94a3b8;   /* Slate 400 */
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #1e293b;
             --radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
         }
 
         body {
@@ -87,6 +87,7 @@
             border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
         }
 
         .card::before {
@@ -123,12 +124,13 @@
             padding: 12px 16px;
             margin-bottom: 20px;
             border-radius: var(--radius);
-            border: 1px solid #cbd5e1;
+            border: 1px solid #334155;
             font-family: 'Inter', sans-serif;
             font-size: 1rem;
             box-sizing: border-box;
             transition: all 0.2s;
-            background: #f1f5f9;
+            background: #1e293b;
+            color: white;
         }
 
         input:focus {
@@ -205,6 +207,12 @@
             border-bottom: 1px solid var(--border);
             padding-bottom: 15px;
             margin-bottom: 20px;
+        }
+
+        .logo-small {
+            height: 40px;
+            width: auto;
+            margin-left: 15px;
         }
 
         .balance-card {
@@ -295,8 +303,11 @@
 
     <main>
         <div id="auth-section" class="card">
-            <h2>Access Portal</h2>
-            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px;">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="logo.png" alt="D-Tech Logo" style="width: 80px; height: auto;">
+            </div>
+            <h2 style="text-align: center;">Access Portal</h2>
+            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px; text-align: center;">
                 Secure login for student reward verification.
             </p>
 
@@ -314,8 +325,13 @@
 
         <div id="dashboard-section" class="card" style="display:none;">
             <div class="dashboard-header">
-                <div style="font-weight:600;">Hello, <span id="display-username" style="color:var(--primary);"></span></div>
-                <button onclick="logout()" class="secondary" style="padding: 6px 12px; font-size: 0.75rem; flex:initial;">LOGOUT</button>
+                <div style="font-weight:600; display: flex; align-items: center;">
+                    Hello, <span id="display-username" style="color:var(--primary); margin-left: 5px;"></span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <button onclick="logout()" class="secondary" style="padding: 6px 12px; font-size: 0.75rem; flex:initial;">LOGOUT</button>
+                    <img src="logo.png" alt="Logo" class="logo-small">
+                </div>
             </div>
 
             <div class="balance-card">
@@ -679,174 +695,198 @@
 
     // ---------- PRO CERTIFICATE GENERATOR ----------
     function generateCertificate(username, certId, amount) {
-      const canvas = document.getElementById('certCanvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
+        // Load Logo first
+        const logo = new Image();
+        logo.src = 'logo.png';
+        logo.crossOrigin = "Anonymous"; // Fix potential taint issues
 
-      // 1. Background (Subtle cream/off-white)
-      ctx.fillStyle = '#FFFCF5';
-      ctx.fillRect(0, 0, w, h);
+        logo.onload = () => {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
 
-      // 2. Guilloche-style Pattern Simulation (Background waves)
-      ctx.save();
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.1)'; // Very faint gold
-      ctx.lineWidth = 1;
-      for (let i = 0; i < h; i += 15) {
-          ctx.beginPath();
-          ctx.moveTo(0, i);
-          ctx.bezierCurveTo(w/3, i - 50, 2*w/3, i + 50, w, i);
-          ctx.stroke();
-      }
-      ctx.restore();
+            // 1. Background (Dark Blue/Black Theme)
+            ctx.fillStyle = '#020617'; // Deep Dark
+            ctx.fillRect(0, 0, w, h);
 
-      // 3. Ornate Border
-      const pad = 40;
-      // Outer Dark Blue Line
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#0f172a';
-      ctx.strokeRect(pad, pad, w - (pad*2), h - (pad*2));
+            // 2. Guilloche-style Pattern Simulation (Waves)
+            ctx.save();
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)'; // Gold Waves
+            ctx.lineWidth = 1;
+            for (let i = 0; i < h; i += 15) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.bezierCurveTo(w/3, i - 50, 2*w/3, i + 50, w, i);
+                ctx.stroke();
+            }
+            ctx.restore();
 
-      // Inner Gold Line (Double)
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#d4af37';
-      ctx.strokeRect(pad + 10, pad + 10, w - (pad*2) - 20, h - (pad*2) - 20);
-      ctx.strokeRect(pad + 18, pad + 18, w - (pad*2) - 36, h - (pad*2) - 36);
+            // 3. Ornate Border
+            const pad = 40;
+            // Outer Gold Line
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#d4af37';
+            ctx.strokeRect(pad, pad, w - (pad*2), h - (pad*2));
 
-      // Corner Accents (Triangles)
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad+60, pad); ctx.lineTo(pad, pad+60); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(w-pad, pad); ctx.lineTo(w-pad-60, pad); ctx.lineTo(w-pad, pad+60); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(pad+60, h-pad); ctx.lineTo(pad, h-pad-60); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(w-pad, h-pad); ctx.lineTo(w-pad-60, h-pad); ctx.lineTo(w-pad, h-pad-60); ctx.fill();
+            // Inner Blue Line (Double)
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.strokeRect(pad + 10, pad + 10, w - (pad*2) - 20, h - (pad*2) - 20);
+            ctx.strokeRect(pad + 18, pad + 18, w - (pad*2) - 36, h - (pad*2) - 36);
 
-      // 4. Header Text
-      ctx.textAlign = 'center';
+            // Corner Accents (Triangles) - Gold
+            ctx.fillStyle = '#d4af37';
+            ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad+60, pad); ctx.lineTo(pad, pad+60); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(w-pad, pad); ctx.lineTo(w-pad-60, pad); ctx.lineTo(w-pad, pad+60); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(pad+60, h-pad); ctx.lineTo(pad, h-pad-60); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(w-pad, h-pad); ctx.lineTo(w-pad-60, h-pad); ctx.lineTo(w-pad, h-pad-60); ctx.fill();
 
-      // Brand Name
-      ctx.font = 'bold 30px "Cinzel"';
-      ctx.fillStyle = '#d4af37';
-      ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, 120);
+            // 4. Header Text
+            ctx.textAlign = 'center';
 
-      // Title
-      ctx.font = '700 60px "Cinzel"';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText('CERTIFICATE OF PAYOUT', w/2, 220);
+            // Brand Name
+            ctx.font = 'bold 30px "Cinzel"';
+            ctx.fillStyle = '#d4af37'; // Gold
+            ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, 120);
 
-      // Subtitle
-      ctx.font = '20px "Inter"';
-      ctx.fillStyle = '#64748b';
-      ctx.fillText('OFFICIAL VERIFICATION DOCUMENT', w/2, 260);
+            // Title
+            ctx.font = '700 60px "Cinzel"';
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.fillText('CERTIFICATE OF PAYOUT', w/2, 220);
 
-      // 5. User Section
-      ctx.font = 'italic 24px "Inter"';
-      ctx.fillStyle = '#334155';
-      ctx.fillText('This certifies that', w/2, 340);
+            // Subtitle
+            ctx.font = '20px "Inter"';
+            ctx.fillStyle = '#94a3b8'; // Slate Light
+            ctx.fillText('OFFICIAL VERIFICATION DOCUMENT', w/2, 260);
 
-      // Name
-      ctx.font = '400 90px "Pinyon Script", serif';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText(username, w/2, 440);
+            // 5. User Section
+            ctx.font = 'italic 24px "Inter"';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('This certifies that', w/2, 340);
 
-      // Underline
-      ctx.beginPath();
-      ctx.moveTo(w/2 - 250, 460);
-      ctx.lineTo(w/2 + 250, 460);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#d4af37';
-      ctx.stroke();
+            // Name
+            ctx.font = '400 90px "Pinyon Script", serif';
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.fillText(username, w/2, 440);
 
-      // Body Text
-      ctx.font = '22px "Inter"';
-      ctx.fillStyle = '#475569';
-      ctx.fillText('Has successfully redeemed value from the student rewards program.', w/2, 530);
+            // Underline
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 250, 460);
+            ctx.lineTo(w/2 + 250, 460);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#d4af37'; // Gold
+            ctx.stroke();
 
-      // VALUE DISPLAY
-      ctx.font = 'bold 40px "Cinzel"';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText(`VALUE: R ${amount.toFixed(2)}`, w/2, 590);
+            // Body Text
+            ctx.font = '22px "Inter"';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('Has successfully redeemed value from the student rewards program.', w/2, 530);
 
-      // 6. Footer / Metadata
-      const bottomY = 700;
+            // VALUE DISPLAY
+            ctx.font = 'bold 40px "Cinzel"';
+            ctx.fillStyle = '#d4af37'; // Gold
+            ctx.fillText(`VALUE: R ${amount.toFixed(2)}`, w/2, 590);
 
-      // Date
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 16px "Inter"';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText('DATE ISSUED:', 150, bottomY);
-      ctx.font = '16px "Inter"';
-      ctx.fillText(new Date().toLocaleDateString(), 150, bottomY + 25);
+            // 6. Footer / Metadata
+            const bottomY = 700;
 
-      // ID
-      ctx.font = 'bold 16px "Inter"';
-      ctx.fillText('CERTIFICATE ID:', 150, bottomY + 65);
-      ctx.font = '16px "Courier New"';
-      ctx.fillText(certId, 150, bottomY + 90);
+            // Date
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 16px "Inter"';
+            ctx.fillStyle = '#d4af37'; // Gold
+            ctx.fillText('DATE ISSUED:', 150, bottomY);
+            ctx.font = '16px "Inter"';
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.fillText(new Date().toLocaleDateString(), 150, bottomY + 25);
 
-      // Signature (MOVED LEFT to make room for QR)
-      // Original center was roughly w-250. Moved to w-380.
-      const sigCenterX = w - 380;
-      
-      ctx.beginPath();
-      ctx.moveTo(sigCenterX - 100, bottomY + 50);
-      ctx.lineTo(sigCenterX + 100, bottomY + 50);
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+            // ID
+            ctx.font = 'bold 16px "Inter"';
+            ctx.fillStyle = '#d4af37'; // Gold
+            ctx.fillText('CERTIFICATE ID:', 150, bottomY + 65);
+            ctx.font = '16px "Courier New"';
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.fillText(certId, 150, bottomY + 90);
 
-      ctx.textAlign = 'center';
-      ctx.font = '16px "Inter"';
-      ctx.fillText('Authorized Signature', sigCenterX, bottomY + 80);
+            // Signature
+            const sigCenterX = w - 380;
 
-      ctx.font = '40px "Pinyon Script"';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText('DTech Admin', sigCenterX, bottomY + 40);
+            ctx.beginPath();
+            ctx.moveTo(sigCenterX - 100, bottomY + 50);
+            ctx.lineTo(sigCenterX + 100, bottomY + 50);
+            ctx.strokeStyle = '#f8fafc'; // White
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-      // 7. Gold Seal
-      const sealX = w/2;
-      const sealY = bottomY + 40;
+            ctx.textAlign = 'center';
+            ctx.font = '16px "Inter"';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Authorized Signature', sigCenterX, bottomY + 80);
 
-      ctx.beginPath();
-      ctx.arc(sealX, sealY, 70, 0, 2 * Math.PI);
-      ctx.fillStyle = '#d4af37';
-      ctx.fill();
+            ctx.font = '40px "Pinyon Script"';
+            ctx.fillStyle = '#f8fafc'; // White
+            ctx.fillText('DTech Admin', sigCenterX, bottomY + 40);
 
-      ctx.beginPath();
-      ctx.arc(sealX, sealY, 60, 0, 2 * Math.PI);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+            // 7. Gold Seal
+            const sealX = w/2;
+            const sealY = bottomY + 40;
 
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 16px "Cinzel"';
-      ctx.fillText('OFFICIAL', sealX, sealY - 10);
-      ctx.fillText('VERIFIED', sealX, sealY + 10);
+            ctx.beginPath();
+            ctx.arc(sealX, sealY, 70, 0, 2 * Math.PI);
+            ctx.fillStyle = '#d4af37'; // Gold
+            ctx.fill();
 
-      ctx.font = '14px serif';
-      ctx.fillText('★ ★ ★', sealX, sealY + 35);
+            ctx.beginPath();
+            ctx.arc(sealX, sealY, 60, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#020617'; // Dark
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-      // 8. QR Code (MOVED TO BOTTOM RIGHT CORNER)
-      const qrCanvas = document.createElement('canvas');
-      const qr = new QRious({
-          element: qrCanvas,
-          value: certId,
-          size: 150,
-          background: 'transparent',
-          foreground: '#0f172a'
-      });
-      // w=1200. Border=40. InnerRight=1160.
-      // QR=150. Draw X = 1160 - 150 = 1010 (approx w-190)
-      // Draw Y = h - 200 = 650.
-      ctx.drawImage(qrCanvas, w - 190, h - 200);
+            ctx.fillStyle = '#020617'; // Dark text on Gold
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 16px "Cinzel"';
+            ctx.fillText('OFFICIAL', sealX, sealY - 10);
+            ctx.fillText('VERIFIED', sealX, sealY + 10);
 
-      // 9. Download
-      const link = document.createElement('a');
-      link.download = `DTech_Certificate_${username}_${certId}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+            ctx.font = '14px serif';
+            ctx.fillText('★ ★ ★', sealX, sealY + 35);
+
+            // 8. LOGO (Top Left)
+            // Logo is roughly 40px margin.
+            // Draw size: 100x100?
+            try {
+                ctx.drawImage(logo, 50, 50, 100, 100 * (logo.height / logo.width));
+            } catch(e) {
+                console.warn("Logo draw failed", e);
+            }
+
+            // 9. QR Code (Bottom Right)
+            const qrCanvas = document.createElement('canvas');
+            const qr = new QRious({
+                element: qrCanvas,
+                value: certId,
+                size: 150,
+                background: 'white', // QR needs contrast to be scannable?
+                // Actually, if we use white background for QR, it stands out.
+                // Or transparent background with white foreground.
+                // Let's use white foreground on transparent, since bg is dark.
+                background: 'transparent',
+                foreground: '#ffffff'
+            });
+            ctx.drawImage(qrCanvas, w - 190, h - 200);
+
+            // 10. Download
+            const link = document.createElement('a');
+            link.download = `DTech_Certificate_${username}_${certId}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        };
+
+        logo.onerror = () => {
+             alert("Error loading logo for certificate.");
+        };
     }
 
     // ---------- INIT ----------
