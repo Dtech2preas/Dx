@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <style>
         :root {
@@ -249,6 +250,27 @@
         .alert.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
         .alert.info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
 
+        /* --- History Table --- */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+        .history-table th, .history-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .history-table th {
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .status-issued { color: var(--accent-hover); font-weight: bold; }
+        .status-paid { color: var(--success); font-weight: bold; }
+
         /* --- Canvas Hidden --- */
         #certCanvas { display: none; }
         
@@ -302,7 +324,15 @@
             </div>
 
             <div class="btn-group center">
+                <button onclick="toggleHistory()" class="secondary" style="font-size:0.8rem;">History</button>
                 <button onclick="refreshBalance()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
+            </div>
+        </div>
+
+        <div id="history-section" class="card" style="display:none;">
+            <h3>Transaction History</h3>
+            <div id="history-content" style="max-height: 200px; overflow-y: auto;">
+                <p style="text-align:center; color:var(--text-light);">No history found.</p>
             </div>
         </div>
 
@@ -406,6 +436,7 @@
     function setAuthUI(loggedIn) {
       document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
       document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
+      document.getElementById('history-section').style.display = 'none'; // Always hide history initially
       document.getElementById('earn-section').style.display = loggedIn ? 'block' : 'none';
       document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
 
@@ -444,6 +475,7 @@
         currentUser = {
           username: u,
           balance: res.data.balance || 0,
+          history: res.data.history || [],
           token: res.data.token
         };
         sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
@@ -465,9 +497,38 @@
       const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
       if (res.ok && res.data) {
         currentUser.balance = res.data.balance;
+        currentUser.history = res.data.history || [];
         sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
         updateUI();
       }
+    }
+
+    function toggleHistory() {
+        const el = document.getElementById('history-section');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('history-content');
+        if(!currentUser.history || currentUser.history.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-light);">No history found.</p>';
+            return;
+        }
+
+        let html = '<table class="history-table"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+        currentUser.history.forEach(item => {
+            const dateStr = new Date(item.date).toLocaleDateString();
+            const statusClass = item.status === 'paid' ? 'status-paid' : 'status-issued';
+            html += `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td>R ${item.amount.toFixed(2)}</td>
+                    <td class="${statusClass}">${item.status.toUpperCase()}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
     }
 
     function updateUI() {
@@ -477,6 +538,8 @@
         const balStr = (currentUser.balance || 0).toFixed(2);
         document.getElementById('display-balance').innerText = balStr;
         document.getElementById('redeem-avail-bal').innerText = balStr;
+
+        renderHistory();
 
         // Button Logic
         const redeemBtn = document.getElementById('redeem-btn');
@@ -760,7 +823,18 @@
       ctx.font = '14px serif';
       ctx.fillText('★ ★ ★', sealX, sealY + 35);
 
-      // 8. Download
+      // 8. QR Code
+      const qrCanvas = document.createElement('canvas');
+      const qr = new QRious({
+          element: qrCanvas,
+          value: certId,
+          size: 150,
+          background: 'transparent',
+          foreground: '#0f172a'
+      });
+      ctx.drawImage(qrCanvas, w - 200, h - 200);
+
+      // 9. Download
       const link = document.createElement('a');
       link.download = `DTech_Certificate_${username}_${certId}.png`;
       link.href = canvas.toDataURL('image/png');
