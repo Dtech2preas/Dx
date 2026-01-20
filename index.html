@@ -783,24 +783,7 @@
       ctx.font = '16px "Courier New"';
       ctx.fillText(certId, 150, bottomY + 90);
 
-      // Signature (MOVED LEFT to make room for QR)
-      // Original center was roughly w-250. Moved to w-380.
-      const sigCenterX = w - 380;
       
-      ctx.beginPath();
-      ctx.moveTo(sigCenterX - 100, bottomY + 50);
-      ctx.lineTo(sigCenterX + 100, bottomY + 50);
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.textAlign = 'center';
-      ctx.font = '16px "Inter"';
-      ctx.fillText('Authorized Signature', sigCenterX, bottomY + 80);
-
-      ctx.font = '40px "Pinyon Script"';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText('DTech Admin', sigCenterX, bottomY + 40);
 
       // 7. Gold Seal
       const sealX = w/2;
