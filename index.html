@@ -117,7 +117,7 @@
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -249,22 +249,6 @@
         .alert.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
         .alert.info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
 
-        /* --- Admin --- */
-        .admin-toggle {
-            text-align: center;
-            margin: 40px 0 20px;
-            font-size: 0.75rem;
-            color: #cbd5e1;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .admin-toggle:hover { color: var(--text-light); }
-        
-        #admin-section {
-            display: none;
-            border-top: 4px solid var(--primary);
-        }
-
         /* --- Canvas Hidden --- */
         #certCanvas { display: none; }
         
@@ -313,25 +297,24 @@
             </div>
 
             <div class="balance-card">
-                <div class="balance-label">Available Points</div>
-                <div class="balance-amount"><span id="display-points">0</span></div>
-                <div style="font-size: 0.8rem; opacity: 0.7;">1 Point = 1 Unit of Value</div>
+                <div class="balance-label">Current Balance</div>
+                <div class="balance-amount">R <span id="display-balance">0.00</span></div>
             </div>
 
             <div class="btn-group center">
-                <button onclick="refreshPoints()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
+                <button onclick="refreshBalance()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
             </div>
         </div>
 
         <div id="earn-section" class="card" style="display:none;">
             <h3>Task Assignment</h3>
             <p style="color:var(--text-light); font-size:0.9rem;">
-                Complete the sponsored task to accrue value. Ensure the verification window remains open for <strong>15 seconds</strong>.
+                Complete the sponsored task to accrue value (approx R 0.10). Verification window: <strong>15 seconds</strong>.
             </p>
             
             <div style="text-align:center; margin: 25px 0;">
                 <button id="watch-btn" onclick="startAdWatch()" style="width:100%; padding: 16px;">
-                    Initiate Task (+10 Pts)
+                    Initiate Task
                 </button>
                 <div id="timer-status"></div>
                 <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary" style="margin-top:12px; border:none; color:var(--danger); font-size:0.8rem;">
@@ -341,37 +324,32 @@
         </div>
 
         <div id="redeem-section" class="card" style="display:none;">
-            <h3>Accreditation</h3>
+            <h3>Withdrawal</h3>
             <p style="color:var(--text-light); font-size:0.9rem;">
-                Exchange points for an official <strong>DTech Verification Certificate</strong>. This document is required for payout processing.
+                Exchange balance for an official <strong>DTech Verification Certificate</strong>.
             </p>
             
-            <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; display:flex; justify-content:space-between; margin-bottom: 20px; font-weight:600;">
-                <span>Certificate Cost</span>
-                <span>20 Points</span>
+            <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:10px;">
+                    <span>Available</span>
+                    <span>R <span id="redeem-avail-bal">0.00</span></span>
+                </div>
+                <div style="font-size:0.8rem; color:#666; margin-bottom: 10px;">
+                    Min: R 10.00 | Max: R 250.00
+                </div>
+
+                <input type="number" id="redeem-amount" placeholder="Enter Amount (e.g. 50)" min="10" max="250" />
             </div>
 
-            <button id="redeem-btn" class="gold-action" onclick="redeemCertificate()" style="width:100%;" disabled>
-                Issue Certificate
+            <button id="redeem-btn" class="gold-action" onclick="redeemCertificate()" style="width:100%;">
+                Generate Certificate
             </button>
         </div>
 
         <div id="message" class="alert"></div>
 
-        <div class="admin-toggle" onclick="toggleAdmin()">Administrator Access</div>
-        <div id="admin-section" class="card">
-            <h3>Admin Console</h3>
-            <label>Certificate UUID</label>
-            <input id="admin-cert-id" type="text" placeholder="CERT-XXXX-XXXX" />
-
-            <label>Admin Key</label>
-            <input id="admin-secret-input" type="password" placeholder="Enter Secret" />
-
-            <div class="btn-group">
-                <button onclick="verifyCert()" class="secondary">Verify Status</button>
-                <button onclick="markPaid()">Authorize Payout</button>
-            </div>
-            <div id="admin-result" style="margin-top:15px; padding:15px; border-left: 3px solid var(--primary); background:#f1f5f9; display:none; font-family:monospace; font-size:0.85rem;"></div>
+        <div style="text-align:center; margin-top:30px;">
+             <a href="admin.html" style="color:#cbd5e1; font-size:0.75rem; text-decoration:none;">Admin Console</a>
         </div>
     </main>
 
@@ -399,12 +377,6 @@
       if(type !== 'error') {
           setTimeout(() => { el.style.display = 'none'; }, 4000);
       }
-    }
-
-    function toggleAdmin() {
-        const el = document.getElementById('admin-section');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        if(el.style.display === 'block') document.getElementById('admin-section').scrollIntoView({behavior: 'smooth'});
     }
 
     async function fetchJson(path, opts = {}) {
@@ -439,7 +411,7 @@
 
       if (!loggedIn) {
         document.getElementById('display-username').innerText = '';
-        document.getElementById('display-points').innerText = '0';
+        document.getElementById('display-balance').innerText = '0.00';
       }
     }
 
@@ -471,7 +443,7 @@
       if (res.ok && res.data) {
         currentUser = {
           username: u,
-          points: res.data.points || 0,
+          balance: res.data.balance || 0,
           token: res.data.token
         };
         sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
@@ -488,11 +460,11 @@
       updateUI();
     }
 
-    async function refreshPoints() {
+    async function refreshBalance() {
       if (!currentUser) return;
       const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
       if (res.ok && res.data) {
-        currentUser.points = res.data.points;
+        currentUser.balance = res.data.balance;
         sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
         updateUI();
       }
@@ -502,18 +474,16 @@
       if (currentUser) {
         setAuthUI(true);
         document.getElementById('display-username').innerText = currentUser.username;
-        document.getElementById('display-points').innerText = currentUser.points;
+        const balStr = (currentUser.balance || 0).toFixed(2);
+        document.getElementById('display-balance').innerText = balStr;
+        document.getElementById('redeem-avail-bal').innerText = balStr;
 
+        // Button Logic
         const redeemBtn = document.getElementById('redeem-btn');
-        const cost = 20;
-        if (currentUser.points >= cost) {
+        if (currentUser.balance >= 10) {
             redeemBtn.disabled = false;
-            redeemBtn.innerText = "Issue Certificate";
-            redeemBtn.classList.add("gold-action");
         } else {
             redeemBtn.disabled = true;
-            redeemBtn.innerText = `Accrue ${cost - currentUser.points} more points`;
-            redeemBtn.classList.remove("gold-action");
         }
       } else {
         setAuthUI(false);
@@ -557,7 +527,7 @@
 
     function resetAdUI() {
         document.getElementById('watch-btn').disabled = false;
-        document.getElementById('watch-btn').innerText = 'Initiate Task (+10 Pts)';
+        document.getElementById('watch-btn').innerText = 'Initiate Task';
         document.getElementById('cancel-ad-btn').disabled = true;
         document.getElementById('timer-status').innerText = '';
     }
@@ -572,108 +542,80 @@
         resetAdUI();
 
         if (elapsed >= 15) {
-            await addPoints(10);
+            await addPoints();
         } else {
             showMessage(`Verification Failed. Detected ${Math.floor(elapsed)}s of 15s required.`, 'error');
         }
       }
     });
 
-    async function addPoints(amt) {
+    async function addPoints() {
       const res = await fetchJson('/add-points', {
         method: 'POST',
         body: JSON.stringify({
             username: currentUser.username,
-            amount: amt,
             token: currentUser.token
         })
       });
 
       if (res.ok) {
-          currentUser.points = res.data.points;
+          currentUser.balance = res.data.balance;
           sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
           updateUI();
-          showMessage(`Task Verified. +${amt} points credited.`, 'success');
+          showMessage(`Task Verified. +R ${res.data.earned} credited.`, 'success');
       } else {
-          showMessage(res.data?.error || 'System error crediting points.', 'error');
+          // Handle specific errors
+          if(res.status === 429) {
+             showMessage(res.data?.error || 'Please wait before next task.', 'error');
+          } else if(res.status === 503) {
+             showMessage('Monthly Budget Reached. System paused until next month.', 'error');
+          } else {
+             showMessage(res.data?.error || 'System error.', 'error');
+          }
       }
     }
 
     // ---------- REDEEM ----------
     async function redeemCertificate() {
-        if (!confirm("Confirm redemption of 20 points for Certificate generation?")) return;
+        const input = document.getElementById('redeem-amount');
+        const amount = parseFloat(input.value);
+
+        if (!amount || amount < 10 || amount > 250) {
+            return showMessage('Invalid amount. Must be between R 10 and R 250.', 'error');
+        }
+
+        if (amount > currentUser.balance) {
+            return showMessage('Insufficient funds.', 'error');
+        }
+
+        if (!confirm(`Confirm withdrawal of R ${amount.toFixed(2)}?`)) return;
 
         const res = await fetchJson('/redeem', {
             method: 'POST',
             body: JSON.stringify({
                 username: currentUser.username,
-                token: currentUser.token
+                token: currentUser.token,
+                amount: amount
             })
         });
 
         if (res.ok) {
-            currentUser.points = res.data.points;
+            currentUser.balance = res.data.balance;
             sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
             updateUI();
             
-            // Wait a moment for fonts to be sure
             document.fonts.ready.then(() => {
-                generateCertificate(currentUser.username, res.data.cert_id);
+                generateCertificate(currentUser.username, res.data.cert_id, amount);
             });
             showMessage('Certificate Issued Successfully.', 'success');
+            input.value = ''; // Reset input
         } else {
             showMessage(res.data?.error || 'Redemption failed', 'error');
         }
     }
 
-    // ---------- ADMIN ----------
-    async function verifyCert() {
-        const id = document.getElementById('admin-cert-id').value.trim();
-        if(!id) return;
-
-        const res = await fetchJson(`/certificate?id=${id}`, { method: 'GET' });
-        const out = document.getElementById('admin-result');
-        out.style.display = 'block';
-
-        if (res.ok) {
-            const statusColor = res.data.status === 'PAID' ? 'green' : 'orange';
-            out.innerHTML = `
-                <div><strong>STATUS:</strong> <span style="color:${statusColor}">${res.data.status}</span></div>
-                <div style="margin-top:5px;"><strong>USER:</strong> ${res.data.username}</div>
-                <div style="margin-top:5px;"><strong>ISSUED:</strong> ${new Date(res.data.date).toLocaleString()}</div>
-                <div style="margin-top:5px; font-size:0.8rem; color:#666;">ID: ${id}</div>
-            `;
-        } else {
-            out.innerHTML = `<strong style="color:red">INVALID CERTIFICATE ID</strong>`;
-        }
-    }
-
-    async function markPaid() {
-        const id = document.getElementById('admin-cert-id').value.trim();
-        const secret = document.getElementById('admin-secret-input').value.trim();
-        if(!id || !secret) return showMessage('Missing credentials.', 'error');
-
-        const res = await fetchJson('/mark-cert-paid', {
-            method: 'POST',
-            body: JSON.stringify({
-                id: id,
-                admin_secret: secret
-            })
-        });
-
-        const out = document.getElementById('admin-result');
-        out.style.display = 'block';
-
-        if (res.ok) {
-            out.innerHTML = `<div style="color:green; font-weight:bold;">PAYOUT AUTHORIZED</div>`;
-            verifyCert(); 
-        } else {
-            out.innerText = `Error: ${res.data?.error}`;
-        }
-    }
-
     // ---------- PRO CERTIFICATE GENERATOR ----------
-    function generateCertificate(username, certId) {
+    function generateCertificate(username, certId, amount) {
       const canvas = document.getElementById('certCanvas');
       const ctx = canvas.getContext('2d');
       const w = canvas.width;
@@ -710,13 +652,9 @@
 
       // Corner Accents (Triangles)
       ctx.fillStyle = '#0f172a';
-      // TL
       ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad+60, pad); ctx.lineTo(pad, pad+60); ctx.fill();
-      // TR
       ctx.beginPath(); ctx.moveTo(w-pad, pad); ctx.lineTo(w-pad-60, pad); ctx.lineTo(w-pad, pad+60); ctx.fill();
-      // BL
       ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(pad+60, h-pad); ctx.lineTo(pad, h-pad-60); ctx.fill();
-      // BR
       ctx.beginPath(); ctx.moveTo(w-pad, h-pad); ctx.lineTo(w-pad-60, h-pad); ctx.lineTo(w-pad, h-pad-60); ctx.fill();
 
       // 4. Header Text
@@ -742,8 +680,8 @@
       ctx.fillStyle = '#334155';
       ctx.fillText('This certifies that', w/2, 340);
 
-      // Name (Calligraphy)
-      ctx.font = '400 90px "Pinyon Script", serif'; // Fallback to serif if load fails
+      // Name
+      ctx.font = '400 90px "Pinyon Script", serif';
       ctx.fillStyle = '#0f172a';
       ctx.fillText(username, w/2, 440);
 
@@ -758,8 +696,12 @@
       // Body Text
       ctx.font = '22px "Inter"';
       ctx.fillStyle = '#475569';
-      ctx.fillText('Has successfully completed the required tasks to redeem value.', w/2, 530);
-      ctx.fillText('This document serves as proof of eligibility for payment processing.', w/2, 565);
+      ctx.fillText('Has successfully redeemed value from the student rewards program.', w/2, 530);
+
+      // VALUE DISPLAY
+      ctx.font = 'bold 40px "Cinzel"';
+      ctx.fillStyle = '#0f172a';
+      ctx.fillText(`VALUE: R ${amount.toFixed(2)}`, w/2, 590);
 
       // 6. Footer / Metadata
       const bottomY = 700;
@@ -778,7 +720,7 @@
       ctx.font = '16px "Courier New"';
       ctx.fillText(certId, 150, bottomY + 90);
 
-      // Signature Line
+      // Signature
       ctx.beginPath();
       ctx.moveTo(w - 350, bottomY + 50);
       ctx.lineTo(w - 150, bottomY + 50);
@@ -790,36 +732,31 @@
       ctx.font = '16px "Inter"';
       ctx.fillText('Authorized Signature', w - 250, bottomY + 80);
       
-      // Fake Signature
       ctx.font = '40px "Pinyon Script"';
       ctx.fillStyle = '#0f172a';
       ctx.fillText('DTech Admin', w - 250, bottomY + 40);
 
-      // 7. The Gold Seal (Bottom Center)
+      // 7. Gold Seal
       const sealX = w/2;
       const sealY = bottomY + 40;
       
-      // Seal Outer
       ctx.beginPath();
       ctx.arc(sealX, sealY, 70, 0, 2 * Math.PI);
       ctx.fillStyle = '#d4af37';
       ctx.fill();
       
-      // Seal Inner Ring
       ctx.beginPath();
       ctx.arc(sealX, sealY, 60, 0, 2 * Math.PI);
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Seal Text
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.font = 'bold 16px "Cinzel"';
       ctx.fillText('OFFICIAL', sealX, sealY - 10);
       ctx.fillText('VERIFIED', sealX, sealY + 10);
       
-      // Stars
       ctx.font = '14px serif';
       ctx.fillText('★ ★ ★', sealX, sealY + 35);
 
@@ -839,7 +776,7 @@
         try {
             currentUser = JSON.parse(saved);
             updateUI();
-            refreshPoints();
+            refreshBalance();
         } catch(e) {
             sessionStorage.removeItem('ad_user');
         }
