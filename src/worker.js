@@ -308,6 +308,21 @@ async function handleMarkCertPaid(request, env) {
 
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
+  // --- SYNC USER HISTORY ---
+  if (cert.username) {
+      const userJson = await env.USERS.get(cert.username);
+      if (userJson) {
+          const user = JSON.parse(userJson);
+          if (user.history) {
+              const item = user.history.find(h => h.id === id);
+              if (item) {
+                  item.status = 'paid';
+                  await env.USERS.put(cert.username, JSON.stringify(user));
+              }
+          }
+      }
+  }
+
   return new Response(JSON.stringify({ message: 'Certificate marked as paid', cert: cert }), { status: 200, headers: CORS_HEADERS });
 }
 

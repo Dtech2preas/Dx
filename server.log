@@ -1,8 +1,0 @@
-127.0.0.1 - - [20/Jan/2026 02:13:04] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [20/Jan/2026 02:13:04] "GET /logo.png HTTP/1.1" 200 -
-127.0.0.1 - - [20/Jan/2026 02:13:06] "GET /index.html HTTP/1.1" 304 -
-127.0.0.1 - - [20/Jan/2026 02:13:06] code 404, message File not found
-127.0.0.1 - - [20/Jan/2026 02:13:06] "GET /user?username=TestStudent HTTP/1.1" 404 -
-127.0.0.1 - - [20/Jan/2026 02:13:10] "GET /admin.html HTTP/1.1" 200 -
-127.0.0.1 - - [20/Jan/2026 02:13:12] code 404, message File not found
-127.0.0.1 - - [20/Jan/2026 02:13:12] "GET /admin-stats HTTP/1.1" 404 -
