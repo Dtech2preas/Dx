@@ -38,7 +38,7 @@
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 600px;
         }
 
         .card {
@@ -50,13 +50,71 @@
             border: 1px solid #e2e8f0;
         }
 
-        input {
+        /* --- Scanner Styles --- */
+        .scanner-box {
+            border: 3px dashed #cbd5e1;
+            border-radius: var(--radius);
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: #f8fafc;
+        }
+
+        .scanner-box:hover {
+            border-color: var(--primary);
+            background: #f1f5f9;
+        }
+
+        .scanner-box.drag-over {
+            border-color: var(--accent);
+            background: #fffbeb;
+        }
+
+        .scanner-box.success {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .scanner-box.error {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        .scanner-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .scanner-text {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .scanner-sub {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        /* Hidden file input */
+        #cert-file {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* --- Inputs & Buttons --- */
+        input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0 20px;
+            padding: 12px;
+            margin: 5px 0 15px;
             border: 1px solid #cbd5e1;
             border-radius: var(--radius);
             box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         button {
@@ -68,15 +126,17 @@
             cursor: pointer;
             font-weight: 600;
             width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         button:hover { opacity: 0.9; }
 
-        button.action { background: var(--accent); color: var(--primary); }
-        button.danger { background: var(--danger); }
+        button.action { background: var(--accent); color: var(--primary); font-weight: 800; }
+        button.secondary { background: transparent; color: var(--text-main); border: 1px solid #cbd5e1; }
 
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
         }
 
@@ -86,30 +146,25 @@
             border-radius: var(--radius);
             text-align: center;
         }
-        .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
-        .stat-label { font-size: 0.8rem; text-transform: uppercase; color: #64748b; }
-
-        .preview-area {
-            border: 2px dashed #cbd5e1;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            min-height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-        .preview-area img { max-width: 100%; max-height: 400px; border: 1px solid #ccc; }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; color: #64748b; }
 
         .status-paid { color: var(--success); font-weight: bold; }
         .status-pending { color: var(--accent); font-weight: bold; }
 
         #login-overlay {
             position: fixed; top:0; left:0; right:0; bottom:0;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.98);
             display: flex; justify-content: center; align-items: center;
             z-index: 1000;
+        }
+
+        /* Manual Toggle */
+        .manual-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: none; /* Hidden by default */
         }
     </style>
 </head>
@@ -125,60 +180,58 @@
 
 <div class="container" style="display:none;" id="main-content">
     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1>DTech Admin</h1>
-        <button onclick="location.reload()" style="width:auto; padding:8px 16px; font-size:0.8rem;">Lock</button>
+        <h1 style="font-size:1.5rem; margin:0;">DTech Admin</h1>
+        <button onclick="location.reload()" style="width:auto; padding:6px 12px; font-size:0.75rem;" class="secondary">Lock</button>
     </header>
 
-    <!-- STATS -->
     <div class="card">
-        <h2>Financial Overview</h2>
         <div class="stat-grid">
-            <div class="stat-box">
-                <div class="stat-label">Total Monthly Limit</div>
-                <div class="stat-val">R 500.00</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Paid This Month</div>
-                <div class="stat-val" id="stat-paid">...</div>
-            </div>
             <div class="stat-box">
                 <div class="stat-label">Pending Liability</div>
                 <div class="stat-val" id="stat-liability">...</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Remaining Budget</div>
+                <div class="stat-label">Budget Remaining</div>
                 <div class="stat-val" id="stat-remaining" style="color:var(--success);">...</div>
             </div>
         </div>
-        <button onclick="loadStats()" style="margin-top:15px; background:transparent; color:#666; border:1px solid #ccc;">Refresh Data</button>
     </div>
 
-    <!-- CERT VERIFIER -->
     <div class="card">
-        <h2>Certificate Validator</h2>
+        <h2 style="text-align:center; margin-bottom: 20px;">Certificate Scanner</h2>
 
-        <label>1. Upload Image to Inspect (Optional)</label>
-        <div class="preview-area" id="drop-zone">
-            <input type="file" id="cert-file" accept="image/*" onchange="previewFile()" />
-            <div id="preview-container"></div>
+        <div class="scanner-box" id="drop-zone">
+            <div class="scanner-icon">📸</div>
+            <div class="scanner-text" id="scanner-text">Upload Certificate Image</div>
+            <div class="scanner-sub" id="scanner-sub">Tap or Drag & Drop to Scan QR</div>
+            <input type="file" id="cert-file" accept="image/*" onchange="handleFile(this.files)" />
         </div>
 
-        <label>2. Certificate ID (e.g. CERT-ABCD-1234)</label>
-        <input type="text" id="cert-id" placeholder="Enter ID from certificate" />
+        <div id="verify-result" style="margin-top:20px; padding:15px; background:#f0f9ff; border: 1px solid #bae6fd; border-radius:6px; display:none; text-align:center;">
+            </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button onclick="verifyCert()">Check Status</button>
-            <button class="action" onclick="markPaid()">AUTHORIZE PAYOUT</button>
+        <div id="action-buttons" style="display:none; margin-top:20px; gap:10px;">
+            <button class="action" onclick="markPaid()">✅ AUTHORIZE PAYOUT</button>
+            <button class="secondary" onclick="resetScanner()">Scan Next</button>
         </div>
 
-        <div id="verify-result" style="margin-top:20px; padding:15px; background:#f1f5f9; border-left:4px solid var(--primary); display:none;"></div>
+        <div style="text-align:center; margin-top:15px;">
+            <a href="#" onclick="toggleManual(); return false;" style="font-size:0.8rem; color:#94a3b8; text-decoration:none;">Input ID Manually</a>
+        </div>
+
+        <div id="manual-input-area" class="manual-section">
+            <label style="font-size:0.8rem; font-weight:bold; display:block; margin-bottom:5px;">Manual Verification</label>
+            <input type="text" id="cert-id" placeholder="CERT-XXXX-XXXX" />
+            <button onclick="verifyCert()" class="secondary">Check ID</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev"; // Adjust if needed
+    const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
     let SECRET = "";
 
+    // --- AUTH ---
     function unlock() {
         const val = document.getElementById('admin-secret').value;
         if(val) {
@@ -189,10 +242,11 @@
         }
     }
 
+    // --- API HELPER ---
     async function fetchJson(path, method = 'GET', body = null) {
         const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                      ? 'http://localhost:8000' // Dev
-                      : API_URL; // Prod
+                      ? 'http://localhost:8000'
+                      : API_URL;
 
         const opts = {
             method,
@@ -212,6 +266,7 @@
         }
     }
 
+    // --- STATS ---
     async function loadStats() {
         const { ok, data } = await fetchJson('/admin-stats');
         if(ok) {
@@ -219,93 +274,150 @@
             const liability = data.liability || 0;
             const remaining = 500 - (paid + liability);
 
-            document.getElementById('stat-paid').innerText = `R ${paid.toFixed(2)}`;
             document.getElementById('stat-liability').innerText = `R ${liability.toFixed(2)}`;
-
             const remEl = document.getElementById('stat-remaining');
             remEl.innerText = `R ${remaining.toFixed(2)}`;
-            remEl.style.color = remaining < 0 ? 'red' : 'green';
-        } else {
-            alert("Failed to load stats. Check secret.");
+            remEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
         }
     }
 
-    function previewFile() {
-        const file = document.getElementById('cert-file').files[0];
-        const container = document.getElementById('preview-container');
-        container.innerHTML = '';
-        if(file) {
-            const img = document.createElement('img');
-            img.src = URL.createObjectURL(file);
-            container.appendChild(img);
+    // --- SCANNER LOGIC ---
+    function handleFile(files) {
+        if(!files || !files[0]) return;
+        const file = files[0];
 
-            // Scan for QR
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const image = new Image();
-                image.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = image.width;
-                    canvas.height = image.height;
-                    context.drawImage(image, 0, 0);
+        // UI Updates
+        const zone = document.getElementById('drop-zone');
+        const text = document.getElementById('scanner-text');
+        text.innerText = "Analyzing...";
+        zone.className = "scanner-box"; // Reset classes
 
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const image = new Image();
+            image.onload = function() {
+                // Draw to hidden canvas to read pixels
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                context.drawImage(image, 0, 0);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // --- JSQR SCAN ---
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-                    if(code) {
-                        console.log("QR Code found:", code.data);
-                        document.getElementById('cert-id').value = code.data;
-                        // Optional: automatically verify
-                        verifyCert();
-                        alert("QR Code Detected: " + code.data);
-                    } else {
-                        console.log("No QR Code found.");
-                    }
-                };
-                image.src = e.target.result;
+                if(code) {
+                    // Success
+                    console.log("QR Found:", code.data);
+                    document.getElementById('cert-id').value = code.data;
+                    
+                    zone.className = "scanner-box success";
+                    text.innerText = "QR Detected!";
+                    document.getElementById('scanner-sub').innerText = code.data;
+                    
+                    // Auto Trigger Verification
+                    verifyCert();
+                } else {
+                    // Fail
+                    zone.className = "scanner-box error";
+                    text.innerText = "No QR Code Found";
+                    document.getElementById('scanner-sub').innerText = "Please try again or use manual input below.";
+                    toggleManual(true); // Open manual input
+                }
             };
-            reader.readAsDataURL(file);
-        }
+            image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 
+    // --- VERIFICATION ---
     async function verifyCert() {
         const id = document.getElementById('cert-id').value.trim();
-        if(!id) return alert("Enter ID");
+        if(!id) return;
 
         const res = await fetchJson(`/certificate?id=${id}`);
         const out = document.getElementById('verify-result');
+        const btns = document.getElementById('action-buttons');
+        
         out.style.display = 'block';
 
         if(res.ok) {
             const c = res.data;
+            const isPaid = c.status === 'paid';
+            
+            // Build Result UI
             out.innerHTML = `
-                <div style="font-size:1.1rem; margin-bottom:10px;">
-                    Status: <span class="${c.status === 'paid' ? 'status-paid' : 'status-pending'}">${c.status.toUpperCase()}</span>
+                <div style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">CERTIFICATE FOUND</div>
+                <div style="font-size:1.5rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
+                    R ${c.amount ? c.amount.toFixed(2) : '20.00'}
                 </div>
-                <div><strong>User:</strong> ${c.username}</div>
-                <div><strong>Amount:</strong> R ${c.amount ? c.amount.toFixed(2) : '20.00 (Legacy)'}</div>
-                <div><strong>Date:</strong> ${new Date(c.date).toLocaleString()}</div>
+                <div style="margin-bottom:10px;">User: <strong>${c.username}</strong></div>
+                <div style="display:inline-block; padding:4px 12px; border-radius:20px; font-size:0.8rem; background:${isPaid ? '#ecfdf5' : '#fffbeb'}; color:${isPaid ? 'var(--success)' : 'var(--accent)'}; border:1px solid currentColor;">
+                    ${c.status.toUpperCase()}
+                </div>
             `;
+
+            // Only show PAYOUT button if not paid
+            btns.style.display = 'flex';
+            if(isPaid) {
+                btns.innerHTML = `<button class="secondary" onclick="resetScanner()">Scan Next</button>`;
+            } else {
+                btns.innerHTML = `
+                    <button class="action" onclick="markPaid()">AUTHORIZE PAYOUT</button>
+                    <button class="secondary" onclick="resetScanner()">Cancel</button>
+                `;
+            }
+
         } else {
-            out.innerHTML = `<span style="color:red">Error: ${res.data.error}</span>`;
+            out.innerHTML = `<span style="color:var(--danger); font-weight:bold;">❌ Error: ${res.data.error || 'Certificate not found'}</span>`;
+            btns.style.display = 'none';
         }
     }
 
+    // --- PAYOUT ACTION ---
     async function markPaid() {
         const id = document.getElementById('cert-id').value.trim();
-        if(!id) return alert("Enter ID");
-        if(!confirm("Are you sure you have paid this user? This action updates the financial budget.")) return;
+        if(!confirm(`Confirm payout for ${id}?`)) return;
 
         const res = await fetchJson('/mark-cert-paid', 'POST', { id, admin_secret: SECRET });
 
         if(res.ok) {
-            alert("Success! Marked as paid.");
-            verifyCert();
+            // Update UI to show Success
+            const out = document.getElementById('verify-result');
+            out.innerHTML = `
+                <div style="color:var(--success); font-weight:bold; font-size:1.2rem;">✅ PAYOUT SUCCESSFUL</div>
+                <p>Database updated.</p>
+            `;
+            document.getElementById('action-buttons').innerHTML = `<button class="secondary" onclick="resetScanner()">Scan Next</button>`;
             loadStats();
         } else {
             alert("Error: " + res.data.error);
         }
+    }
+
+    // --- UI HELPERS ---
+    function toggleManual(forceOpen = false) {
+        const el = document.getElementById('manual-input-area');
+        if(forceOpen) {
+            el.style.display = 'block';
+        } else {
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function resetScanner() {
+        document.getElementById('cert-id').value = '';
+        document.getElementById('cert-file').value = ''; // Reset file input
+        document.getElementById('verify-result').style.display = 'none';
+        document.getElementById('action-buttons').style.display = 'none';
+        
+        // Reset Visuals
+        const zone = document.getElementById('drop-zone');
+        zone.className = "scanner-box";
+        document.getElementById('scanner-text').innerText = "Upload Certificate Image";
+        document.getElementById('scanner-sub').innerText = "Tap or Drag & Drop to Scan QR";
     }
 </script>
 
