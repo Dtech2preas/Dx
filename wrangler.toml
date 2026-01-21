@@ -8,22 +8,6 @@ compatibility_date = "2023-10-25"
 binding = "USERS"
 id = "<YOUR_KV_NAMESPACE_ID>"
 
-# Durable Object Bindings
-# These bind the variable name in code (binding) to the class name exported in worker.js
-[[durable_objects.bindings]]
-name = "USER_DO"
-class_name = "UserDO"
-
-[[durable_objects.bindings]]
-name = "TREASURY_DO"
-class_name = "TreasuryDO"
-
-# Migrations are required for Durable Objects
-# When you first deploy, you'll need to run a migration to create the classes
-[[migrations]]
-tag = "v1"
-new_classes = ["UserDO", "TreasuryDO"]
-
 # Environment Variables
 [vars]
 ADMIN_SECRET = "REPLACE_THIS_WITH_A_SECURE_SECRET"
