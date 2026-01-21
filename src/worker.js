@@ -12,6 +12,30 @@ const MAX_WITHDRAWAL = 250.00;
 
 export default {
   async fetch(request, env, ctx) {
+    // --- 1. CONFIGURATION DIAGNOSTIC CHECK ---
+    // If the bindings are missing, we intercept the request to provide instructions.
+    // This prevents the "Cannot read properties of undefined" crash.
+    const missingBindings = [];
+    if (!env.USER_DO) missingBindings.push("USER_DO (Durable Object)");
+    if (!env.TREASURY_DO) missingBindings.push("TREASURY_DO (Durable Object)");
+    if (!env.USERS) missingBindings.push("USERS (KV Namespace)");
+
+    if (missingBindings.length > 0) {
+        // If it's a browser request (HTML), show the Setup Guide
+        if (request.headers.get('Accept') && request.headers.get('Accept').includes('text/html')) {
+            return new Response(getSetupGuideHTML(missingBindings), {
+                headers: { 'Content-Type': 'text/html' }
+            });
+        }
+        // If it's an API request, return JSON error
+        return new Response(JSON.stringify({
+            error: "Server Configuration Missing",
+            details: missingBindings,
+            message: "Please configure Durable Objects and KV in Cloudflare Dashboard."
+        }), { status: 503, headers: CORS_HEADERS });
+    }
+
+    // Handle OPTIONS Preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });
     }
@@ -31,20 +55,12 @@ export default {
       } else if (path === '/user' && request.method === 'GET') {
         return await handleUserAction(request, env, 'info');
       } else if (path === '/certificate' && request.method === 'GET') {
-        // Certificates can be verified by anyone with the ID?
-        // Or should we ask the UserDO?
-        // Current implementation stored certs in KV "CERT:ID".
-        // To maintain "Single Source of Truth", certs should ideally be in UserDO or TreasuryDO.
-        // But for fast public verification, KV is better.
-        // I will stick to: UserDO generates cert -> Puts to KV (read-only for verifier).
         return await handleGetCert(request, env);
       } else if (path === '/mark-cert-paid' && request.method === 'POST') {
-        // Admin action.
         return await handleMarkCertPaid(request, env);
       } else if (path === '/admin-stats' && request.method === 'GET') {
         return await handleGetStats(request, env);
       } else if (path === '/admin/config' && request.method === 'POST') {
-        // Optional: Endpoint to update global config
         return await handleUpdateConfig(request, env);
       } else {
         return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
@@ -54,6 +70,69 @@ export default {
     }
   },
 };
+
+// --- Setup Guide HTML Generator ---
+function getSetupGuideHTML(missing) {
+    const listItems = missing.map(m => `<li>${m}</li>`).join('');
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Server Setup Required</title>
+        <style>
+            body { font-family: sans-serif; padding: 40px; background: #f8fafc; color: #334155; }
+            .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h1 { color: #ef4444; border-bottom: 2px solid #fecaca; padding-bottom: 10px; }
+            .step { background: #eff6ff; padding: 15px; margin-bottom: 15px; border-left: 4px solid #3b82f6; }
+            code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+            .missing-list { background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; padding: 15px; border-radius: 6px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Setup Required</h1>
+            <p>Your Cloudflare Worker code is deployed, but it is not connected to the required storage (Durable Objects & KV). The following bindings are missing:</p>
+            <ul class="missing-list">${listItems}</ul>
+
+            <h2>How to Fix (In Cloudflare Dashboard)</h2>
+
+            <div class="step">
+                <h3>1. Open Settings</h3>
+                <p>Go to your Worker > <strong>Settings</strong> > <strong>Variables</strong> (or Bindings).</p>
+            </div>
+
+            <div class="step">
+                <h3>2. Add KV Namespace Binding</h3>
+                <p>Scroll to <strong>KV Namespace Bindings</strong> and click <strong>Add binding</strong>.</p>
+                <ul>
+                    <li>Variable name: <code>USERS</code></li>
+                    <li>KV Namespace: <em>Select your namespace</em></li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3>3. Add Durable Object Bindings</h3>
+                <p>Scroll to <strong>Durable Object Bindings</strong> and click <strong>Add binding</strong> twice.</p>
+
+                <p><strong>Binding 1:</strong></p>
+                <ul>
+                    <li>Variable name: <code>USER_DO</code></li>
+                    <li>Class name: <code>UserDO</code></li>
+                </ul>
+
+                <p><strong>Binding 2:</strong></p>
+                <ul>
+                    <li>Variable name: <code>TREASURY_DO</code></li>
+                    <li>Class name: <code>TreasuryDO</code></li>
+                </ul>
+            </div>
+
+            <p><strong>After adding these, click "Save and Deploy" and refresh this page.</strong></p>
+        </div>
+    </body>
+    </html>
+    `;
+}
 
 // --- Handlers ---
 
@@ -77,7 +156,6 @@ async function handleRegister(request, env) {
 
   await env.USERS.put(username, JSON.stringify(userProfile));
 
-  // Initialize DO (Optional, usually happens on first access)
   return jsonResp({ message: 'Registered successfully' }, 201);
 }
 
@@ -120,24 +198,10 @@ async function handleUserAction(request, env, action) {
   if (request.method === 'GET') {
     const url = new URL(request.url);
     username = url.searchParams.get('username');
-    // For GET /user, we might not require token if it's public?
-    // Usually /user is private. The old code didn't check token for /user GET?
-    // Old code: handleGetUser had no token check? Let's check memory/file.
-    // "handleGetUser... if (!username)... no token check".
-    // Okay, I will add token check for security if possible, but to stay compatible I might need to be careful.
-    // However, prompt says "User authentication implements... session tokens for securing API endpoints".
-    // I will enforce token for /user.
-    // But wait, the frontend might not send it for GET?
-    // Let's assume the frontend sends 'Authorization' header or query param?
-    // The old code `handleGetUser` strictly only checked `username`.
-    // I will stick to the old behavior for GET /user to avoid breaking frontend if it relies on public profiles.
-    // BUT `handleAddPoints` and `handleRedeem` NEED tokens.
   } else {
     const body = await request.json();
     username = body.username;
     token = body.token;
-    // Re-attach body for forwarding
-    // We need to pass the body to the DO.
     request = new Request(request.url, {
         method: request.method,
         body: JSON.stringify(body)
@@ -156,9 +220,6 @@ async function handleUserAction(request, env, action) {
   }
 
   if (!profile.do_id) {
-      // Migration case: User exists but has no DO ID.
-      // Should we create one?
-      // Plan said "Start fresh / reset". So this shouldn't happen.
       return jsonResp({ error: 'System reset: Please re-register' }, 400);
   }
 
@@ -196,10 +257,6 @@ async function handleMarkCertPaid(request, env) {
     await env.USERS.put(certKey, JSON.stringify(cert));
 
     // Update Treasury
-    // We need to move Liability -> Paid
-    // We can use a Treasury DO for this.
-    // Since we don't know the exact singleton ID easily without idFromName('fixed'),
-    // we'll try that.
     const treasuryId = env.TREASURY_DO.idFromName('GLOBAL_TREASURY');
     const treasury = env.TREASURY_DO.get(treasuryId);
 
@@ -267,8 +324,6 @@ export class TreasuryDO {
         }
 
         if (url.pathname === '/check-budget') {
-            // Check if adding 'amount' would exceed budget
-            // Returns { ok: boolean, config: ... }
             const { amount } = await request.json();
             const total = stats.paid + stats.liability + amount;
             const ok = !config.halted && (total <= config.budget);
@@ -283,7 +338,6 @@ export class TreasuryDO {
         }
 
         if (url.pathname === '/payout') {
-            // Liability -> Paid
             const { amount } = await request.json();
             stats.liability = parseFloat((stats.liability - amount).toFixed(2));
             if (stats.liability < 0) stats.liability = 0;
@@ -312,7 +366,6 @@ export class UserDO {
     constructor(state, env) {
         this.state = state;
         this.env = env;
-        // Cache Global Config
         this.globalConfig = null;
         this.lastGlobalCheck = 0;
     }
@@ -334,14 +387,12 @@ export class UserDO {
         if (userData.last_reset_day !== today) {
             userData.ad_count = 0;
             userData.last_reset_day = today;
-            // Balance and History persist
             await this.state.storage.put('data', userData);
         }
 
-        if (url.pathname === '/user') { // GET /user calls this stub with /user path?
-            // Actually router calls stub.fetch(request). URL matches.
+        if (url.pathname === '/user') {
             return jsonResp({
-                username: 'User', // DO doesn't know its username easily unless stored.
+                username: 'User',
                 balance: userData.balance,
                 history: userData.history
             });
@@ -349,20 +400,13 @@ export class UserDO {
 
         if (url.pathname === '/add-points') {
             // 1. Sync/Check Budget
-            const canProceed = await this.checkGlobalBudget(0.3); // Check safely for max reward
+            const canProceed = await this.checkGlobalBudget(0.3);
             if (!canProceed) {
                  return jsonResp({ error: 'Daily limit reached or system paused.' }, 503);
             }
 
             // 2. Cooldown
             const now = Date.now();
-            // Random Cooldown 30-60s
-            // We need to know what the cooldown WAS for the LAST ad?
-            // Or we enforce a static rule?
-            // Prompt: "Enforce a server-side cooldown... e.g. 30-60s".
-            // Implementation: We enforce that (now - last_ad_ts) > 30s at minimum.
-            // Ideally we tracked the *required* cooldown from previous turn.
-            // Let's stick to simple: if < 30s, reject.
             if (now - userData.last_ad_ts < 30 * 1000) {
                  return jsonResp({ error: 'Cooldown active' }, 429);
             }
@@ -377,11 +421,7 @@ export class UserDO {
 
             await this.state.storage.put('data', userData);
 
-            // 5. Notify Treasury (Async)
-            // We await it to ensure consistency, or do it separately.
-            // "Do not serialize... cache...".
-            // But we MUST increase liability.
-            // I will do it here. It adds ~50ms latency. Acceptable.
+            // 5. Notify Treasury
             await this.notifyTreasuryLiability(reward);
 
             return jsonResp({
@@ -392,7 +432,7 @@ export class UserDO {
         }
 
         if (url.pathname === '/redeem') {
-            const { amount, method, username } = await request.json(); // username passed for cert
+            const { amount, method, username } = await request.json();
             const amountR = parseFloat(amount);
 
             if (isNaN(amountR) || amountR < 10.00 || amountR > 250.00) {
@@ -423,7 +463,7 @@ export class UserDO {
             const certData = {
                 id: certId,
                 username: username || 'User',
-                amount: amountR, // Original Amount
+                amount: amountR,
                 fee: fee,
                 payout: payout,
                 method: method,
@@ -435,15 +475,12 @@ export class UserDO {
             userData.history.unshift({
                 id: certId,
                 amount: amountR,
-                payout: payout, // details
+                payout: payout,
                 date: dateStr,
                 status: 'issued'
             });
 
             await this.state.storage.put('data', userData);
-
-            // Store Cert in KV (via Worker? No, DO cannot access KV directly safely?
-            // Actually DO can access `this.env.USERS`. Yes.)
             await this.env.USERS.put(certId, JSON.stringify(certData));
 
             return jsonResp({
@@ -461,9 +498,6 @@ export class UserDO {
     }
 
     calculateReward(adCount) {
-        // adCount is 0-based index of *completed* ads today?
-        // Or current count? logic: "Ads 1-5".
-        // If adCount is 0, this is the 1st ad.
         const currentAd = adCount + 1;
         let min, max;
 
@@ -471,12 +505,9 @@ export class UserDO {
             min = 0.1; max = 0.3;
             return this.rand(min, max);
         } else if (currentAd <= 10) {
-            // Weighted low
             if (Math.random() < 0.7) return this.rand(0.1, 0.2);
             else return this.rand(0.2, 0.3);
         } else {
-            // 11+
-            // 0.001 - 0.1, weighted low
             if (Math.random() < 0.8) return this.rand(0.001, 0.05);
             else return this.rand(0.05, 0.1);
         }
@@ -488,12 +519,10 @@ export class UserDO {
 
     async checkGlobalBudget(potentialAmount) {
         const now = Date.now();
-        // Refresh cache every 60s
         if (!this.globalConfig || (now - this.lastGlobalCheck > 60000)) {
             try {
                 const id = this.env.TREASURY_DO.idFromName('GLOBAL_TREASURY');
                 const stub = this.env.TREASURY_DO.get(id);
-                // We ask "check-budget" for a small amount to see if open
                 const res = await stub.fetch(new Request('http://internal/check-budget', {
                     method: 'POST',
                     body: JSON.stringify({ amount: potentialAmount })
@@ -503,16 +532,10 @@ export class UserDO {
                 this.lastGlobalCheck = now;
                 return data.ok;
             } catch (e) {
-                // Fail open or closed? Closed for safety.
                 return false;
             }
         }
-
-        // Use Cache
         if (this.globalConfig.halted) return false;
-        // We don't track exact liability in cache, we just rely on "halted" flag or loose "ok".
-        // The prompt says "halt new earnings if... exceeds".
-        // If we only check every 60s, we might overshoot. This is acceptable per "Do not serialize".
         return true;
     }
 
@@ -520,7 +543,6 @@ export class UserDO {
         try {
             const id = this.env.TREASURY_DO.idFromName('GLOBAL_TREASURY');
             const stub = this.env.TREASURY_DO.get(id);
-            // Fire and forget-ish, but we await to ensure it's sent.
             await stub.fetch(new Request('http://internal/add-liability', {
                 method: 'POST',
                 body: JSON.stringify({ amount })
