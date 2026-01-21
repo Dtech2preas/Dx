@@ -111,18 +111,34 @@ function getSetupGuideHTML(missing) {
             </div>
 
             <div class="step">
-                <h3>3. Add Durable Object Bindings</h3>
+                <h3>3. Create Durable Object Namespaces (Crucial Step)</h3>
+                <p><strong>You cannot bind them until you create them!</strong></p>
+                <ol>
+                    <li>Go back to the main <strong>Workers & Pages</strong> dashboard (exit this worker's settings).</li>
+                    <li>On the left sidebar, click <strong>Durable Objects</strong>.</li>
+                    <li>Click <strong>Create new namespace</strong>.</li>
+                    <li>Name it <code>user_do_namespace</code> and click Add.</li>
+                    <li>Click <strong>Create new namespace</strong> again.</li>
+                    <li>Name it <code>treasury_do_namespace</code> and click Add.</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <h3>4. Add Durable Object Bindings</h3>
+                <p>Now go back to your Worker > <strong>Settings</strong> > <strong>Variables</strong>.</p>
                 <p>Scroll to <strong>Durable Object Bindings</strong> and click <strong>Add binding</strong> twice.</p>
 
                 <p><strong>Binding 1:</strong></p>
                 <ul>
                     <li>Variable name: <code>USER_DO</code></li>
+                    <li>Durable Object: Select <code>user_do_namespace</code> (the one you just created)</li>
                     <li>Class name: <code>UserDO</code></li>
                 </ul>
 
                 <p><strong>Binding 2:</strong></p>
                 <ul>
                     <li>Variable name: <code>TREASURY_DO</code></li>
+                    <li>Durable Object: Select <code>treasury_do_namespace</code> (the one you just created)</li>
                     <li>Class name: <code>TreasuryDO</code></li>
                 </ul>
             </div>
