@@ -418,11 +418,25 @@
             const isPaid = c.status === 'paid';
             
             // Build Result UI
+            const fee = c.fee || 0;
+            const payout = c.payout || c.amount || 0;
+            const method = c.method || 'Unknown';
+
             out.innerHTML = `
                 <div style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">CERTIFICATE FOUND</div>
-                <div style="font-size:1.5rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
-                    R ${c.amount ? c.amount.toFixed(2) : '20.00'}
+                <div style="margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                    <div style="font-size:0.8rem; color:#64748b;">NET PAYOUT</div>
+                    <div style="font-size:2rem; font-weight:bold; color:var(--primary);">
+                        R ${payout.toFixed(2)}
+                    </div>
+                    <div style="font-size:0.8rem; color:#94a3b8;">Method: ${method}</div>
                 </div>
+
+                <div style="display:flex; justify-content:space-around; margin-bottom:15px; font-size:0.9rem;">
+                    <div>Gross: <strong>R ${c.amount ? c.amount.toFixed(2) : '0.00'}</strong></div>
+                    <div>Fee: <span style="color:var(--danger);">R ${fee.toFixed(2)}</span></div>
+                </div>
+
                 <div style="margin-bottom:10px;">User: <strong>${c.username}</strong></div>
                 <div style="display:inline-block; padding:4px 12px; border-radius:20px; font-size:0.8rem; background:${isPaid ? '#ecfdf5' : '#fffbeb'}; color:${isPaid ? 'var(--success)' : 'var(--accent)'}; border:1px solid currentColor;">
                     ${c.status.toUpperCase()}
