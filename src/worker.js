@@ -8,7 +8,7 @@ const CORS_HEADERS = {
 const MONTHLY_BUDGET = 500.00;
 const MIN_WITHDRAWAL = 10.00;
 const MAX_WITHDRAWAL = 250.00;
-const RATE_LIMIT_SECONDS = 20;
+const RATE_LIMIT_SECONDS = 5; // Hard limit for abuse, logic handles penalties
 
 const FEES = {
   'Airtime': 0.25,
@@ -174,22 +174,60 @@ async function handleAddPoints(request, env) {
   const user = JSON.parse(userJson);
   if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
 
-  // 1. Rate Limiting
   const now = Date.now();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // 1. Daily Reset
+  if (user.last_reset_date !== todayStr) {
+      user.daily_count = 0;
+      user.last_reset_date = todayStr;
+  }
+  if (!user.daily_count) user.daily_count = 0;
+
+  // 2. Rate Limiting & Speed Check
+  let elapsed = 999;
   if (user.last_earned_at) {
-      const elapsed = (now - user.last_earned_at) / 1000;
+      elapsed = (now - user.last_earned_at) / 1000;
       if (elapsed < RATE_LIMIT_SECONDS) {
           return new Response(JSON.stringify({ error: `Please wait ${Math.ceil(RATE_LIMIT_SECONDS - elapsed)}s` }), { status: 429, headers: CORS_HEADERS });
       }
   }
 
-  // 2. Calculate Random Earnings (0.05 - 0.15 Rands)
-  // 1 Ad = 0.5 pts. 1 pt = 0.1-0.3 R. => 1 Ad = 0.5 * (0.1..0.3) = 0.05..0.15
-  const min = 0.05;
-  const max = 0.15;
-  const earnings = parseFloat((Math.random() * (max - min) + min).toFixed(2));
+  // 3. Determine Reward based on Speed and Daily Count
+  let min = 0.01;
+  let max = 0.05;
+  let speedStatus = 'green'; // green, yellow, red
 
-  // 3. Check Budget
+  // Speed Logic: Green (>60s), Yellow (30-60s), Red (<30s)
+  if (elapsed < 30) {
+      // RED ZONE - Penalty
+      speedStatus = 'red';
+      min = 0.001;
+      max = 0.01;
+  } else {
+      // Normal Flow (Green/Yellow) - Use Tiers
+      if (elapsed < 60) speedStatus = 'yellow';
+      else speedStatus = 'green';
+
+      // Tier Logic
+      if (user.daily_count < 11) {
+          // Tier 1 (0-10): High Reward
+          min = 0.10;
+          max = 0.30;
+      } else if (user.daily_count < 41) {
+          // Tier 2 (11-40): High Reward
+          min = 0.10;
+          max = 0.30;
+      } else {
+          // Tier 3 (41+): Low Reward
+          min = 0.01;
+          max = 0.10;
+      }
+  }
+
+  const earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3)); // 3 decimals for precision on low amounts
+
+  // 4. Check Budget
   const stats = await getGlobalStats(env);
   const totalCommitment = stats.paid + stats.liability;
 
@@ -199,20 +237,23 @@ async function handleAddPoints(request, env) {
       }), { status: 503, headers: CORS_HEADERS });
   }
 
-  // 4. Update Global
+  // 5. Update Global
   stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
-  // 5. Update User
+  // 6. Update User
   user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(2));
   user.last_earned_at = now;
+  user.daily_count += 1;
 
   await env.USERS.put(username, JSON.stringify(user));
 
   return new Response(JSON.stringify({
       message: 'Earnings credited',
       balance: user.balance,
-      earned: earnings
+      earned: earnings,
+      daily_count: user.daily_count,
+      speed_status: speedStatus
   }), { status: 200, headers: CORS_HEADERS });
 }
 
