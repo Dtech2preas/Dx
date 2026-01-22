@@ -42,6 +42,10 @@ export default {
         return await handleMarkCertPaid(request, env);
       } else if (path === '/admin-stats' && request.method === 'GET') {
         return await handleGetStats(request, env);
+      } else if (path === '/admin/user-action' && request.method === 'POST') {
+        return await handleAdminUserAction(request, env);
+      } else if (path === '/admin/system-action' && request.method === 'POST') {
+        return await handleAdminSystemAction(request, env);
       } else {
         return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
       }
@@ -68,19 +72,53 @@ function getCurrentMonthStr() {
 async function getGlobalStats(env) {
   const raw = await env.USERS.get('GLOBAL_STATS');
   const currentMonth = getCurrentMonthStr();
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  let stats = raw ? JSON.parse(raw) : {
-    month: currentMonth,
-    paid: 0,
-    liability: 0
-  };
+  let stats = raw ? JSON.parse(raw) : {};
+
+  // Ensure Defaults
+  if (!stats.month) stats.month = currentMonth;
+  if (stats.paid === undefined) stats.paid = 0;
+  if (stats.liability === undefined) stats.liability = 0;
+
+  // New Stats
+  if (stats.total_users === undefined) stats.total_users = 0;
+  if (stats.active_today === undefined) stats.active_today = 0;
+  if (stats.ads_today === undefined) stats.ads_today = 0;
+  if (stats.rewards_today === undefined) stats.rewards_today = 0;
+  if (!stats.last_active_date) stats.last_active_date = todayStr;
+
+  // System Config
+  if (!stats.system_status) {
+      stats.system_status = {
+          freeze_rewards: false,
+          emergency_cut: false, // 50% reduction
+          withdrawals_enabled: true,
+          ads_enabled: true
+      };
+  }
+
+  let dirty = false;
 
   // Auto-reset monthly paid amount if new month
   if (stats.month !== currentMonth) {
     stats.month = currentMonth;
     stats.paid = 0;
     // Liability carries over!
-    await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+    dirty = true;
+  }
+
+  // Auto-reset daily stats
+  if (stats.last_active_date !== todayStr) {
+      stats.last_active_date = todayStr;
+      stats.active_today = 0;
+      stats.ads_today = 0;
+      stats.rewards_today = 0;
+      dirty = true;
+  }
+
+  if (dirty) {
+      await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
   }
 
   return stats;
@@ -105,10 +143,18 @@ async function handleRegister(request, env) {
   const userData = {
     passwordHash: passwordHash,
     balance: 0.00, // Rands
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    is_frozen: false,
+    is_shadow_banned: false,
+    withdrawal_disabled: false
   };
 
   await env.USERS.put(username, JSON.stringify(userData));
+
+  // Update Global Stats
+  const stats = await getGlobalStats(env);
+  stats.total_users += 1;
+  await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
   return new Response(JSON.stringify({ message: 'User registered successfully' }), { status: 201, headers: CORS_HEADERS });
 }
@@ -152,6 +198,15 @@ async function handleLogin(request, env) {
 
   if (user.balance === undefined) user.balance = 0;
 
+  // Check Active Status
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (user.last_seen_date !== todayStr) {
+      const stats = await getGlobalStats(env);
+      stats.active_today += 1;
+      await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+      user.last_seen_date = todayStr;
+  }
+
   const token = crypto.randomUUID();
   user.token = token;
   await env.USERS.put(username, JSON.stringify(user));
@@ -174,8 +229,27 @@ async function handleAddPoints(request, env) {
   const user = JSON.parse(userJson);
   if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
 
+  // Check Freeze
+  if (user.is_frozen) {
+      return new Response(JSON.stringify({ error: 'Account frozen. Contact support.' }), { status: 403, headers: CORS_HEADERS });
+  }
+
   const now = Date.now();
   const todayStr = new Date().toISOString().split('T')[0];
+
+  // Fetch Stats Early for Config Checks
+  const stats = await getGlobalStats(env);
+
+  // Check Global Freeze
+  if (stats.system_status.freeze_rewards) {
+       return new Response(JSON.stringify({ error: 'Rewards currently paused by admin.' }), { status: 503, headers: CORS_HEADERS });
+  }
+
+  // Active User Check
+  if (user.last_seen_date !== todayStr) {
+      stats.active_today += 1;
+      user.last_seen_date = todayStr;
+  }
 
   // 1. Daily Reset
   if (user.last_reset_date !== todayStr) {
@@ -225,10 +299,20 @@ async function handleAddPoints(request, env) {
       }
   }
 
-  const earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3)); // 3 decimals for precision on low amounts
+  // Shadow Ban Override
+  if (user.is_shadow_banned) {
+      min = 0.001;
+      max = 0.01;
+  }
+
+  let earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
+
+  // Emergency Cut
+  if (stats.system_status.emergency_cut) {
+      earnings = parseFloat((earnings * 0.5).toFixed(3));
+  }
 
   // 4. Check Budget
-  const stats = await getGlobalStats(env);
   const totalCommitment = stats.paid + stats.liability;
 
   if (totalCommitment + earnings > MONTHLY_BUDGET) {
@@ -239,6 +323,9 @@ async function handleAddPoints(request, env) {
 
   // 5. Update Global
   stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
+  stats.ads_today += 1;
+  stats.rewards_today = parseFloat((stats.rewards_today + earnings).toFixed(2));
+
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
   // 6. Update User
@@ -277,6 +364,17 @@ async function handleRedeem(request, env) {
 
   const user = JSON.parse(userJson);
   if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+
+  // Check User Restriction
+  if (user.withdrawal_disabled) {
+      return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: CORS_HEADERS });
+  }
+
+  // Check Global Restriction
+  const stats = await getGlobalStats(env);
+  if (!stats.system_status.withdrawals_enabled) {
+      return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: CORS_HEADERS });
+  }
 
   if ((user.balance || 0) < amountR) {
       return new Response(JSON.stringify({ error: 'Insufficient balance' }), { status: 400, headers: CORS_HEADERS });
@@ -352,6 +450,19 @@ async function handleMarkCertPaid(request, env) {
   cert.status = 'paid';
   await env.USERS.put(key, JSON.stringify(cert));
 
+  // Sync with User History
+  const userJson = await env.USERS.get(cert.username);
+  if (userJson) {
+      const user = JSON.parse(userJson);
+      if (user.history) {
+          const entry = user.history.find(h => h.id === id);
+          if (entry) {
+              entry.status = 'paid';
+              await env.USERS.put(cert.username, JSON.stringify(user));
+          }
+      }
+  }
+
   // Update Stats: Shift from Liability to Paid
   const stats = await getGlobalStats(env);
   stats.liability = parseFloat((stats.liability - cert.amount).toFixed(2));
@@ -406,4 +517,66 @@ async function handleGetStats(request, env) {
 
     const stats = await getGlobalStats(env);
     return new Response(JSON.stringify(stats), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleAdminUserAction(request, env) {
+    const secret = request.headers.get('X-Admin-Secret');
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+
+    const { username, action, value } = await request.json();
+    if (!username || !action) return new Response(JSON.stringify({ error: 'Missing args' }), { status: 400, headers: CORS_HEADERS });
+
+    const userJson = await env.USERS.get(username);
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    const user = JSON.parse(userJson);
+
+    let message = 'Action completed';
+
+    if (action === 'get_details') {
+        // Just return current state
+        message = 'User details retrieved';
+    }
+    else if (action === 'freeze') user.is_frozen = true;
+    else if (action === 'unfreeze') user.is_frozen = false;
+    else if (action === 'shadowban') user.is_shadow_banned = !!value;
+    else if (action === 'disable_withdrawal') user.withdrawal_disabled = !!value;
+    else if (action === 'reset_counters') {
+        user.daily_count = 0;
+        user.last_reset_date = new Date().toISOString().split('T')[0];
+    }
+    else if (action === 'adjust_balance') {
+        const delta = parseFloat(value);
+        if (!isNaN(delta)) {
+            user.balance = parseFloat(((user.balance || 0) + delta).toFixed(2));
+            // Update Liability in Stats
+            const stats = await getGlobalStats(env);
+            stats.liability = parseFloat((stats.liability + delta).toFixed(2));
+            await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+        }
+    } else {
+        return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
+    }
+
+    await env.USERS.put(username, JSON.stringify(user));
+    return new Response(JSON.stringify({ message, user }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleAdminSystemAction(request, env) {
+    const secret = request.headers.get('X-Admin-Secret');
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+
+    const { action, value } = await request.json();
+    const stats = await getGlobalStats(env);
+
+    // Ensure system_status exists
+    if (!stats.system_status) stats.system_status = {};
+
+    if (action === 'toggle_freeze_rewards') stats.system_status.freeze_rewards = !!value;
+    else if (action === 'toggle_emergency_cut') stats.system_status.emergency_cut = !!value;
+    else if (action === 'toggle_withdrawals') stats.system_status.withdrawals_enabled = !!value;
+    else if (action === 'toggle_ads') stats.system_status.ads_enabled = !!value;
+    else return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
+
+    await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+    return new Response(JSON.stringify({ message: 'System updated', status: stats.system_status }), { status: 200, headers: CORS_HEADERS });
 }

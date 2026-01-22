@@ -167,6 +167,20 @@
             border-top: 1px solid #e2e8f0;
             display: none; /* Hidden by default */
         }
+
+        /* New Controls */
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .control-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; background: #f1f5f9; border-radius: var(--radius); text-align: center; gap: 8px; }
+        .toggle-btn { padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; width: 100%; }
+        .toggle-on { background: var(--success); color: white; }
+        .toggle-off { background: #cbd5e1; color: #64748b; }
+        .toggle-warn { background: var(--danger); color: white; }
+
+        .user-panel { background: #f8fafc; padding: 15px; border-radius: var(--radius); border: 1px solid #e2e8f0; margin-top: 15px; }
+        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; display: inline-block; margin-bottom: 5px; }
+        .badge-red { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .badge-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-yellow { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
     </style>
 </head>
 <body>
@@ -190,15 +204,87 @@
         <button onclick="location.reload()" style="width:auto; padding:6px 12px; font-size:0.75rem;" class="secondary">Lock</button>
     </header>
 
+    <!-- Global Stats -->
     <div class="card">
-        <div class="stat-grid">
+        <h3>Core Stats</h3>
+        <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-box">
-                <div class="stat-label">Pending Liability</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-val" id="s-users">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Active Today</div>
+                <div class="stat-val" id="s-active">0</div>
+            </div>
+             <div class="stat-box">
+                <div class="stat-label">Ads Today</div>
+                <div class="stat-val" id="s-ads">0</div>
+            </div>
+             <div class="stat-box">
+                <div class="stat-label">Rewards Today</div>
+                <div class="stat-val" id="s-rewards">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Liability</div>
                 <div class="stat-val" id="stat-liability">...</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Budget Remaining</div>
-                <div class="stat-val" id="stat-remaining" style="color:var(--success);">...</div>
+                <div class="stat-label">Budget</div>
+                <div class="stat-val" id="stat-remaining">...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Controls -->
+    <div class="card">
+        <h3>System Controls</h3>
+        <div class="control-grid">
+            <div class="control-item">
+                <span style="font-size:0.8rem; font-weight:bold;">Rewards</span>
+                <button id="btn-freeze" class="toggle-btn" onclick="toggleSys('toggle_freeze_rewards')">NORMAL</button>
+            </div>
+            <div class="control-item">
+                <span style="font-size:0.8rem; font-weight:bold;">Emergency Cut</span>
+                <button id="btn-cut" class="toggle-btn" onclick="toggleSys('toggle_emergency_cut')">OFF</button>
+            </div>
+            <div class="control-item">
+                <span style="font-size:0.8rem; font-weight:bold;">Withdrawals</span>
+                <button id="btn-withdraw" class="toggle-btn" onclick="toggleSys('toggle_withdrawals')">ENABLED</button>
+            </div>
+            <div class="control-item">
+                <span style="font-size:0.8rem; font-weight:bold;">Ads System</span>
+                <button id="btn-ads" class="toggle-btn" onclick="toggleSys('toggle_ads')">RUNNING</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Manager -->
+    <div class="card">
+        <h3>User Manager</h3>
+        <div style="display:flex; gap:10px;">
+            <input id="u-search" placeholder="Enter Username" style="margin:0;">
+            <button onclick="lookupUser()" style="width:auto;">Search</button>
+        </div>
+
+        <div id="u-panel" class="user-panel" style="display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+                <div>
+                    <strong id="u-name" style="font-size:1.1rem; display:block;">User</strong>
+                    <div style="font-size:0.8rem; color:#64748b;">Daily: <span id="u-daily">0</span></div>
+                </div>
+                <div style="text-align:right;">
+                    <div id="u-balance" style="font-weight:bold; color:var(--accent); font-size:1.2rem;">R 0.00</div>
+                </div>
+            </div>
+
+            <div id="u-flags" style="margin-bottom:15px;"></div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button class="secondary" onclick="toggleUserStatus('freeze')" id="btn-u-freeze">Freeze</button>
+                <button class="secondary" onclick="toggleUserStatus('shadowban')" id="btn-u-shadow">Shadowban</button>
+                <button class="secondary" onclick="toggleUserStatus('withdraw')" id="btn-u-withdraw">Block W/D</button>
+                <button class="secondary" onclick="actUser('reset_counters')">Reset Daily</button>
+                <button class="secondary" onclick="adjustBal()" style="grid-column: span 2; background:#f0f9ff; border-color:#bae6fd;">Adjust Balance</button>
             </div>
         </div>
     </div>
@@ -292,10 +378,18 @@
         }
     }
 
-    // --- STATS ---
+    // --- STATS & SYSTEM ---
+    let currentSystem = {};
+
     async function loadStats() {
         const { ok, data } = await fetchJson('/admin-stats');
         if(ok) {
+            // Stats
+            document.getElementById('s-users').innerText = data.total_users || 0;
+            document.getElementById('s-active').innerText = data.active_today || 0;
+            document.getElementById('s-ads').innerText = data.ads_today || 0;
+            document.getElementById('s-rewards').innerText = `R ${(data.rewards_today || 0).toFixed(2)}`;
+
             const paid = data.paid || 0;
             const liability = data.liability || 0;
             const remaining = 500 - (paid + liability);
@@ -304,6 +398,132 @@
             const remEl = document.getElementById('stat-remaining');
             remEl.innerText = `R ${remaining.toFixed(2)}`;
             remEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+
+            // System Buttons
+            if(data.system_status) {
+                currentSystem = data.system_status;
+                updateSysBtn('btn-freeze', currentSystem.freeze_rewards, 'PAUSED', 'NORMAL', true);
+                updateSysBtn('btn-cut', currentSystem.emergency_cut, 'ACTIVE', 'OFF', true);
+                updateSysBtn('btn-withdraw', currentSystem.withdrawals_enabled, 'ENABLED', 'DISABLED', false);
+                updateSysBtn('btn-ads', currentSystem.ads_enabled, 'RUNNING', 'PAUSED', false);
+            }
+        }
+    }
+
+    function updateSysBtn(id, state, onTxt, offTxt, isBadIfOn) {
+        const el = document.getElementById(id);
+        if(state) {
+            // It is "Active/True"
+            el.innerText = isBadIfOn ? onTxt : onTxt;
+            el.className = isBadIfOn ? "toggle-btn toggle-warn" : "toggle-btn toggle-on";
+        } else {
+             el.innerText = isBadIfOn ? offTxt : offTxt;
+             el.className = isBadIfOn ? "toggle-btn toggle-on" : "toggle-btn toggle-warn"; // Invert logic for "Bad" toggles
+             if(!isBadIfOn && !state) el.className = "toggle-btn toggle-off"; // Disabled state usually grey
+             if(isBadIfOn && !state) el.className = "toggle-btn toggle-on"; // Normal state green
+        }
+        // Custom colors override
+        if(id === 'btn-freeze') {
+            el.className = state ? "toggle-btn toggle-warn" : "toggle-btn toggle-on";
+        }
+        if(id === 'btn-cut') {
+            el.className = state ? "toggle-btn toggle-warn" : "toggle-btn toggle-off";
+        }
+        if(id === 'btn-withdraw') {
+            el.className = state ? "toggle-btn toggle-on" : "toggle-btn toggle-warn";
+        }
+        if(id === 'btn-ads') {
+            el.className = state ? "toggle-btn toggle-on" : "toggle-btn toggle-warn";
+        }
+    }
+
+    async function toggleSys(action) {
+        let val = false;
+        // Determine next state
+        if(action === 'toggle_freeze_rewards') val = !currentSystem.freeze_rewards;
+        if(action === 'toggle_emergency_cut') val = !currentSystem.emergency_cut;
+        if(action === 'toggle_withdrawals') val = !currentSystem.withdrawals_enabled;
+        if(action === 'toggle_ads') val = !currentSystem.ads_enabled;
+
+        const { ok } = await fetchJson('/admin/system-action', 'POST', { action, value: val });
+        if(ok) loadStats();
+    }
+
+    // --- USER MANAGEMENT ---
+    let loadedUser = null;
+
+    async function lookupUser() {
+        const u = document.getElementById('u-search').value.trim();
+        if(!u) return;
+
+        document.getElementById('u-panel').style.display = 'none';
+
+        const { ok, data } = await fetchJson('/admin/user-action', 'POST', { username: u, action: 'get_details' });
+
+        if(ok && data.user) {
+            loadedUser = data.user;
+            renderUser(u);
+        } else {
+            alert('User not found');
+        }
+    }
+
+    function renderUser(username) {
+        const u = loadedUser;
+        document.getElementById('u-panel').style.display = 'block';
+        document.getElementById('u-name').innerText = username;
+        document.getElementById('u-balance').innerText = `R ${(u.balance||0).toFixed(2)}`;
+        document.getElementById('u-daily').innerText = u.daily_count || 0;
+
+        // Flags
+        const flags = document.getElementById('u-flags');
+        flags.innerHTML = '';
+        if(u.is_frozen) flags.innerHTML += `<span class="badge badge-red">FROZEN</span>`;
+        if(u.is_shadow_banned) flags.innerHTML += `<span class="badge badge-yellow">SHADOWBAN</span>`;
+        if(u.withdrawal_disabled) flags.innerHTML += `<span class="badge badge-red">NO-WITHDRAW</span>`;
+
+        // Update Buttons
+        document.getElementById('btn-u-freeze').innerText = u.is_frozen ? "Unfreeze" : "Freeze";
+        document.getElementById('btn-u-shadow').innerText = u.is_shadow_banned ? "End Shadowban" : "Shadowban";
+        document.getElementById('btn-u-withdraw').innerText = u.withdrawal_disabled ? "Enable W/D" : "Disable W/D";
+    }
+
+    async function toggleUserStatus(type) {
+        if(!loadedUser) return;
+        const u = document.getElementById('u-search').value.trim();
+        let action = '';
+        let val = false;
+
+        if(type === 'freeze') {
+            action = loadedUser.is_frozen ? 'unfreeze' : 'freeze';
+        } else if (type === 'shadowban') {
+            action = 'shadowban';
+            val = !loadedUser.is_shadow_banned;
+        } else if (type === 'withdraw') {
+            action = 'disable_withdrawal';
+            val = !loadedUser.withdrawal_disabled;
+        }
+
+        await actUser(action, val);
+    }
+
+    async function adjustBal() {
+        if(!loadedUser) return;
+        const amt = prompt("Enter amount to ADD (negative to subtract):");
+        if(amt) {
+            await actUser('adjust_balance', amt);
+        }
+    }
+
+    async function actUser(action, value = null) {
+        const u = document.getElementById('u-search').value.trim();
+        const { ok, data } = await fetchJson('/admin/user-action', 'POST', { username: u, action, value });
+        if(ok) {
+            loadedUser = data.user;
+            renderUser(u);
+            if(action === 'adjust_balance') loadStats(); // Update liability
+        } else {
+            alert("Error: " + (data?.error || 'Unknown'));
         }
     }
 
