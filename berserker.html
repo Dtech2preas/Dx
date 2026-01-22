@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Berserker - Read Mode</title>
 
-    <!-- Monetag Multitag (ALL-IN-ONE) - kept as requested -->
+    <!-- Monetag Multitag (ALL-IN-ONE) -->
     <script src="https://quge5.com/88/tag.min.js" data-zone="204316" async data-cfasync="false"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,33 +13,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        :root{
-            --bg:#050617; --surface:#0f172a; --text:#e6eef8; --muted:#94a3b8; --accent:#d4af37; --radius:10px;
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --radius: 10px;
         }
-        html,body{height:100%}
-        body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;min-height:100vh;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;}
-        header{width:100%;padding:14px 0;text-align:center;background:var(--surface);border-bottom:2px solid rgba(255,255,255,0.03)}
-        main{width:100%;max-width:720px;padding:20px;box-sizing:border-box;flex:1;}
-        .card{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(0,0,0,0.4)}
-        #ads-container{width:100%;max-width:720px;margin-top:12px;z-index:50;pointer-events:auto}
-        .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:0.9rem;margin-bottom:8px}
-        .title{font-weight:600;font-size:1.15rem;margin-bottom:12px}
-        .body{line-height:1.6;color:var(--text);white-space:pre-wrap}
-        .controls{display:flex;gap:8px;margin-top:14px}
-        .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer}
-        .btn.primary{background:var(--accent);color:#000;border-color:transparent}
-        #message{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:999px;background:rgba(0,0,0,0.6);display:none}
-        .loader{color:var(--muted);padding:12px 0}
+        html, body { height: 100% }
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0; display: flex; flex-direction: column; align-items: center;
+        }
+        header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
+        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        }
+        #ads-container { width: 100%; max-width: 720px; margin-top: 12px; }
+        .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+        .title { font-weight: 600; font-size: 1.15rem; margin-bottom: 12px; }
+        .body { line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+        .controls { display: flex; gap: 8px; margin-top: 14px; }
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .btn.primary { background: var(--accent); color: #000; border-color: transparent; }
+        #message {
+            position: fixed; top: 72px; left: 50%;
+            transform: translateX(-50%); z-index: 60;
+            padding: 10px 16px; border-radius: 999px;
+            background: rgba(0,0,0,0.6); display: none;
+        }
+        .loader { color: var(--muted); padding: 12px 0; }
     </style>
 </head>
 <body>
+
     <header>
         <div style="font-weight:700">BERSERKER — READ MODE</div>
     </header>
 
-    <!-- stable ad slot for Monetag banners/iframes -->
-    <div id="ads-container" aria-hidden="true"></div>
-
+    <div id="ads-container" aria-hidden="true"></div>  
     <div id="message"></div>
 
     <main>
@@ -63,16 +90,13 @@
     </main>
 
     <script>
-        // CONFIG (backend communication logic preserved)
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev"; // adjust if needed
-        // External free story API (Quotable)
-        const EXTERNAL_STORY_API = "https://api.quotable.io/random";
+        // backend logic preserved
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/"; // fetch random short story 2
 
-        // STATE
         let currentUser = null;
         let isProcessingReward = false;
 
-        // UI helpers
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
             el.textContent = txt;
@@ -96,29 +120,23 @@
                 let data = null;
                 try { data = await res.json(); } catch(e){}
                 return { ok: res.ok, status: res.status, data };
-            } catch (e) {
+            } catch {
                 return { ok: false, status: 0, data: null };
             }
         }
 
-        // AUTH & INIT
         function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
                 return;
             }
-            try {
-                currentUser = JSON.parse(saved);
-                document.getElementById('user-display').innerText = currentUser.username || '...';
-                document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
-                loadCachedStory();
-            } catch (e) {
-                window.location.href = 'index.html';
-            }
+            currentUser = JSON.parse(saved);
+            document.getElementById('user-display').innerText = currentUser.username || '…';
+            document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
+            loadCachedStory();
         }
 
-        // Story caching & rendering
         function loadCachedStory() {
             const cached = localStorage.getItem('cachedStory');
             if (cached) {
@@ -136,33 +154,25 @@
 
         function renderStory(s) {
             document.getElementById('story-title').innerText = s.title || 'Untitled';
-            // Quotable returns plain text; use textContent to avoid any HTML injection
-            document.getElementById('story-body').textContent = s.body || '';
+            document.getElementById('story-body').textContent = (s.story || '') + (s.moral ? "\n\nMoral: " + s.moral : '');
         }
 
-        // Fetch from Quotable and cache locally
         async function fetchAndCacheStory() {
             showMessage('Fetching story...');
             try {
-                const res = await fetch(EXTERNAL_STORY_API, { method: 'GET' });
-                if (!res.ok) throw new Error('fetch failed');
+                const res = await fetch(STORY_API_ENDPOINT);
+                if (!res.ok) throw new Error('fetch fail');
                 const data = await res.json();
-                // Build story object
-                const story = {
-                    id: data._id || (`quote_${Date.now()}`),
-                    title: data.author || 'Unknown',
-                    body: data.content || ''
-                };
-                localStorage.setItem('cachedStory', JSON.stringify(story));
-                renderStory(story);
+                const storyObj = { id: data._id, title: data.title + " — " + data.author, story: data.story, moral: data.moral };
+                localStorage.setItem('cachedStory', JSON.stringify(storyObj));
+                renderStory(storyObj);
                 showMessage('Story cached');
-            } catch (e) {
+            } catch {
                 showMessage('Failed to fetch story');
             }
         }
 
-        // Reward logic (preserved)
-        async function attemptRewardSimulated() {
+        async function attemptReward() {
             if (isProcessingReward) return;
             isProcessingReward = true;
             showMessage('Verifying engagement...');
@@ -177,35 +187,22 @@
                 currentUser.balance = res.data.balance;
                 sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
                 document.getElementById('balance-display').innerText = currentUser.balance.toFixed(2);
-                const earned = res.data.earned;
-                showMessage(`Reward Unlocked! +R ${earned}`);
+                showMessage(`Reward Unlocked! +R ${res.data.earned}`);
             } else {
-                if (res.status === 429) {
-                    showMessage('Too fast! Please wait.');
-                } else {
-                    showMessage(res.data?.error || 'Reward failed.');
-                }
+                showMessage(res.data?.error || 'Reward failed.');
             }
             isProcessingReward = false;
         }
 
-        // UI event bindings
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
         document.getElementById('clear-cache-btn').addEventListener('click', () => {
             localStorage.removeItem('cachedStory');
             renderPlaceholder();
             showMessage('Cache cleared');
         });
-        document.getElementById('claim-btn').addEventListener('click', async () => {
-            await attemptRewardSimulated();
-        });
+        document.getElementById('claim-btn').addEventListener('click', attemptReward);
 
-        // Init on DOMContentLoaded
-        window.addEventListener('DOMContentLoaded', () => {
-            init();
-        });
-
-        // NOTE: Do not replace or remove #ads-container after Monetag loads.
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
