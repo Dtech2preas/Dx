@@ -29,6 +29,18 @@
             margin: 0; display: flex; flex-direction: column; align-items: center;
         }
         header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
+        .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
+
+        /* Health Bar */
+        #health-bar-container {
+            width: 100%; max-width: 720px; height: 6px; background: rgba(255,255,255,0.1);
+            margin: 0 auto; overflow: hidden; position: relative;
+        }
+        #health-bar {
+            height: 100%; width: 0%; background: #22c55e;
+            transition: width 0.5s linear, background 0.3s ease;
+        }
+
         main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
         .card {
             background: var(--surface);
@@ -64,7 +76,12 @@
 
     <header>
         <div style="font-weight:700">BERSERKER — READ MODE</div>
+        <div class="top-balance">R <span id="balance-display-top">0.00</span></div>
     </header>
+
+    <div id="health-bar-container">
+        <div id="health-bar"></div>
+    </div>
 
     <div id="ads-container" aria-hidden="true"></div>  
     <div id="message"></div>
@@ -73,7 +90,7 @@
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
-                <div>Balance: R <span id="balance-display">0.00</span></div>
+                <!-- <div>Balance: R <span id="balance-display">0.00</span></div> (Moved to top) -->
             </div>
 
             <div id="story-area">
@@ -96,6 +113,8 @@
 
         let currentUser = null;
         let isProcessingReward = false;
+        let lastClaimTime = Date.now(); // Local estimate
+        let hasEngaged = false; // "blur" validation
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -133,8 +152,18 @@
             }
             currentUser = JSON.parse(saved);
             document.getElementById('user-display').innerText = currentUser.username || '…';
-            document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
+            updateBalanceUI(currentUser.balance || 0);
+
+            // Restore lastClaimTime if possible (or default to now)
+            const storedTime = localStorage.getItem('lastClaimTime');
+            if (storedTime) lastClaimTime = parseInt(storedTime);
+
+            startHealthBar();
             loadCachedStory();
+        }
+
+        function updateBalanceUI(amount) {
+            document.getElementById('balance-display-top').innerText = amount.toFixed(2);
         }
 
         function loadCachedStory() {
@@ -172,10 +201,48 @@
             }
         }
 
+        // Health Bar Logic
+        function startHealthBar() {
+            const bar = document.getElementById('health-bar');
+
+            setInterval(() => {
+                const now = Date.now();
+                const elapsed = (now - lastClaimTime) / 1000;
+                let pct = 0;
+                let color = '#ef4444'; // Red
+
+                if (elapsed < 30) {
+                    // Red Zone (0-30s)
+                    pct = (elapsed / 30) * 33;
+                    color = '#ef4444'; // Red
+                } else if (elapsed < 60) {
+                    // Yellow Zone (30-60s)
+                    pct = 33 + ((elapsed - 30) / 30) * 33;
+                    color = '#eab308'; // Yellow
+                } else {
+                    // Green Zone (60s+)
+                    pct = 66 + ((elapsed - 60) / 30) * 34;
+                    if (pct > 100) pct = 100;
+                    color = '#22c55e'; // Green
+                }
+
+                bar.style.width = pct + '%';
+                bar.style.background = color;
+            }, 100);
+        }
+
         async function attemptReward() {
             if (isProcessingReward) return;
+
+            // "Blur Thing" validation
+            if (!hasEngaged) {
+                 showMessage('Please read the story first!', 3000);
+                 return;
+            }
+
             isProcessingReward = true;
             showMessage('Verifying engagement...');
+
             const res = await fetchJson('/add-points', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -183,16 +250,37 @@
                     token: currentUser.token
                 })
             });
+
             if (res.ok) {
                 currentUser.balance = res.data.balance;
                 sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                document.getElementById('balance-display').innerText = currentUser.balance.toFixed(2);
-                showMessage(`Reward Unlocked! +R ${res.data.earned}`);
+                updateBalanceUI(currentUser.balance);
+
+                // Update Local Timer
+                lastClaimTime = Date.now();
+                localStorage.setItem('lastClaimTime', lastClaimTime);
+                hasEngaged = false; // Reset engagement
+
+                // Speed Feedback
+                const status = res.data.speed_status; // green, yellow, red
+                if (status === 'red') {
+                    showMessage(`Warning: Too Fast! +R ${res.data.earned} (Penalty Applied)`);
+                } else {
+                     showMessage(`Reward Unlocked! +R ${res.data.earned}`);
+                }
+
             } else {
                 showMessage(res.data?.error || 'Reward failed.');
             }
             isProcessingReward = false;
         }
+
+        // Event Listeners
+        window.addEventListener('blur', () => {
+            // User left the tab (read ad/story?)
+            hasEngaged = true;
+            // console.log('User engaged');
+        });
 
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
         document.getElementById('clear-cache-btn').addEventListener('click', () => {
