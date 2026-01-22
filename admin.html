@@ -381,11 +381,21 @@
                 if(code) {
                     // Success
                     console.log("QR Found:", code.data);
-                    document.getElementById('cert-id').value = code.data;
+
+                    // Parse ID from QR format: DTECH_CERT:<ID>:<USERNAME>:...
+                    let certId = code.data;
+                    if (certId.startsWith('DTECH_CERT:')) {
+                        const parts = certId.split(':');
+                        if (parts.length >= 2) {
+                            certId = parts[1];
+                        }
+                    }
+
+                    document.getElementById('cert-id').value = certId;
                     
                     zone.className = "scanner-box success";
                     text.innerText = "QR Detected!";
-                    document.getElementById('scanner-sub').innerText = code.data;
+                    document.getElementById('scanner-sub').innerText = certId;
                     
                     // Auto Trigger Verification
                     verifyCert();

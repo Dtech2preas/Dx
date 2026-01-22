@@ -10,6 +10,12 @@ const MIN_WITHDRAWAL = 10.00;
 const MAX_WITHDRAWAL = 250.00;
 const RATE_LIMIT_SECONDS = 20;
 
+const FEES = {
+  'Airtime': 0.25,
+  'Voucher': 0.30,
+  'Cash Send': 0.40
+};
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
@@ -211,9 +217,14 @@ async function handleAddPoints(request, env) {
 }
 
 async function handleRedeem(request, env) {
-  const { username, token, amount } = await request.json();
+  const { username, token, amount, method } = await request.json();
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+
+  // Validate Method
+  if (FEES[method] === undefined) {
+      return new Response(JSON.stringify({ error: 'Invalid or missing withdrawal method' }), { status: 400, headers: CORS_HEADERS });
+  }
 
   const amountR = parseFloat(amount);
   if (isNaN(amountR) || amountR < MIN_WITHDRAWAL || amountR > MAX_WITHDRAWAL) {
@@ -230,6 +241,11 @@ async function handleRedeem(request, env) {
       return new Response(JSON.stringify({ error: 'Insufficient balance' }), { status: 400, headers: CORS_HEADERS });
   }
 
+  // Calculate Fee
+  const feePct = FEES[method];
+  const fee = parseFloat((amountR * feePct).toFixed(2));
+  const payout = parseFloat((amountR - fee).toFixed(2));
+
   // Deduct from User
   user.balance = parseFloat((user.balance - amountR).toFixed(2));
 
@@ -241,7 +257,10 @@ async function handleRedeem(request, env) {
   const certData = {
       id: certId,
       username: username,
-      amount: amountR,
+      amount: amountR, // Gross
+      fee: fee,
+      payout: payout, // Net
+      method: method,
       date: new Date().toISOString(),
       status: 'issued' // status: issued, paid
   };
