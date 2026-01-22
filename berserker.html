@@ -16,6 +16,7 @@
         :root{
             --bg:#050617; --surface:#0f172a; --text:#e6eef8; --muted:#94a3b8; --accent:#d4af37; --radius:10px;
         }
+        html,body{height:100%}
         body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;min-height:100vh;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;}
         header{width:100%;padding:14px 0;text-align:center;background:var(--surface);border-bottom:2px solid rgba(255,255,255,0.03)}
         main{width:100%;max-width:720px;padding:20px;box-sizing:border-box;flex:1;}
@@ -23,11 +24,12 @@
         #ads-container{width:100%;max-width:720px;margin-top:12px;z-index:50;pointer-events:auto}
         .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:0.9rem;margin-bottom:8px}
         .title{font-weight:600;font-size:1.15rem;margin-bottom:12px}
-        .body{line-height:1.6;color:var(--text)}
+        .body{line-height:1.6;color:var(--text);white-space:pre-wrap}
         .controls{display:flex;gap:8px;margin-top:14px}
         .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer}
         .btn.primary{background:var(--accent);color:#000;border-color:transparent}
         #message{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:999px;background:rgba(0,0,0,0.6);display:none}
+        .loader{color:var(--muted);padding:12px 0}
     </style>
 </head>
 <body>
@@ -38,6 +40,8 @@
     <!-- stable ad slot for Monetag banners/iframes -->
     <div id="ads-container" aria-hidden="true"></div>
 
+    <div id="message"></div>
+
     <main>
         <div class="card">
             <div class="meta">
@@ -47,7 +51,7 @@
 
             <div id="story-area">
                 <div class="title" id="story-title">Loading story...</div>
-                <div class="body" id="story-body">Please wait.</div>
+                <div class="body" id="story-body"><div class="loader">Please wait.</div></div>
             </div>
 
             <div class="controls">
@@ -58,22 +62,23 @@
         </div>
     </main>
 
-    <div id="message"></div>
-
     <script>
-        // CONFIG (copied backend communication logic)
+        // CONFIG (backend communication logic preserved)
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev"; // adjust if needed
-        const STORY_API = "/stories/random"; // backend route: GET /stories/random (returns {id,title,body})
+        // External free story API (Quotable)
+        const EXTERNAL_STORY_API = "https://api.quotable.io/random";
+
         // STATE
         let currentUser = null;
         let isProcessingReward = false;
 
-        // UTILS
+        // UI helpers
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
             el.textContent = txt;
             el.style.display = 'block';
-            setTimeout(()=> el.style.display = 'none', ms);
+            clearTimeout(el._hideTimeout);
+            el._hideTimeout = setTimeout(()=> el.style.display = 'none', ms);
         }
 
         function getBaseUrl() {
@@ -96,7 +101,7 @@
             }
         }
 
-        // AUTH & INIT (same flow)
+        // AUTH & INIT
         function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
@@ -113,43 +118,50 @@
             }
         }
 
-        // STORY CACHING & FETCHING
+        // Story caching & rendering
         function loadCachedStory() {
             const cached = localStorage.getItem('cachedStory');
             if (cached) {
                 const s = JSON.parse(cached);
                 renderStory(s);
             } else {
-                // try fetch once at init but only if needed
                 renderPlaceholder();
             }
         }
 
         function renderPlaceholder() {
             document.getElementById('story-title').innerText = 'No story cached';
-            document.getElementById('story-body').innerText = 'Click "Fetch New Story" to download and cache a short story.';
+            document.getElementById('story-body').textContent = 'Click "Fetch New Story" to download and cache a short story.';
         }
 
         function renderStory(s) {
             document.getElementById('story-title').innerText = s.title || 'Untitled';
-            // safe html insertion for simple paragraphs (assumes s.body is plain text or safe HTML)
-            document.getElementById('story-body').innerHTML = s.body || '';
+            // Quotable returns plain text; use textContent to avoid any HTML injection
+            document.getElementById('story-body').textContent = s.body || '';
         }
 
+        // Fetch from Quotable and cache locally
         async function fetchAndCacheStory() {
             showMessage('Fetching story...');
-            const res = await fetchJson(STORY_API, { method: 'GET' });
-            if (res.ok && res.data) {
-                const story = res.data;
+            try {
+                const res = await fetch(EXTERNAL_STORY_API, { method: 'GET' });
+                if (!res.ok) throw new Error('fetch failed');
+                const data = await res.json();
+                // Build story object
+                const story = {
+                    id: data._id || (`quote_${Date.now()}`),
+                    title: data.author || 'Unknown',
+                    body: data.content || ''
+                };
                 localStorage.setItem('cachedStory', JSON.stringify(story));
                 renderStory(story);
                 showMessage('Story cached');
-            } else {
+            } catch (e) {
                 showMessage('Failed to fetch story');
             }
         }
 
-        // REWARD (copied logic)
+        // Reward logic (preserved)
         async function attemptRewardSimulated() {
             if (isProcessingReward) return;
             isProcessingReward = true;
@@ -177,7 +189,7 @@
             isProcessingReward = false;
         }
 
-        // simple claim flow (manual fetch-only caching logic preserved)
+        // UI event bindings
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
         document.getElementById('clear-cache-btn').addEventListener('click', () => {
             localStorage.removeItem('cachedStory');
@@ -185,18 +197,15 @@
             showMessage('Cache cleared');
         });
         document.getElementById('claim-btn').addEventListener('click', async () => {
-            // on read mode we assume user must stay >=10s after some interaction;
-            // for now the claim button triggers the backend reward check (backend enforces cooldown/validation)
             await attemptRewardSimulated();
         });
 
-        // INIT
+        // Init on DOMContentLoaded
         window.addEventListener('DOMContentLoaded', () => {
             init();
         });
 
-        // NOTE: Avoid touching #ads-container or replacing body contents after Monetag loads.
-        // Stories are cached locally and will not trigger frequent DOM rewrites.
+        // NOTE: Do not replace or remove #ads-container after Monetag loads.
     </script>
 </body>
 </html>
