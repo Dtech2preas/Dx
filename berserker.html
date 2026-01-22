@@ -115,6 +115,7 @@
         let isProcessingReward = false;
         let lastClaimTime = Date.now(); // Local estimate
         let hasEngaged = false; // "blur" validation
+        let adStartTime = 0;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -236,7 +237,7 @@
 
             // "Blur Thing" validation
             if (!hasEngaged) {
-                 showMessage('Please read the story first!', 3000);
+                 showMessage('Please click an ad and watch for 10s first!', 3000);
                  return;
             }
 
@@ -260,6 +261,7 @@
                 lastClaimTime = Date.now();
                 localStorage.setItem('lastClaimTime', lastClaimTime);
                 hasEngaged = false; // Reset engagement
+                document.getElementById('claim-btn').innerText = "Claim Reward";
 
                 // Speed Feedback
                 const status = res.data.speed_status; // green, yellow, red
@@ -278,8 +280,28 @@
         // Event Listeners
         window.addEventListener('blur', () => {
             // User left the tab (read ad/story?)
-            hasEngaged = true;
-            // console.log('User engaged');
+            adStartTime = Date.now();
+            showMessage('Ad Timer Started... Return in 10s', 5000);
+        });
+
+        window.addEventListener('focus', () => {
+            if (adStartTime > 0) {
+                const duration = Date.now() - adStartTime;
+                adStartTime = 0; // Reset
+
+                if (duration >= 10000) { // 10 seconds
+                    hasEngaged = true;
+                    showMessage(`Ad Verified! (${(duration/1000).toFixed(1)}s)`, 3000);
+                    document.getElementById('claim-btn').innerText = "Claim Reward ✅";
+                } else {
+                    hasEngaged = false;
+                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s). Watch for 10s+.`, 4000);
+                    document.getElementById('claim-btn').innerText = "Claim Reward ❌";
+                    setTimeout(() => {
+                        if(!hasEngaged) document.getElementById('claim-btn').innerText = "Claim Reward";
+                    }, 2000);
+                }
+            }
         });
 
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
