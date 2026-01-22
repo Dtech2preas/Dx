@@ -1,374 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Berserker - Read Mode</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Berserker - Read Mode</title>
 
-  <!-- Monetag Multitag (ALL-IN-ONE) -->
-  <script src="https://quge5.com/88/tag.min.js" data-zone="204316" async data-cfasync="false"></script>
+    <!-- Monetag Multitag (ALL-IN-ONE) -->
+    <script src="https://quge5.com/88/tag.min.js" data-zone="204316" async data-cfasync="false"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --bg:#050617; --surface:#0f172a; --text:#e6eef8; --muted:#94a3b8;
-      --accent:#d4af37; --radius:10px; --green:#10b981; --yellow:#f59e0b; --red:#ef4444;
-    }
-    html,body{height:100%}
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;min-height:100vh;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center}
-    header{width:100%;padding:12px 16px;text-align:center;background:var(--surface);border-bottom:2px solid rgba(255,255,255,0.03);position:sticky;top:0;z-index:40}
-    .top-row{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:900px;margin:0 auto;width:100%}
-    .revenue {font-weight:700;color:var(--accent)}
-    .health-wrap{display:flex;flex-direction:column;gap:6px;align-items:center}
-    .health-label{font-size:0.85rem;color:var(--muted)}
-    .health-bar {width:240px;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-    .health-fill {height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));width:0%;transition:width .35s ease}
-    main{width:100%;max-width:720px;padding:20px;box-sizing:border-box;flex:1}
-    .card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(0,0,0,0.4)}
-    #ads-container{width:100%;max-width:720px;margin-top:12px}
-    .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:0.9rem;margin-bottom:8px}
-    .title{font-weight:600;font-size:1.15rem;margin-bottom:12px}
-    .body{line-height:1.6;color:var(--text);white-space:pre-wrap}
-    .controls{display:flex;gap:8px;margin-top:14px}
-    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer}
-    .btn.primary{background:var(--accent);color:#000;border-color:transparent}
-    #message{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:999px;background:rgba(0,0,0,0.6);display:none}
-    .loader{color:var(--muted);padding:12px 0}
-    .small{font-size:0.85rem;color:var(--muted)}
-    .danger-tip{color:var(--red);font-weight:700}
-  </style>
+    <style>
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --radius: 10px;
+        }
+        html, body { height: 100% }
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0; display: flex; flex-direction: column; align-items: center;
+        }
+        header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
+        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        }
+        #ads-container { width: 100%; max-width: 720px; margin-top: 12px; }
+        .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+        .title { font-weight: 600; font-size: 1.15rem; margin-bottom: 12px; }
+        .body { line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+        .controls { display: flex; gap: 8px; margin-top: 14px; }
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .btn.primary { background: var(--accent); color: #000; border-color: transparent; }
+        #message {
+            position: fixed; top: 72px; left: 50%;
+            transform: translateX(-50%); z-index: 60;
+            padding: 10px 16px; border-radius: 999px;
+            background: rgba(0,0,0,0.6); display: none;
+        }
+        .loader { color: var(--muted); padding: 12px 0; }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="top-row">
-      <div style="display:flex;flex-direction:column;align-items:flex-start">
+
+    <header>
         <div style="font-weight:700">BERSERKER — READ MODE</div>
-        <div class="small">Read to earn — ads load in background</div>
-      </div>
+    </header>
 
-      <div style="display:flex;align-items:center;gap:18px">
-        <div class="revenue">Balance: R <span id="balance-display">0.00</span></div>
+    <div id="ads-container" aria-hidden="true"></div>  
+    <div id="message"></div>
 
-        <div class="health-wrap">
-          <div class="health-label" id="health-status-text">Health: Good</div>
-          <div class="health-bar" role="progressbar" aria-label="Ad health">
-            <div id="health-fill" class="health-fill"></div>
-          </div>
+    <main>
+        <div class="card">
+            <div class="meta">
+                <div>User: <span id="user-display">...</span></div>
+                <div>Balance: R <span id="balance-display">0.00</span></div>
+            </div>
+
+            <div id="story-area">
+                <div class="title" id="story-title">Loading story...</div>
+                <div class="body" id="story-body"><div class="loader">Please wait.</div></div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="fetch-btn">Fetch New Story</button>
+                <button class="btn" id="clear-cache-btn">Clear Cache</button>
+                <button class="btn primary" id="claim-btn">Claim Reward</button>
+            </div>
         </div>
-      </div>
-    </div>
-  </header>
+    </main>
 
-  <div id="ads-container" aria-hidden="true"></div>
-  <div id="message"></div>
+    <script>
+        // backend logic preserved
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/"; // fetch random short story 2
 
-  <main>
-    <div class="card">
-      <div class="meta">
-        <div>User: <span id="user-display">...</span></div>
-        <div class="small">Today's clicks: <span id="ads-today">0</span></div>
-      </div>
+        let currentUser = null;
+        let isProcessingReward = false;
 
-      <div id="story-area">
-        <div class="title" id="story-title">Loading story...</div>
-        <div class="body" id="story-body"><div class="loader">Please wait.</div></div>
-      </div>
+        function showMessage(txt, ms = 2500) {
+            const el = document.getElementById('message');
+            el.textContent = txt;
+            el.style.display = 'block';
+            clearTimeout(el._hideTimeout);
+            el._hideTimeout = setTimeout(()=> el.style.display = 'none', ms);
+        }
 
-      <div class="controls">
-        <button class="btn" id="fetch-btn">Fetch New Story</button>
-        <button class="btn" id="clear-cache-btn">Clear Cache</button>
-        <button class="btn primary" id="claim-btn">Claim Reward</button>
-      </div>
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
 
-      <div style="margin-top:12px;font-size:0.85rem;color:var(--muted)">
-        <div>Estimated today revenue: R <span id="est-revenue">0.00</span></div>
-        <div id="ad-guidance" style="margin-top:6px"></div>
-      </div>
-    </div>
-  </main>
+        async function fetchJson(path, opts = {}) {
+            const url = `${getBaseUrl()}${path}`;
+            const defaultHeaders = { 'Content-Type': 'application/json' };
+            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
+            try {
+                const res = await fetch(url, safeOpts);
+                let data = null;
+                try { data = await res.json(); } catch(e){}
+                return { ok: res.ok, status: res.status, data };
+            } catch {
+                return { ok: false, status: 0, data: null };
+            }
+        }
 
-  <script>
-    // CONFIG
-    const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-    const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/"; // random story
-    const PER_AD_ESTIMATE = 0.085; // conservative ZAR per ad action (adjust as you gather data)
-    const MAX_SAFE_DAILY = 12; // green threshold
-    const YELLOW_THRESHOLD = 20; // yellow threshold
-    const RED_THRESHOLD = 28; // red threshold => hard warning
-    const MIN_AWAY_SECONDS_FOR_AD = 2; // consider >2s away as an interaction; Monetag pop/under usually >2s
-    const AVOID_DOUBLE_COUNT_MS = 5000; // dedupe interactions in this window
+        function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(saved);
+            document.getElementById('user-display').innerText = currentUser.username || '…';
+            document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
+            loadCachedStory();
+        }
 
-    // STATE
-    let currentUser = null;
-    let isProcessingReward = false;
-    let awayStart = null;
-    let lastAdTimestamps = loadAdTimestamps(); // array of epoch ms
-    let lastRecorded = 0;
+        function loadCachedStory() {
+            const cached = localStorage.getItem('cachedStory');
+            if (cached) {
+                const s = JSON.parse(cached);
+                renderStory(s);
+            } else {
+                renderPlaceholder();
+            }
+        }
 
-    // STORAGE KEYS
-    const STORAGE_KEY = 'cachedStory';
-    const AD_TS_KEY = 'ad_timestamps_v1';
+        function renderPlaceholder() {
+            document.getElementById('story-title').innerText = 'No story cached';
+            document.getElementById('story-body').textContent = 'Click "Fetch New Story" to download and cache a short story.';
+        }
 
-    // UI helpers
-    function showMessage(txt, ms = 2500) {
-      const el = document.getElementById('message');
-      el.textContent = txt;
-      el.style.display = 'block';
-      clearTimeout(el._hideTimeout);
-      el._hideTimeout = setTimeout(()=> el.style.display = 'none', ms);
-    }
+        function renderStory(s) {
+            document.getElementById('story-title').innerText = s.title || 'Untitled';
+            document.getElementById('story-body').textContent = (s.story || '') + (s.moral ? "\n\nMoral: " + s.moral : '');
+        }
 
-    function getBaseUrl() {
-      return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:8000'
-        : API_URL;
-    }
+        async function fetchAndCacheStory() {
+            showMessage('Fetching story...');
+            try {
+                const res = await fetch(STORY_API_ENDPOINT);
+                if (!res.ok) throw new Error('fetch fail');
+                const data = await res.json();
+                const storyObj = { id: data._id, title: data.title + " — " + data.author, story: data.story, moral: data.moral };
+                localStorage.setItem('cachedStory', JSON.stringify(storyObj));
+                renderStory(storyObj);
+                showMessage('Story cached');
+            } catch {
+                showMessage('Failed to fetch story');
+            }
+        }
 
-    async function fetchJson(path, opts = {}) {
-      const url = `${getBaseUrl()}${path}`;
-      const defaultHeaders = { 'Content-Type': 'application/json' };
-      const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-      try {
-        const res = await fetch(url, safeOpts);
-        let data = null;
-        try { data = await res.json(); } catch(e){}
-        return { ok: res.ok, status: res.status, data };
-      } catch (e) {
-        return { ok: false, status: 0, data: null };
-      }
-    }
+        async function attemptReward() {
+            if (isProcessingReward) return;
+            isProcessingReward = true;
+            showMessage('Verifying engagement...');
+            const res = await fetchJson('/add-points', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    token: currentUser.token
+                })
+            });
+            if (res.ok) {
+                currentUser.balance = res.data.balance;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                document.getElementById('balance-display').innerText = currentUser.balance.toFixed(2);
+                showMessage(`Reward Unlocked! +R ${res.data.earned}`);
+            } else {
+                showMessage(res.data?.error || 'Reward failed.');
+            }
+            isProcessingReward = false;
+        }
 
-    // --- ad timestamp helpers ---
-    function loadAdTimestamps() {
-      try {
-        const raw = localStorage.getItem(AD_TS_KEY);
-        if (!raw) return [];
-        const arr = JSON.parse(raw);
-        // only keep today's timestamps (since midnight local)
-        const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-        return arr.filter(ts => ts >= startOfDay.getTime());
-      } catch { return []; }
-    }
+        document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
+        document.getElementById('clear-cache-btn').addEventListener('click', () => {
+            localStorage.removeItem('cachedStory');
+            renderPlaceholder();
+            showMessage('Cache cleared');
+        });
+        document.getElementById('claim-btn').addEventListener('click', attemptReward);
 
-    function saveAdTimestamps() {
-      try {
-        localStorage.setItem(AD_TS_KEY, JSON.stringify(lastAdTimestamps));
-      } catch(e) {}
-    }
-
-    function recordAdInteraction(meta = 'auto') {
-      const now = Date.now();
-      // dedupe quick double counts
-      if (now - lastRecorded < AVOID_DOUBLE_COUNT_MS) return false;
-      lastRecorded = now;
-      lastAdTimestamps.push(now);
-      saveAdTimestamps();
-      updateHealthUI();
-      // best-effort notify backend for logging/analytics (backend may ignore)
-      fetch(getBaseUrl() + '/track-ad', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: currentUser?.username, token: currentUser?.token, ts: now, meta })
-      }).catch(()=>{});
-      return true;
-    }
-
-    function getAdsTodayCount() {
-      const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-      return lastAdTimestamps.filter(ts => ts >= startOfDay.getTime()).length;
-    }
-
-    function calcEstimatedRevenue() {
-      return (getAdsTodayCount() * PER_AD_ESTIMATE);
-    }
-
-    function healthStatus() {
-      const n = getAdsTodayCount();
-      if (n <= MAX_SAFE_DAILY) return 'green';
-      if (n <= YELLOW_THRESHOLD) return 'yellow';
-      return 'red';
-    }
-
-    function updateHealthUI() {
-      const n = getAdsTodayCount();
-      document.getElementById('ads-today').innerText = n;
-      document.getElementById('est-revenue').innerText = calcEstimatedRevenue().toFixed(2);
-      const status = healthStatus();
-      const fill = document.getElementById('health-fill');
-
-      // fill percentage based on red threshold
-      const pct = Math.min(100, Math.round((n / RED_THRESHOLD) * 100));
-      fill.style.width = pct + '%';
-
-      // color shifting (approx)
-      if (status === 'green') {
-        fill.style.background = "linear-gradient(90deg,var(--green),#56d7a6)";
-        document.getElementById('health-status-text').innerText = `Health: Good — keep going`;
-        document.getElementById('ad-guidance').innerHTML = '';
-        enableClaim();
-      } else if (status === 'yellow') {
-        fill.style.background = "linear-gradient(90deg,var(--yellow),#ffd27a)";
-        document.getElementById('health-status-text').innerText = `Health: Warning — slow down a bit`;
-        document.getElementById('ad-guidance').innerHTML = '<span style="color:var(--yellow)">You are clicking frequently. Take short breaks between ads to maintain CPM.</span>';
-        enableClaim();
-      } else {
-        fill.style.background = "linear-gradient(90deg,var(--red),#ff9a9a)";
-        document.getElementById('health-status-text').innerText = `Health: Critical — pause now`;
-        document.getElementById('ad-guidance').innerHTML = '<span class="danger-tip">You have clicked too many ads today. Please rest before continuing — claim disabled for safety.</span>';
-        disableClaimFor(60 * 60); // disable for 1 hour soft-lock
-      }
-      document.getElementById('balance-display').innerText = (currentUser?.balance || 0).toFixed(2);
-    }
-
-    // Claim enable/disable helpers
-    let claimDisabledUntil = 0;
-    function disableClaimFor(seconds) {
-      claimDisabledUntil = Date.now() + seconds * 1000;
-      updateClaimButtonState();
-    }
-    function enableClaim() {
-      claimDisabledUntil = 0;
-      updateClaimButtonState();
-    }
-    function updateClaimButtonState() {
-      const btn = document.getElementById('claim-btn');
-      if (Date.now() < claimDisabledUntil) {
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
-      } else {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-      }
-    }
-
-    // --- Story logic (same as prior) ---
-    function init() {
-      const saved = sessionStorage.getItem('ad_user');
-      if (!saved) {
-        window.location.href = 'index.html';
-        return;
-      }
-      try {
-        currentUser = JSON.parse(saved);
-        document.getElementById('user-display').innerText = currentUser.username || '...';
-        document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
-      } catch {
-        window.location.href = 'index.html';
-        return;
-      }
-      loadCachedStory();
-      updateHealthUI();
-    }
-
-    function loadCachedStory() {
-      const cached = localStorage.getItem(STORAGE_KEY);
-      if (cached) {
-        const s = JSON.parse(cached);
-        renderStory(s);
-      } else renderPlaceholder();
-    }
-
-    const STORAGE_KEY = 'cachedStory';
-    function renderPlaceholder() {
-      document.getElementById('story-title').innerText = 'No story cached';
-      document.getElementById('story-body').textContent = 'Click "Fetch New Story" to download and cache a short story.';
-    }
-
-    function renderStory(s) {
-      document.getElementById('story-title').innerText = s.title || 'Untitled';
-      document.getElementById('story-body').textContent = (s.story || '') + (s.moral ? "\n\nMoral: " + s.moral : '');
-    }
-
-    async function fetchAndCacheStory() {
-      showMessage('Fetching story...');
-      try {
-        const res = await fetch(STORY_API_ENDPOINT);
-        if (!res.ok) throw new Error('fetch fail');
-        const data = await res.json();
-        const storyObj = { id: data._id, title: (data.title || 'Story') + " — " + (data.author || 'Unknown'), story: data.story, moral: data.moral };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(storyObj));
-        renderStory(storyObj);
-        showMessage('Story cached');
-      } catch (e) {
-        showMessage('Failed to fetch story');
-      }
-    }
-
-    // --- Reward flow (calls your backend)
-    async function attemptReward() {
-      if (isProcessingReward) return;
-      if (Date.now() < claimDisabledUntil) {
-        showMessage('Claim disabled — please wait or slow down.');
-        return;
-      }
-      isProcessingReward = true;
-      showMessage('Verifying engagement...');
-      const res = await fetchJson('/add-points', {
-        method: 'POST',
-        body: JSON.stringify({ username: currentUser.username, token: currentUser.token })
-      });
-      if (res.ok) {
-        currentUser.balance = res.data.balance;
-        sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-        document.getElementById('balance-display').innerText = currentUser.balance.toFixed(2);
-        showMessage(`Reward Unlocked! +R ${res.data.earned}`);
-      } else {
-        if (res.status === 429) showMessage('Too fast! Please wait.');
-        else showMessage(res.data?.error || 'Reward failed.');
-      }
-      isProcessingReward = false;
-    }
-
-    // --- Ad interaction detection ---
-    // 1) blur/focus: many ad formats cause blur (pop/under). record if away >= MIN_AWAY_SECONDS_FOR_AD
-    window.addEventListener('blur', () => {
-      awayStart = Date.now();
-    });
-    window.addEventListener('focus', () => {
-      if (!awayStart) return;
-      const elapsed = (Date.now() - awayStart) / 1000;
-      awayStart = null;
-      if (elapsed >= MIN_AWAY_SECONDS_FOR_AD) {
-        const recorded = recordAdInteraction('blur_focus');
-        if (recorded) showMessage(`Ad interaction recorded (${Math.floor(elapsed)}s away)`, 1500);
-      }
-    });
-
-    // 2) manual hook: if you have in-page ad-triggering buttons, call recordAdInteraction('click') on click
-    // Example: if Monetag smartlink button is in your page and you control it, add class="ad-action"
-    document.addEventListener('click', (e) => {
-      const target = e.target;
-      if (!target) return;
-      // if element has data-ad-action or class ad-action, count it
-      if (target.dataset && target.dataset.adAction !== undefined) {
-        recordAdInteraction('ad_button');
-        showMessage('Ad clicked', 1200);
-      }
-    });
-
-    // Prevent double-counting when user rotates pages quickly: keep lastRecorded dedupe implemented above
-
-    // --- bindings ---
-    document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
-    document.getElementById('clear-cache-btn').addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEY);
-      renderPlaceholder();
-      showMessage('Cache cleared');
-    });
-    document.getElementById('claim-btn').addEventListener('click', attemptReward);
-
-    // init
-    window.addEventListener('DOMContentLoaded', init);
-
-    // Minor periodic UI upkeep (e.g., re-enable claim when time passes)
-    setInterval(() => {
-      updateHealthUI();
-      updateClaimButtonState();
-    }, 2000);
-
-  </script>
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
