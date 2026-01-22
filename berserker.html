@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(s){s.dataset.zone='10499732',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Berserker Mode - DTech Rewards</title>
-    <!-- Monetag Multitag -->
+
+    <!-- Monetag Multitag (ALL-IN-ONE) - kept as requested -->
     <script src="https://quge5.com/88/tag.min.js" data-zone="204316" async data-cfasync="false"></script>
 
-<script>(function(s){s.dataset.zone='10499732',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <!-- NOTE: Removed duplicate vignette scripts that were present before.
+         Those vignette scripts often conflict with other injected ad types.
+         If you need them later, add a single trusted vignette script intentionally. -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,7 +52,7 @@
             box-shadow: var(--shadow);
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 20;
         }
 
         header h1 {
@@ -58,6 +60,15 @@
             font-family: 'Cinzel', serif;
             font-size: 1.5rem;
             color: var(--primary);
+        }
+
+        /* Ads container: reserve stable DOM slot for injected banners/ads */
+        #ads-container {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 8px;
+            z-index: 50; /* higher than overlays so injected banners are visible */
+            pointer-events: auto;
         }
 
         .stats-bar {
@@ -152,7 +163,7 @@
             top: 70px; /* Below header */
             left: 50%;
             transform: translateX(-50%);
-            z-index: 100;
+            z-index: 5; /* lowered so ads can render above if needed */
             width: 90%;
             max-width: 400px;
             pointer-events: none; /* Let clicks pass through if transparent */
@@ -167,7 +178,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             display: none;
             animation: slideDown 0.3s ease;
-            pointer-events: auto;
+            pointer-events: none; /* avoid blocking ad clicks */
         }
 
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -203,6 +214,10 @@
     <header>
         <h1>BERSERKER MODE</h1>
     </header>
+
+    <!-- Stable slot for Monetag banners/iframes to inject into.
+         Important: keep this DOM node untouched by trivia updates. -->
+    <div id="ads-container" aria-hidden="true"></div>
 
     <div class="stats-bar">
         <div class="stat-item">User: <span id="user-display" class="stat-value">...</span></div>
@@ -242,10 +257,8 @@
             el.innerText = msg;
             el.className = `alert ${type}`;
             el.style.display = 'block';
-
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 3000);
+            // Hide after a short timeout
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
 
         function getBaseUrl() {
@@ -289,8 +302,6 @@
         // TRIVIA LOGIC
         async function loadQuestion() {
             const container = document.getElementById('trivia-container');
-            // Show skeleton or loader if needed, but we usually want instant next
-            // container.innerHTML = '<div class="loader">Loading...</div>';
 
             try {
                 const res = await fetch(TRIVIA_API);
@@ -300,7 +311,6 @@
                     const q = data.results[0];
                     renderQuestion(q);
                 } else {
-                    // Retry if empty (sometimes API rate limits)
                     setTimeout(loadQuestion, 1000);
                 }
             } catch (e) {
@@ -341,11 +351,11 @@
             });
 
             html += `</div>`;
+            // IMPORTANT: only update trivia-container (do not touch #ads-container)
             container.innerHTML = html;
         }
 
         function handleAnswer(btn, isCorrect) {
-            // Visual Feedback
             const buttons = document.querySelectorAll('.option-btn');
             buttons.forEach(b => b.disabled = true); // Prevent double clicks
 
@@ -353,7 +363,6 @@
                 btn.classList.add('correct');
             } else {
                 btn.classList.add('wrong');
-                // Highlight correct one? Maybe too easy. Let's just move on.
             }
 
             // Immediately fetch next question to keep flow fast
@@ -361,6 +370,11 @@
         }
 
         // AD REWARD LOGIC
+        // NOTE: The blur/focus approach can trigger pop-unders (which is fine)
+        // but some networks use blur/focus events to decide behavior. To avoid
+        // interfering with other ad types we temporarily comment those listeners.
+        // If you want to re-enable blur/focus based reward detection, remove the comments.
+        /*
         window.addEventListener('blur', () => {
             awayStartTime = Date.now();
             console.log("User left/blurred at", awayStartTime);
@@ -381,6 +395,20 @@
                 showMessage(`Stay engaged for at least 10s (You did ${Math.floor(elapsedSeconds)}s)`, 'warning');
             }
         });
+        */
+
+        // For testing without blur/focus: provide a visible "Claim reward" button that simulates
+        // the user returning after >=10s. (You can hide this in production or use for debugging.)
+        function createDebugClaimButton() {
+            const btn = document.createElement('button');
+            btn.textContent = "DEBUG: Claim Reward (simulates 10s return)";
+            btn.className = 'btn-secondary';
+            btn.style.marginTop = '12px';
+            btn.onclick = async () => {
+                await attemptReward(12); // simulate 12 seconds away
+            };
+            document.querySelector('.card').appendChild(btn);
+        }
 
         async function attemptReward(elapsed) {
             if (isProcessingReward) return;
@@ -414,8 +442,16 @@
             isProcessingReward = false;
         }
 
-        // Start
-        init();
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            init();
+            // Add debug claim button while testing locally / on res.
+            createDebugClaimButton();
+        });
+
+        // IMPORTANT: Avoid rewriting or replacing <body> or the #ads-container.
+        // Monetag's injected banners/iframes often get removed if you replace parent containers.
+        // Ensure any dynamic UI updates are restricted to #trivia-container only.
 
     </script>
 </body>
