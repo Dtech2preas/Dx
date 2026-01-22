@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Berserker Mode - DTech Rewards</title>
+    <!-- Monetag Multitag -->
+    <script src="https://quge5.com/88/tag.min.js" data-zone="204316" async data-cfasync="false"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --accent: #d4af37;
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-light: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #1e293b;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: var(--surface);
+            padding: 1rem 0;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.9);
+            width: 100%;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-item {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .stat-value { color: var(--accent); }
+
+        main {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Trivia Styles */
+        .question-meta {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: white;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 15px;
+            text-align: left;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .option-btn:hover {
+            background: #334155;
+            border-color: var(--primary);
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.correct { background: rgba(16, 185, 129, 0.2); border-color: var(--success); }
+        .option-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); }
+
+        /* Feedback Message */
+        #feedback-area {
+            position: fixed;
+            top: 70px; /* Below header */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 90%;
+            max-width: 400px;
+            pointer-events: none; /* Let clicks pass through if transparent */
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            animation: slideDown 0.3s ease;
+            pointer-events: auto;
+        }
+
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .alert.success { background: var(--success); color: #fff; }
+        .alert.warning { background: var(--accent); color: #000; }
+        .alert.error { background: var(--danger); color: #fff; }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .btn-secondary:hover { color: white; border-color: var(--text-main); }
+
+        /* Loader */
+        .loader {
+            text-align: center;
+            padding: 20px;
+            color: var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BERSERKER MODE</h1>
+    </header>
+
+    <div class="stats-bar">
+        <div class="stat-item">User: <span id="user-display" class="stat-value">...</span></div>
+        <div class="stat-item">Balance: <span class="stat-value">R <span id="balance-display">0.00</span></span></div>
+    </div>
+
+    <div id="feedback-area">
+        <div id="message-box" class="alert"></div>
+    </div>
+
+    <main>
+        <div class="card">
+            <div id="trivia-container">
+                <div class="loader">Loading Challenge...</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; color: var(--text-light); font-size: 0.8rem; margin-top: 10px;">
+            <p>Interacting with sponsored content supports the platform.</p>
+            <button class="btn-secondary" onclick="window.location.href='index.html'">Return to Dashboard</button>
+        </div>
+    </main>
+
+    <script>
+        // CONFIG
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev"; // Sync with index.html
+        const TRIVIA_API = "https://opentdb.com/api.php?amount=1&type=multiple";
+
+        // STATE
+        let currentUser = null;
+        let awayStartTime = null;
+        let isProcessingReward = false;
+
+        // UTILS
+        function showMessage(msg, type = 'success') {
+            const el = document.getElementById('message-box');
+            el.innerText = msg;
+            el.className = `alert ${type}`;
+            el.style.display = 'block';
+
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 3000);
+        }
+
+        function getBaseUrl() {
+             return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        async function fetchJson(path, opts = {}) {
+            const url = `${getBaseUrl()}${path}`;
+            const defaultHeaders = { 'Content-Type': 'application/json' };
+            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
+
+            try {
+                const res = await fetch(url, safeOpts);
+                let data = null;
+                try { data = await res.json(); } catch (e) {}
+                return { ok: res.ok, status: res.status, data };
+            } catch (e) {
+                return { ok: false, status: 0, data: null };
+            }
+        }
+
+        // AUTH & INIT
+        function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            try {
+                currentUser = JSON.parse(saved);
+                document.getElementById('user-display').innerText = currentUser.username;
+                document.getElementById('balance-display').innerText = (currentUser.balance || 0).toFixed(2);
+                loadQuestion();
+            } catch (e) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // TRIVIA LOGIC
+        async function loadQuestion() {
+            const container = document.getElementById('trivia-container');
+            // Show skeleton or loader if needed, but we usually want instant next
+            // container.innerHTML = '<div class="loader">Loading...</div>';
+
+            try {
+                const res = await fetch(TRIVIA_API);
+                const data = await res.json();
+
+                if (data.results && data.results.length > 0) {
+                    const q = data.results[0];
+                    renderQuestion(q);
+                } else {
+                    // Retry if empty (sometimes API rate limits)
+                    setTimeout(loadQuestion, 1000);
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:red; text-align:center;">Failed to load question. Retrying...</div>';
+                setTimeout(loadQuestion, 2000);
+            }
+        }
+
+        function decodeHtml(html) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        function renderQuestion(q) {
+            const container = document.getElementById('trivia-container');
+            const answers = [...q.incorrect_answers, q.correct_answer];
+
+            // Shuffle
+            for (let i = answers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [answers[i], answers[j]] = [answers[j], answers[i]];
+            }
+
+            let html = `
+                <div class="question-meta">
+                    <span>${decodeHtml(q.category)}</span>
+                    <span>${decodeHtml(q.difficulty)}</span>
+                </div>
+                <div class="question-text">${decodeHtml(q.question)}</div>
+                <div class="options-grid">
+            `;
+
+            answers.forEach(ans => {
+                const isCorrect = ans === q.correct_answer;
+                // We encode status in data attribute to reveal later
+                html += `<button class="option-btn" onclick="handleAnswer(this, ${isCorrect})">${decodeHtml(ans)}</button>`;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function handleAnswer(btn, isCorrect) {
+            // Visual Feedback
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true); // Prevent double clicks
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+            } else {
+                btn.classList.add('wrong');
+                // Highlight correct one? Maybe too easy. Let's just move on.
+            }
+
+            // Immediately fetch next question to keep flow fast
+            setTimeout(loadQuestion, 600);
+        }
+
+        // AD REWARD LOGIC
+        window.addEventListener('blur', () => {
+            awayStartTime = Date.now();
+            console.log("User left/blurred at", awayStartTime);
+        });
+
+        window.addEventListener('focus', async () => {
+            if (!awayStartTime) return;
+
+            const now = Date.now();
+            const elapsedSeconds = (now - awayStartTime) / 1000;
+            awayStartTime = null;
+
+            console.log("User returned. Time away:", elapsedSeconds);
+
+            if (elapsedSeconds >= 10) {
+                await attemptReward(elapsedSeconds);
+            } else if (elapsedSeconds > 1) { // Ignore accidental blurs < 1s
+                showMessage(`Stay engaged for at least 10s (You did ${Math.floor(elapsedSeconds)}s)`, 'warning');
+            }
+        });
+
+        async function attemptReward(elapsed) {
+            if (isProcessingReward) return;
+            isProcessingReward = true;
+
+            showMessage('Verifying engagement...', 'warning'); // Yellow/Info
+
+            const res = await fetchJson('/add-points', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    token: currentUser.token
+                })
+            });
+
+            if (res.ok) {
+                currentUser.balance = res.data.balance;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                document.getElementById('balance-display').innerText = currentUser.balance.toFixed(2);
+
+                const earned = res.data.earned;
+                showMessage(`Reward Unlocked! +R ${earned}`, 'success');
+            } else {
+                if(res.status === 429) {
+                    showMessage('Too fast! Please wait a moment.', 'error');
+                } else {
+                    showMessage(res.data?.error || 'Reward failed.', 'error');
+                }
+            }
+
+            isProcessingReward = false;
+        }
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
