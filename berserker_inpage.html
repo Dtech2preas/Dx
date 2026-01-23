@@ -279,23 +279,67 @@
             isProcessingReward = false;
         }
 
+        // ---------- Improved "away" detection (visibility + safe blur fallback) ----------
+        // lastUserInteraction is used to ensure the user was active recently (avoid false positives for background checks)
+        let blurTimer = null;
+        let lastUserInteraction = Date.now();
+
+        // track user activity so we know the user actually interacted recently
+        ['mousemove', 'keydown', 'touchstart', 'click'].forEach(evt =>
+            window.addEventListener(evt, () => { lastUserInteraction = Date.now(); }, { passive: true })
+        );
+
+        function onHiddenStart() {
+            if (adStartTime === 0) {
+                adStartTime = Date.now();
+                showMessage('Ad Timer Started... Return in 10s', 5000);
+            }
+        }
+
+        function onVisibleReturn() {
+            if (adStartTime === 0) return;
+            const duration = Date.now() - adStartTime;
+            adStartTime = 0;
+            if (duration >= 10000) {
+                attemptReward();
+            } else {
+                showMessage(`Too Short! (${(duration / 1000).toFixed(1)}s). Watch for 10s+.`, 4000);
+            }
+        }
+
+        // Primary: Page Visibility API (robust for tab switch / app background)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                onHiddenStart();
+            } else { // visible
+                onVisibleReturn();
+            }
+        });
+
+        // Fallback: handle blur but avoid false starts from in-page overlays that steal focus
         window.addEventListener('blur', () => {
-            adStartTime = Date.now();
-            showMessage('Ad Timer Started... Return in 10s', 5000);
+            // small delay so transient focus changes (like overlays) don't start the ad timer
+            blurTimer = setTimeout(() => {
+                const userWasActiveRecently = (Date.now() - lastUserInteraction) < 60_000; // 60s window
+                // If the document truly became hidden OR window lost focus AND user was recently active, consider "away"
+                if (document.visibilityState === 'hidden' || (!document.hasFocus() && userWasActiveRecently)) {
+                    onHiddenStart();
+                } else {
+                    // Likely an in-page overlay or tiny focus shift — ignore
+                }
+            }, 250);
         });
 
         window.addEventListener('focus', () => {
-            if (adStartTime > 0) {
-                const duration = Date.now() - adStartTime;
-                adStartTime = 0;
-
-                if (duration >= 10000) {
-                    attemptReward();
-                } else {
-                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s). Watch for 10s+.`, 4000);
-                }
+            if (blurTimer) {
+                clearTimeout(blurTimer);
+                blurTimer = null;
+            }
+            if (document.visibilityState === 'visible') {
+                onVisibleReturn();
             }
         });
+        // ---------- End improved away detection ----------
 
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
 
