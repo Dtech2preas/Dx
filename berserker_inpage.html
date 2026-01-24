@@ -27,9 +27,38 @@
             background: var(--bg);
             color: var(--text);
             margin: 0; display: flex; flex-direction: column; align-items: center;
+            padding-top: 80px; /* Space for Top Ads */
         }
         header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
         .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
+
+        /* Instruction Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-card {
+            background: var(--surface); border: 1px solid var(--accent);
+            padding: 25px; border-radius: 12px; max-width: 90%; width: 400px;
+            text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-title {
+            color: var(--accent); font-family: serif; font-size: 1.4rem;
+            margin-bottom: 15px; font-weight: 700; text-transform: uppercase;
+        }
+        .modal-text {
+            color: #e2e8f0; line-height: 1.6; font-size: 1rem; margin-bottom: 25px;
+        }
+        .modal-btn {
+            background: var(--accent); color: #000; font-weight: 800;
+            padding: 12px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 1rem; transition: transform 0.2s;
+        }
+        .modal-btn:hover { transform: scale(1.05); }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
         /* Health Bar */
         #health-bar-container {
@@ -72,6 +101,19 @@
     </style>
 </head>
 <body>
+
+    <!-- Instructions Popup -->
+    <div class="modal-overlay" id="intro-modal">
+        <div class="modal-card">
+            <div class="modal-title">In-Page Mode</div>
+            <div class="modal-text">
+                Two slide notifications will appear on the top of the website.<br><br>
+                <strong>Click them to activate the ad.</strong><br><br>
+                <span style="color: #fbbf24; font-weight: bold;">NB:</span> Click and wait for 10s or more (you get higher revenue the longer you stay and the more buttons you click on the ad).
+            </div>
+            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">UNDERSTOOD</button>
+        </div>
+    </div>
 
     <header>
         <div style="font-weight:700">BERSERKER — IN-PAGE MODE</div>
