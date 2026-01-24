@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Berserker - Stage 5</title>
+    <title>Berserker - Direct Mode</title>
 
     <!-- Stage 5: Direct Links (No Ad Tag) -->
 
@@ -29,16 +29,6 @@
         }
         header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
         .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
-
-        /* Health Bar */
-        #health-bar-container {
-            width: 100%; max-width: 720px; height: 6px; background: rgba(255,255,255,0.1);
-            margin: 0 auto; overflow: hidden; position: relative;
-        }
-        #health-bar {
-            height: 100%; width: 0%; background: #22c55e;
-            transition: width 0.5s linear, background 0.3s ease;
-        }
 
         main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
         .card {
@@ -76,6 +66,8 @@
         }
         .progress-indicator { color: var(--accent); font-weight: 700; }
 
+        .back-btn { display: inline-block; margin-bottom: 15px; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+
         /* Instruction Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -107,37 +99,35 @@
 </head>
 <body>
 
-    <!-- Instructions Popup -->
     <div class="modal-overlay" id="intro-modal">
         <div class="modal-card">
-            <div class="modal-title">Direct Link Mode</div>
+            <div class="modal-title">Direct Mission</div>
             <div class="modal-text">
-                <strong>Click any of those buttons</strong> for the required amounts or more.
+                Complete tasks by clicking the buttons.<br>
+                <strong>2 clicks per button required.</strong><br>
+                Wait 10s on the page for each click.
             </div>
-            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">I'M READY</button>
+            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
         </div>
     </div>
 
     <header>
-        <div style="font-weight:700">BERSERKER — DIRECT MODE</div>
+        <div style="font-weight:700">BERSERKER — DIRECT</div>
         <div class="top-balance">R <span id="balance-display-top">0.00</span></div>
     </header>
-
-    <div id="health-bar-container">
-        <div id="health-bar"></div>
-    </div>
 
     <div id="message"></div>
 
     <main>
+        <a href="berserker.html" class="back-btn">← Back to Menu</a>
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
-                <div class="progress-indicator">Tasks: <span id="total-progress">0</span>/20</div>
+                <div class="progress-indicator">Progress: <span id="total-progress">0</span>/8</div>
             </div>
 
             <div class="title">Complete All Tasks</div>
-            <p style="color:var(--muted); font-size:0.9rem;">Click each link and view for 10 seconds. You must complete each link 5 times.</p>
+            <p style="color:var(--muted); font-size:0.9rem;">Click each link and view for 10 seconds. You must complete each link 2 times.</p>
 
             <div class="link-grid" id="link-container">
                 <!-- Buttons injected by JS -->
@@ -153,16 +143,15 @@
             { id: 3, url: 'https://otieu.com/4/10205357' },
             { id: 4, url: 'https://otieu.com/4/10358600' }
         ];
-        const CLICKS_PER_LINK = 3;
+        const CLICKS_PER_LINK = 2;
 
         let currentUser = null;
         let isProcessingReward = false;
-        let lastClaimTime = Date.now();
         let adStartTime = 0;
-        let activeLinkId = null; // ID of the link currently being visited
+        let activeLinkId = null;
 
-        // Format: { "1": 0, "2": 3, ... }
-        let stageProgress = {};
+        // Local tracking for UI buttons
+        let localProgress = {};
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -178,21 +167,7 @@
                 : API_URL;
         }
 
-        async function fetchJson(path, opts = {}) {
-            const url = `${getBaseUrl()}${path}`;
-            const defaultHeaders = { 'Content-Type': 'application/json' };
-            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-            try {
-                const res = await fetch(url, safeOpts);
-                let data = null;
-                try { data = await res.json(); } catch(e){}
-                return { ok: res.ok, status: res.status, data };
-            } catch {
-                return { ok: false, status: 0, data: null };
-            }
-        }
-
-        function init() {
+        async function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
@@ -200,23 +175,31 @@
             }
             currentUser = JSON.parse(saved);
             document.getElementById('user-display').innerText = currentUser.username || '…';
-            updateBalanceUI(currentUser.balance || 0);
 
-            const storedTime = localStorage.getItem('lastClaimTime');
-            if (storedTime) lastClaimTime = parseInt(storedTime);
-
-            // Restore Progress
+            // Restore Local Progress
             try {
-                stageProgress = JSON.parse(sessionStorage.getItem('stage_progress_direct') || '{}');
-            } catch { stageProgress = {}; }
+                localProgress = JSON.parse(sessionStorage.getItem('local_progress_direct') || '{}');
+            } catch { localProgress = {}; }
 
-            // Initialize progress for new IDs
             LINKS.forEach(l => {
-                if (stageProgress[l.id] === undefined) stageProgress[l.id] = 0;
+                if (localProgress[l.id] === undefined) localProgress[l.id] = 0;
             });
 
+            await refreshProfile();
             renderButtons();
-            startHealthBar();
+        }
+
+        async function refreshProfile() {
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${currentUser.username}`);
+                const data = await res.json();
+                if(data.balance !== undefined) {
+                    currentUser.balance = data.balance;
+                    updateBalanceUI(data.balance);
+                    const p = data.rounds?.mission?.direct || 0;
+                    document.getElementById('total-progress').innerText = p;
+                }
+            } catch(e) {}
         }
 
         function updateBalanceUI(amount) {
@@ -227,11 +210,8 @@
             const container = document.getElementById('link-container');
             container.innerHTML = '';
 
-            let totalDone = 0;
-
             LINKS.forEach((link, idx) => {
-                const count = stageProgress[link.id] || 0;
-                totalDone += count;
+                const count = localProgress[link.id] || 0;
                 const isComplete = count >= CLICKS_PER_LINK;
 
                 const btn = document.createElement('button');
@@ -245,89 +225,64 @@
                 btn.onclick = () => handleLinkClick(link.id, link.url);
                 container.appendChild(btn);
             });
-
-            document.getElementById('total-progress').innerText = totalDone;
-
-            // Check completion
-            if (totalDone >= (LINKS.length * CLICKS_PER_LINK)) {
-                setTimeout(() => {
-                    showMessage('All Tasks Complete! Rotating...');
-                    sessionStorage.removeItem('stage_progress_direct');
-                    let idx = parseInt(sessionStorage.getItem('berserker_index') || '0');
-                    sessionStorage.setItem('berserker_index', (idx + 1).toString());
-                    window.location.href = 'berserker.html';
-                }, 2000);
-            }
         }
 
         function handleLinkClick(id, url) {
             activeLinkId = id;
             window.open(url, '_blank');
             showMessage('Timer Started... Return after 10s.');
-            // Blur event will fire naturally when tab opens
-        }
-
-        function startHealthBar() {
-            const bar = document.getElementById('health-bar');
-            setInterval(() => {
-                const now = Date.now();
-                const elapsed = (now - lastClaimTime) / 1000;
-                let pct = 0;
-                let color = '#ef4444';
-                if (elapsed < 30) {
-                    pct = (elapsed / 30) * 33;
-                    color = '#ef4444';
-                } else if (elapsed < 60) {
-                    pct = 33 + ((elapsed - 30) / 30) * 33;
-                    color = '#eab308';
-                } else {
-                    pct = 66 + ((elapsed - 60) / 30) * 34;
-                    if (pct > 100) pct = 100;
-                    color = '#22c55e';
-                }
-                bar.style.width = pct + '%';
-                bar.style.background = color;
-            }, 100);
         }
 
         async function attemptReward() {
             if (isProcessingReward) return;
-            if (!activeLinkId) return; // Must have clicked a link
+            if (!activeLinkId) return;
 
             isProcessingReward = true;
             showMessage('Verifying engagement...');
 
-            const res = await fetchJson('/add-points', {
-                method: 'POST',
-                body: JSON.stringify({
-                    username: currentUser.username,
-                    token: currentUser.token
-                })
-            });
+            try {
+                const res = await fetch(`${getBaseUrl()}/add-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: currentUser.token,
+                        type: 'direct'
+                    })
+                });
+                const data = await res.json();
 
-            if (res.ok) {
-                currentUser.balance = res.data.balance;
-                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                updateBalanceUI(currentUser.balance);
+                if (res.ok) {
+                    currentUser.balance = data.balance;
+                    updateBalanceUI(currentUser.balance);
 
-                lastClaimTime = Date.now();
-                localStorage.setItem('lastClaimTime', lastClaimTime);
+                    showMessage(`Task Complete! +R ${data.earned}`);
 
-                const status = res.data.speed_status;
-                if (status === 'red') {
-                    showMessage(`Warning: Too Fast! +R ${res.data.earned} (Penalty)`);
+                    // Update Local Progress
+                    localProgress[activeLinkId]++;
+                    sessionStorage.setItem('local_progress_direct', JSON.stringify(localProgress));
+
+                    // Update Total Progress from Backend
+                    const p = data.progress?.direct || 0;
+                    document.getElementById('total-progress').innerText = p;
+
+                    activeLinkId = null;
+                    renderButtons();
+
+                    if (data.mission_complete) {
+                        showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
+                        setTimeout(() => window.location.href = 'berserker.html', 3000);
+                    }
+
                 } else {
-                     showMessage(`Task Complete! +R ${res.data.earned}`);
+                    showMessage(data.error || 'Reward failed.');
+                    if (data.error && data.error.includes('complete')) {
+                        // Maybe backend says mission complete but frontend didn't know
+                         setTimeout(() => window.location.href = 'berserker.html', 2000);
+                    }
                 }
-
-                // Update Progress
-                stageProgress[activeLinkId]++;
-                sessionStorage.setItem('stage_progress_direct', JSON.stringify(stageProgress));
-                activeLinkId = null; // Reset
-                renderButtons();
-
-            } else {
-                showMessage(res.data?.error || 'Reward failed.');
+            } catch (e) {
+                showMessage("Network error");
             }
             isProcessingReward = false;
         }
@@ -346,8 +301,8 @@
                 if (duration >= 10000) {
                     attemptReward();
                 } else {
-                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s). Watch for 10s+.`, 4000);
-                    activeLinkId = null; // Reset to force re-click
+                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s).`, 4000);
+                    activeLinkId = null;
                 }
             }
         });

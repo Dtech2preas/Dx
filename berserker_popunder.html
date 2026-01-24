@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Berserker - Stage 2</title>
+    <title>Berserker - Pop-Under Mode</title>
 
     <!-- Stage 2: Popunder Ad -->
-       <script>(function(s){s.dataset.zone='10504135',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <script>(function(s){s.dataset.zone='10504135',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,16 +30,6 @@
         }
         header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
         .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
-
-        /* Health Bar */
-        #health-bar-container {
-            width: 100%; max-width: 720px; height: 6px; background: rgba(255,255,255,0.1);
-            margin: 0 auto; overflow: hidden; position: relative;
-        }
-        #health-bar {
-            height: 100%; width: 0%; background: #22c55e;
-            transition: width 0.5s linear, background 0.3s ease;
-        }
 
         main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
         .card {
@@ -69,6 +59,8 @@
         }
         .loader { color: var(--muted); padding: 12px 0; }
         .progress-indicator { color: var(--accent); font-weight: 700; }
+
+        .back-btn { display: inline-block; margin-bottom: 15px; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
 
         /* Instruction Modal */
         .modal-overlay {
@@ -101,31 +93,26 @@
 </head>
 <body>
 
-    <!-- Instructions Popup -->
     <div class="modal-overlay" id="intro-modal">
         <div class="modal-card">
-            <div class="modal-title">Pop-Under Mode</div>
+            <div class="modal-title">Pop-Under Mission</div>
             <div class="modal-text">
-                This is a Pop-Under Berserker Mode.<br><br>
                 Activate the ad by clicking <strong>anywhere</strong> on the screen.<br><br>
-                <span style="color: #fbbf24; font-weight: bold;">NB:</span> Click, wait for 10s, then come back and your rewards will auto be added.
+                Wait for 10s then come back.
             </div>
-            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">LET'S GO</button>
+            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
         </div>
     </div>
 
     <header>
-        <div style="font-weight:700">BERSERKER — POPUNDER MODE</div>
+        <div style="font-weight:700">BERSERKER — POPS</div>
         <div class="top-balance">R <span id="balance-display-top">0.00</span></div>
     </header>
-
-    <div id="health-bar-container">
-        <div id="health-bar"></div>
-    </div>
 
     <div id="message"></div>
 
     <main>
+        <a href="berserker.html" class="back-btn">← Back to Menu</a>
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
@@ -141,7 +128,7 @@
                 <button class="btn" id="fetch-btn">Fetch New Story</button>
             </div>
             <div style="margin-top:12px; font-size: 0.85rem; color: #64748b;">
-                Tip: Interact with the page/ad, then return after 10s to auto-claim.
+                Tip: Click anywhere, wait 10s, return.
             </div>
         </div>
     </main>
@@ -149,13 +136,11 @@
     <script>
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
         const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/";
-        const STAGE_TARGET = 4;
+        const TARGET = 4;
 
         let currentUser = null;
         let isProcessingReward = false;
-        let lastClaimTime = Date.now();
         let adStartTime = 0;
-        let stageProgress = 0;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -171,21 +156,7 @@
                 : API_URL;
         }
 
-        async function fetchJson(path, opts = {}) {
-            const url = `${getBaseUrl()}${path}`;
-            const defaultHeaders = { 'Content-Type': 'application/json' };
-            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-            try {
-                const res = await fetch(url, safeOpts);
-                let data = null;
-                try { data = await res.json(); } catch(e){}
-                return { ok: res.ok, status: res.status, data };
-            } catch {
-                return { ok: false, status: 0, data: null };
-            }
-        }
-
-        function init() {
+        async function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
@@ -193,24 +164,26 @@
             }
             currentUser = JSON.parse(saved);
             document.getElementById('user-display').innerText = currentUser.username || '…';
-            updateBalanceUI(currentUser.balance || 0);
 
-            const storedTime = localStorage.getItem('lastClaimTime');
-            if (storedTime) lastClaimTime = parseInt(storedTime);
-
-            stageProgress = parseInt(sessionStorage.getItem('stage_progress_popunder') || '0');
-            updateProgressUI();
-
-            startHealthBar();
+            await refreshProfile();
             loadCachedStory();
+        }
+
+        async function refreshProfile() {
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${currentUser.username}`);
+                const data = await res.json();
+                if(data.balance !== undefined) {
+                    currentUser.balance = data.balance;
+                    updateBalanceUI(data.balance);
+                    const p = data.rounds?.mission?.popunder || 0;
+                    document.getElementById('progress-display').innerText = p;
+                }
+            } catch(e) {}
         }
 
         function updateBalanceUI(amount) {
             document.getElementById('balance-display-top').innerText = amount.toFixed(2);
-        }
-
-        function updateProgressUI() {
-            document.getElementById('progress-display').innerText = stageProgress;
         }
 
         function loadCachedStory() {
@@ -248,74 +221,48 @@
             }
         }
 
-        function startHealthBar() {
-            const bar = document.getElementById('health-bar');
-            setInterval(() => {
-                const now = Date.now();
-                const elapsed = (now - lastClaimTime) / 1000;
-                let pct = 0;
-                let color = '#ef4444';
-                if (elapsed < 30) {
-                    pct = (elapsed / 30) * 33;
-                    color = '#ef4444';
-                } else if (elapsed < 60) {
-                    pct = 33 + ((elapsed - 30) / 30) * 33;
-                    color = '#eab308';
-                } else {
-                    pct = 66 + ((elapsed - 60) / 30) * 34;
-                    if (pct > 100) pct = 100;
-                    color = '#22c55e';
-                }
-                bar.style.width = pct + '%';
-                bar.style.background = color;
-            }, 100);
-        }
-
         async function attemptReward() {
             if (isProcessingReward) return;
-
             isProcessingReward = true;
             showMessage('Verifying engagement...');
 
-            const res = await fetchJson('/add-points', {
-                method: 'POST',
-                body: JSON.stringify({
-                    username: currentUser.username,
-                    token: currentUser.token
-                })
-            });
+            try {
+                const res = await fetch(`${getBaseUrl()}/add-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: currentUser.token,
+                        type: 'popunder'
+                    })
+                });
+                const data = await res.json();
 
-            if (res.ok) {
-                currentUser.balance = res.data.balance;
-                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                updateBalanceUI(currentUser.balance);
+                if (res.ok) {
+                    currentUser.balance = data.balance;
+                    sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                    updateBalanceUI(currentUser.balance);
 
-                lastClaimTime = Date.now();
-                localStorage.setItem('lastClaimTime', lastClaimTime);
+                    showMessage(`Reward Unlocked! +R ${data.earned}`);
 
-                const status = res.data.speed_status;
-                if (status === 'red') {
-                    showMessage(`Warning: Too Fast! +R ${res.data.earned} (Penalty)`);
+                    const p = data.progress?.popunder || 0;
+                    document.getElementById('progress-display').innerText = p;
+
+                    if (data.mission_complete) {
+                         showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
+                         setTimeout(() => window.location.href = 'berserker.html', 3000);
+                    } else if (p >= TARGET && !data.progress) {
+                         // Type mission done
+                    }
+
                 } else {
-                     showMessage(`Reward Unlocked! +R ${res.data.earned}`);
+                    showMessage(data.error || 'Reward failed.');
+                    if (data.error && data.error.includes('complete')) {
+                        setTimeout(() => window.location.href = 'berserker.html', 2000);
+                    }
                 }
-
-                stageProgress++;
-                sessionStorage.setItem('stage_progress_popunder', stageProgress.toString());
-                updateProgressUI();
-
-                if (stageProgress >= STAGE_TARGET) {
-                    setTimeout(() => {
-                        showMessage('Stage Complete! Rotating...');
-                        sessionStorage.removeItem('stage_progress_popunder');
-                        let idx = parseInt(sessionStorage.getItem('berserker_index') || '0');
-                        sessionStorage.setItem('berserker_index', (idx + 1).toString());
-                        window.location.href = 'berserker.html';
-                    }, 2000);
-                }
-
-            } else {
-                showMessage(res.data?.error || 'Reward failed.');
+            } catch (e) {
+                showMessage("Network error");
             }
             isProcessingReward = false;
         }
@@ -333,7 +280,7 @@
                 if (duration >= 10000) {
                     attemptReward();
                 } else {
-                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s). Watch for 10s+.`, 4000);
+                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s).`, 4000);
                 }
             }
         });

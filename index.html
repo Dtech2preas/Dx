@@ -344,6 +344,10 @@
             <label for="password">Password</label>
             <input id="password" type="password" placeholder="Enter secure key" />
 
+            <div id="ref-display" style="display:none; color:var(--accent); font-size:0.8rem; margin-bottom:15px; text-align:center;">
+                Referred by: <span id="ref-username" style="font-weight:bold;"></span>
+            </div>
+
             <div class="btn-group">
                 <button onclick="handleRegister()" class="secondary">New Student</button>
                 <button onclick="handleLogin()">Secure Login</button>
@@ -490,6 +494,7 @@
         let adStartTime = null;
         let adWindow = null;
         let timerInterval = null;
+        let referralCode = null;
 
         // ---------- UTILS ----------
         function showMessage(msg, type = 'info') {
@@ -559,9 +564,12 @@
           if (u.length <= 5) return showMessage('Username must be more than 5 characters.', 'error');
           if (p.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
 
+          const payload = { username: u, password: p };
+          if(referralCode) payload.referred_by = referralCode;
+
           const res = await fetchJson('/register', {
             method: 'POST',
-            body: JSON.stringify({ username: u, password: p })
+            body: JSON.stringify(payload)
           });
 
           if (res.ok) showMessage('Account created. Please login.', 'success');
@@ -1169,6 +1177,16 @@
 
         // ---------- INIT ----------
         (function init() {
+          // Check Referral
+          const urlParams = new URLSearchParams(window.location.search);
+          const ref = urlParams.get('ref');
+          if(ref) {
+              referralCode = ref;
+              const d = document.getElementById('ref-display');
+              document.getElementById('ref-username').innerText = ref;
+              d.style.display = 'block';
+          }
+
           setupRedeemListeners();
           const saved = sessionStorage.getItem('ad_user');
           if (saved) {

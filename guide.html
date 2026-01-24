@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide - DTech</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 700px; width: 100%; }
+
+        h1 { color: var(--accent); font-size: 2rem; margin-bottom: 30px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { color: #fff; margin-top: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        h3 { color: var(--muted); margin-top: 25px; font-size: 1.1rem; }
+
+        .card {
+            background: var(--surface);
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .highlight { color: var(--accent); font-weight: bold; }
+        .green { color: var(--success); font-weight: bold; }
+        .yellow { color: #facc15; font-weight: bold; }
+        .red { color: var(--danger); font-weight: bold; }
+
+        ul { padding-left: 20px; }
+        li { margin-bottom: 10px; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: var(--accent);
+            color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 800;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>How to Earn</h1>
+
+        <div class="card">
+            <h2>The Rounds System</h2>
+            <p>Our earning system is divided into 3 rounds. To maximize your revenue, you should aim to complete the higher rounds first.</p>
+
+            <h3>1. <span class="green">Round 1 (High Revenue)</span></h3>
+            <ul>
+                <li><strong>Earnings:</strong> R0.10 - R0.30 per click.</li>
+                <li><strong>Mission:</strong> You must complete a specific number of ads (4 Popunders, 6 In-Page, 8 Direct Links).</li>
+                <li><strong>Cooldown:</strong> Once finished, this round locks for <span class="highlight">60 minutes</span>.</li>
+            </ul>
+
+            <h3>2. <span class="yellow">Round 2 (Medium Revenue)</span></h3>
+            <ul>
+                <li><strong>Availability:</strong> Opens only when Round 1 is on cooldown.</li>
+                <li><strong>Earnings:</strong> R0.10 - R0.30 (Lower chance of high rewards).</li>
+                <li><strong>Cooldown:</strong> Locks for <span class="highlight">20 minutes</span> after completion.</li>
+            </ul>
+
+            <h3>3. <span class="red">Round 3 (Grind Mode)</span></h3>
+            <ul>
+                <li><strong>Availability:</strong> Opens when both Round 1 & 2 are cooling down.</li>
+                <li><strong>Earnings:</strong> R0.001 - R0.10.</li>
+                <li><strong>Limits:</strong> <span class="highlight">Unlimited Clicks.</span> No cooldowns. Grind as much as you want!</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Bonuses</h2>
+
+            <h3>Referral Program</h3>
+            <p>Invite friends using your unique link found on your <a href="profile.html" style="color:var(--accent)">Profile</a>. You earn <span class="highlight">5%</span> of everything they earn, forever. This is paid from our system budget, so it doesn't affect their earnings.</p>
+
+            <h3>Notification Streak</h3>
+            <p>Keep push notifications enabled and check in daily. Maintaining a <span class="highlight">7-Day Streak</span> verifies you as an active user and unlocks special rewards.</p>
+        </div>
+
+        <div class="card">
+            <h2>Rules</h2>
+            <ul>
+                <li>Do not use ad-blockers.</li>
+                <li>Do not use VPNs.</li>
+                <li>When clicking an ad, you must wait <span class="highlight">10 seconds</span> on the destination page for it to count.</li>
+                <li>Withdrawals are processed manually via Certificates. Scan the QR code to redeem.</li>
+            </ul>
+        </div>
+
+        <a href="berserker.html" class="btn">START EARNING</a>
+    </div>
+
+</body>
+</html>

@@ -234,6 +234,14 @@
         </div>
     </div>
 
+    <!-- Red Zone List -->
+    <div class="card">
+        <h3>Red Zone Activity (Round 3)</h3>
+        <div id="red-zone-list" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">
+            <div style="color:#64748b; text-align:center;">No recent activity</div>
+        </div>
+    </div>
+
     <!-- System Controls -->
     <div class="card">
         <h3>System Controls</h3>
@@ -472,7 +480,10 @@
         document.getElementById('u-panel').style.display = 'block';
         document.getElementById('u-name').innerText = username;
         document.getElementById('u-balance').innerText = `R ${(u.balance||0).toFixed(2)}`;
-        document.getElementById('u-daily').innerText = u.daily_count || 0;
+
+        const refBal = u.referral_balance || 0;
+        const refCount = u.referral_count || 0;
+        document.getElementById('u-daily').innerHTML = `Daily: ${u.daily_count||0} <span style="color:#cbd5e1; margin:0 5px;">|</span> Ref: R${refBal.toFixed(2)} (${refCount})`;
 
         // Flags
         const flags = document.getElementById('u-flags');

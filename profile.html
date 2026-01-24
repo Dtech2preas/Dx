@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - DTech</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            background: var(--surface);
+            padding: 15px 0;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+        h3 { margin: 0; font-size: 2rem; font-weight: 800; }
+
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .balance-box {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
+        .value { font-size: 1.25rem; font-weight: 700; color: #fff; }
+
+        /* Referral Section */
+        .ref-link-box {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            border: 1px dashed var(--muted);
+        }
+        .ref-link {
+            font-family: monospace;
+            color: var(--accent);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 10px;
+        }
+        .copy-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        /* Streak Section */
+        .streak-track {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+        /* Line behind */
+        .streak-track::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 4px; background: #334155;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+        .day-node {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid #334155;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: bold;
+            z-index: 1;
+            position: relative;
+        }
+        .day-node.active {
+            background: var(--accent);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        .check-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .check-btn:disabled {
+            background: #334155;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* History */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .history-item:last-child { border-bottom: none; }
+        .h-left { display: flex; flex-direction: column; }
+        .h-date { font-size: 0.75rem; color: var(--muted); }
+        .h-id { font-size: 0.85rem; font-weight: 600; }
+        .h-amount { font-weight: 700; color: var(--accent); }
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-weight: 800; font-size: 1.2rem; letter-spacing: 1px;">MY PROFILE</div>
+    </header>
+
+    <div class="container">
+        <a href="berserker.html" class="back-btn">← Back to Berserker</a>
+
+        <!-- Balance Card -->
+        <div class="card">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="label">Total Withdrawalable Balance</div>
+                <h3 id="total-balance">R 0.00</h3>
+                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 5px;">(Earnings + Referrals)</div>
+            </div>
+
+            <div class="balance-grid">
+                <div class="balance-box">
+                    <div class="label">Ad Earnings</div>
+                    <div class="value" id="main-balance">R 0.00</div>
+                </div>
+                <div class="balance-box">
+                    <div class="label">Ref Commission</div>
+                    <div class="value" id="ref-balance">R 0.00</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; font-size: 0.9rem;">
+                Daily Ad Count: <span id="daily-count" style="color: var(--accent); font-weight: bold;">0</span>
+            </div>
+        </div>
+
+        <!-- Referral Card -->
+        <div class="card">
+            <h2>Referral Program</h2>
+            <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
+                Invite friends and earn <strong>5%</strong> of their lifetime earnings! Commission is paid from the system budget, not their wallet.
+            </p>
+            <div class="ref-link-box">
+                <span class="ref-link" id="ref-link">Loading...</span>
+                <button class="copy-btn" onclick="copyRef()">COPY</button>
+            </div>
+            <div style="margin-top: 15px; font-size: 0.9rem;">
+                Total Referrals: <strong id="ref-count">0</strong>
+            </div>
+        </div>
+
+        <!-- Streak Card -->
+        <div class="card">
+            <h2>Notification Streak</h2>
+            <p style="font-size: 0.85rem; color: var(--muted);">
+                Keep notifications ENABLED for 7 days to verify you are an active user.
+            </p>
+
+            <div class="streak-track" id="streak-track">
+                <!-- JS will populate -->
+                <div class="day-node">1</div>
+                <div class="day-node">2</div>
+                <div class="day-node">3</div>
+                <div class="day-node">4</div>
+                <div class="day-node">5</div>
+                <div class="day-node">6</div>
+                <div class="day-node">7</div>
+            </div>
+
+            <button class="check-btn" id="streak-btn" onclick="checkStreak()">VERIFY NOTIFICATIONS</button>
+            <div id="streak-msg" style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--accent); height: 1.2em;"></div>
+        </div>
+
+        <!-- History Card -->
+        <div class="card">
+            <h2>Withdrawal History</h2>
+            <div id="history-list">
+                <div style="text-align: center; color: var(--muted); padding: 20px;">Loading history...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        let currentUser = null;
+
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        async function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const localUser = JSON.parse(saved);
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${localUser.username}`);
+                const data = await res.json();
+
+                if(data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                currentUser = data;
+                render();
+
+            } catch (e) {
+                console.error(e);
+                alert("Failed to load profile.");
+            }
+        }
+
+        function render() {
+            // Balance
+            const main = currentUser.balance || 0;
+            const ref = currentUser.referral_balance || 0;
+            const total = main + ref;
+
+            document.getElementById('total-balance').innerText = `R ${total.toFixed(2)}`;
+            document.getElementById('main-balance').innerText = `R ${main.toFixed(2)}`;
+            document.getElementById('ref-balance').innerText = `R ${ref.toFixed(2)}`;
+            document.getElementById('daily-count').innerText = currentUser.daily_count || 0;
+
+            // Referrals
+            const link = `${window.location.origin}/index.html?ref=${currentUser.username}`;
+            document.getElementById('ref-link').innerText = link;
+            document.getElementById('ref-count').innerText = currentUser.referral_count || 0;
+
+            // Streak
+            const days = currentUser.streak || 0;
+            const track = document.getElementById('streak-track');
+            track.innerHTML = '';
+            for(let i=1; i<=7; i++) {
+                const isActive = i <= days;
+                const node = document.createElement('div');
+                node.className = `day-node ${isActive ? 'active' : ''}`;
+                node.innerText = i;
+                track.appendChild(node);
+            }
+
+            // History
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            if(!currentUser.history || currentUser.history.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 20px;">No withdrawals yet.</div>';
+            } else {
+                currentUser.history.forEach(h => {
+                    const el = document.createElement('div');
+                    el.className = 'history-item';
+
+                    // Parse Date
+                    const d = new Date(h.date).toLocaleDateString();
+
+                    el.innerHTML = `
+                        <div class="h-left">
+                            <span class="h-id">${h.id}</span>
+                            <span class="h-date">${d}</span>
+                        </div>
+                        <div>
+                            <span class="h-amount">R ${h.amount.toFixed(2)}</span>
+                            <span class="status-badge" style="background:${h.status==='paid'?'rgba(34,197,94,0.2)':'rgba(234,179,8,0.2)'}; color:${h.status==='paid'?'var(--success)':'var(--accent)'}">${h.status.toUpperCase()}</span>
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+            }
+        }
+
+        async function checkStreak() {
+            const btn = document.getElementById('streak-btn');
+            const msg = document.getElementById('streak-msg');
+            const saved = JSON.parse(sessionStorage.getItem('ad_user'));
+
+            btn.disabled = true;
+            btn.innerText = "CHECKING...";
+
+            // Check Permission first
+            if (Notification.permission !== "granted") {
+                const perm = await Notification.requestPermission();
+                if (perm !== "granted") {
+                    msg.innerText = "Please allow notifications to continue.";
+                    msg.style.color = "var(--danger)";
+                    btn.disabled = false;
+                    btn.innerText = "VERIFY NOTIFICATIONS";
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/update-notification-streak`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: saved.username, token: saved.token })
+                });
+                const data = await res.json();
+
+                if (data.days) {
+                    currentUser.streak = data.days;
+                    render(); // Re-render bubbles
+                    msg.innerText = data.message;
+                    msg.style.color = "var(--success)";
+                } else {
+                    msg.innerText = data.error || "Error";
+                }
+            } catch (e) {
+                msg.innerText = "Network Error";
+            }
+
+            btn.disabled = false;
+            btn.innerText = "VERIFY NOTIFICATIONS";
+        }
+
+        function copyRef() {
+            const txt = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(txt).then(() => alert('Link copied!'));
+        }
+
+        init();
+    </script>
+</body>
+</html>

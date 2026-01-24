@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Berserker - Stage 3</title>
+    <title>Berserker - In-Page Mode</title>
 
-    <!-- Stage 3: In-page Push -->
-   <script>(function(s){s.dataset.zone='10504195',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <!-- Ad Tag -->
+    <script>(function(s){s.dataset.zone='10504195',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,9 +27,15 @@
             background: var(--bg);
             color: var(--text);
             margin: 0; display: flex; flex-direction: column; align-items: center;
-            padding-top: 80px; /* Space for Top Ads */
+            padding-top: 20vh; /* 20% Top Space for Ads */
         }
-        header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
+        header {
+            width: 100%; padding: 14px 0; text-align: center;
+            background: var(--surface);
+            border-bottom: 2px solid rgba(255,255,255,0.03);
+            position: fixed; top: 0; left: 0; z-index: 50;
+            height: 60px; box-sizing: border-box;
+        }
         .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
 
         /* Instruction Modal */
@@ -60,17 +66,7 @@
         .modal-btn:hover { transform: scale(1.05); }
         @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
-        /* Health Bar */
-        #health-bar-container {
-            width: 100%; max-width: 720px; height: 6px; background: rgba(255,255,255,0.1);
-            margin: 0 auto; overflow: hidden; position: relative;
-        }
-        #health-bar {
-            height: 100%; width: 0%; background: #22c55e;
-            transition: width 0.5s linear, background 0.3s ease;
-        }
-
-        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
+        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; margin-top: 60px; }
         .card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -91,46 +87,44 @@
             cursor: pointer;
         }
         #message {
-            position: fixed; top: 72px; left: 50%;
+            position: fixed; top: 100px; left: 50%;
             transform: translateX(-50%); z-index: 60;
             padding: 10px 16px; border-radius: 999px;
             background: rgba(0,0,0,0.6); display: none; text-align: center;
         }
         .loader { color: var(--muted); padding: 12px 0; }
         .progress-indicator { color: var(--accent); font-weight: 700; }
+
+        .back-btn { display: inline-block; margin-bottom: 15px; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <!-- Instructions Popup -->
     <div class="modal-overlay" id="intro-modal">
         <div class="modal-card">
-            <div class="modal-title">In-Page Mode</div>
+            <div class="modal-title">In-Page Mission</div>
             <div class="modal-text">
-                Two slide notifications will appear on the top of the website.<br><br>
-                <strong>Click them to activate the ad.</strong><br><br>
-                <span style="color: #fbbf24; font-weight: bold;">NB:</span> Click and wait for 10s or more (you get higher revenue the longer you stay and the more buttons you click on the ad).
+                Top area reserved for ads.<br><br>
+                <strong>Click notifications to activate.</strong><br>
+                Wait 10s after clicking for reward.
             </div>
-            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">UNDERSTOOD</button>
+            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
         </div>
     </div>
 
     <header>
-        <div style="font-weight:700">BERSERKER — IN-PAGE MODE</div>
+        <div style="font-weight:700">BERSERKER — IN-PAGE</div>
         <div class="top-balance">R <span id="balance-display-top">0.00</span></div>
     </header>
-
-    <div id="health-bar-container">
-        <div id="health-bar"></div>
-    </div>
 
     <div id="message"></div>
 
     <main>
+        <a href="berserker.html" class="back-btn">← Back to Menu</a>
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
-                <div class="progress-indicator">Progress: <span id="progress-display">0</span>/12</div>
+                <div class="progress-indicator">Progress: <span id="progress-display">0</span>/6</div>
             </div>
 
             <div id="story-area">
@@ -142,7 +136,7 @@
                 <button class="btn" id="fetch-btn">Fetch New Story</button>
             </div>
             <div style="margin-top:12px; font-size: 0.85rem; color: #64748b;">
-                Tip: Interact with the page/ad, then return after 10s to auto-claim.
+                Tip: Interact with the ad, then return after 10s to claim.
             </div>
         </div>
     </main>
@@ -150,13 +144,11 @@
     <script>
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
         const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/";
-        const STAGE_TARGET = 4;
+        const TARGET = 6;
 
         let currentUser = null;
         let isProcessingReward = false;
-        let lastClaimTime = Date.now();
         let adStartTime = 0;
-        let stageProgress = 0;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -172,21 +164,7 @@
                 : API_URL;
         }
 
-        async function fetchJson(path, opts = {}) {
-            const url = `${getBaseUrl()}${path}`;
-            const defaultHeaders = { 'Content-Type': 'application/json' };
-            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-            try {
-                const res = await fetch(url, safeOpts);
-                let data = null;
-                try { data = await res.json(); } catch(e){}
-                return { ok: res.ok, status: res.status, data };
-            } catch {
-                return { ok: false, status: 0, data: null };
-            }
-        }
-
-        function init() {
+        async function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
@@ -194,24 +172,29 @@
             }
             currentUser = JSON.parse(saved);
             document.getElementById('user-display').innerText = currentUser.username || '…';
-            updateBalanceUI(currentUser.balance || 0);
 
-            const storedTime = localStorage.getItem('lastClaimTime');
-            if (storedTime) lastClaimTime = parseInt(storedTime);
+            // Fetch fresh profile to get progress
+            await refreshProfile();
 
-            stageProgress = parseInt(sessionStorage.getItem('stage_progress_inpage') || '0');
-            updateProgressUI();
-
-            startHealthBar();
             loadCachedStory();
+        }
+
+        async function refreshProfile() {
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${currentUser.username}`);
+                const data = await res.json();
+                if(data.balance !== undefined) {
+                    currentUser.balance = data.balance;
+                    // Update Progress
+                    const p = data.rounds?.mission?.inpage || 0;
+                    document.getElementById('progress-display').innerText = p;
+                    updateBalanceUI(data.balance);
+                }
+            } catch(e) { console.error(e); }
         }
 
         function updateBalanceUI(amount) {
             document.getElementById('balance-display-top').innerText = amount.toFixed(2);
-        }
-
-        function updateProgressUI() {
-            document.getElementById('progress-display').innerText = stageProgress;
         }
 
         function loadCachedStory() {
@@ -249,84 +232,60 @@
             }
         }
 
-        function startHealthBar() {
-            const bar = document.getElementById('health-bar');
-            setInterval(() => {
-                const now = Date.now();
-                const elapsed = (now - lastClaimTime) / 1000;
-                let pct = 0;
-                let color = '#ef4444';
-                if (elapsed < 30) {
-                    pct = (elapsed / 30) * 33;
-                    color = '#ef4444';
-                } else if (elapsed < 60) {
-                    pct = 33 + ((elapsed - 30) / 30) * 33;
-                    color = '#eab308';
-                } else {
-                    pct = 66 + ((elapsed - 60) / 30) * 34;
-                    if (pct > 100) pct = 100;
-                    color = '#22c55e';
-                }
-                bar.style.width = pct + '%';
-                bar.style.background = color;
-            }, 100);
-        }
-
         async function attemptReward() {
             if (isProcessingReward) return;
-
             isProcessingReward = true;
             showMessage('Verifying engagement...');
 
-            const res = await fetchJson('/add-points', {
-                method: 'POST',
-                body: JSON.stringify({
-                    username: currentUser.username,
-                    token: currentUser.token
-                })
-            });
+            try {
+                const res = await fetch(`${getBaseUrl()}/add-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: currentUser.token,
+                        type: 'inpage'
+                    })
+                });
+                const data = await res.json();
 
-            if (res.ok) {
-                currentUser.balance = res.data.balance;
-                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                updateBalanceUI(currentUser.balance);
+                if (res.ok) {
+                    currentUser.balance = data.balance;
+                    sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                    updateBalanceUI(currentUser.balance);
 
-                lastClaimTime = Date.now();
-                localStorage.setItem('lastClaimTime', lastClaimTime);
+                    showMessage(`Reward Unlocked! +R ${data.earned}`);
 
-                const status = res.data.speed_status;
-                if (status === 'red') {
-                    showMessage(`Warning: Too Fast! +R ${res.data.earned} (Penalty)`);
+                    // Update Progress
+                    const p = data.progress?.inpage || 0;
+                    document.getElementById('progress-display').innerText = p;
+
+                    if (data.mission_complete) {
+                         // Full Mission Complete (All types)
+                         showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
+                         setTimeout(() => window.location.href = 'berserker.html', 3000);
+                    } else if (p >= TARGET && !data.progress) {
+                        // Current Type Mission Complete (progress is null in R3, but in R1/R2 it's obj)
+                        // If p >= TARGET, backend returns error? No, backend increments THEN checks.
+                        // Actually my backend code: "If currentCount >= target ... return Error".
+                        // So the LAST successful claim puts it AT target.
+                    }
+
                 } else {
-                     showMessage(`Reward Unlocked! +R ${res.data.earned}`);
+                    showMessage(data.error || 'Reward failed.');
+                    if (data.error && data.error.includes('complete')) {
+                        setTimeout(() => window.location.href = 'berserker.html', 2000);
+                    }
                 }
-
-                stageProgress++;
-                sessionStorage.setItem('stage_progress_inpage', stageProgress.toString());
-                updateProgressUI();
-
-                if (stageProgress >= STAGE_TARGET) {
-                    setTimeout(() => {
-                        showMessage('Stage Complete! Rotating...');
-                        sessionStorage.removeItem('stage_progress_inpage');
-                        let idx = parseInt(sessionStorage.getItem('berserker_index') || '0');
-                        sessionStorage.setItem('berserker_index', (idx + 1).toString());
-                        window.location.href = 'berserker.html';
-                    }, 2000);
-                }
-
-            } else {
-                showMessage(res.data?.error || 'Reward failed.');
+            } catch (e) {
+                showMessage("Network error");
             }
             isProcessingReward = false;
         }
 
-        // ---------- Improved "away" detection (visibility + safe blur fallback) ----------
-        // lastUserInteraction is used to ensure the user was active recently (avoid false positives for background checks)
         let blurTimer = null;
         let lastUserInteraction = Date.now();
 
-        // track user activity so we know the user actually interacted recently
         ['mousemove', 'keydown', 'touchstart', 'click'].forEach(evt =>
             window.addEventListener(evt, () => { lastUserInteraction = Date.now(); }, { passive: true })
         );
@@ -345,46 +304,33 @@
             if (duration >= 10000) {
                 attemptReward();
             } else {
-                showMessage(`Too Short! (${(duration / 1000).toFixed(1)}s). Watch for 10s+.`, 4000);
+                showMessage(`Too Short! (${(duration / 1000).toFixed(1)}s).`, 4000);
             }
         }
 
-        // Primary: Page Visibility API (robust for tab switch / app background)
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 onHiddenStart();
-            } else { // visible
+            } else {
                 onVisibleReturn();
             }
         });
 
-        // Fallback: handle blur but avoid false starts from in-page overlays that steal focus
         window.addEventListener('blur', () => {
-            // small delay so transient focus changes (like overlays) don't start the ad timer
             blurTimer = setTimeout(() => {
-                const userWasActiveRecently = (Date.now() - lastUserInteraction) < 60_000; // 60s window
-                // If the document truly became hidden OR window lost focus AND user was recently active, consider "away"
+                const userWasActiveRecently = (Date.now() - lastUserInteraction) < 60_000;
                 if (document.visibilityState === 'hidden' || (!document.hasFocus() && userWasActiveRecently)) {
                     onHiddenStart();
-                } else {
-                    // Likely an in-page overlay or tiny focus shift — ignore
                 }
             }, 250);
         });
 
         window.addEventListener('focus', () => {
-            if (blurTimer) {
-                clearTimeout(blurTimer);
-                blurTimer = null;
-            }
-            if (document.visibilityState === 'visible') {
-                onVisibleReturn();
-            }
+            if (blurTimer) { clearTimeout(blurTimer); blurTimer = null; }
+            if (document.visibilityState === 'visible') { onVisibleReturn(); }
         });
-        // ---------- End improved away detection ----------
 
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
-
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
