@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Berserker - Pop-Under Mode</title>
+    <title>Berserker - Notifications</title>
 
     <!-- Ad Tag Injected Dynamically -->
 
@@ -61,6 +61,28 @@
 
         .back-btn { display: inline-block; margin-bottom: 15px; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
 
+        .skip-btn {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        .claim-btn {
+            background: var(--accent);
+            color: #000;
+            font-weight: 800;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
         /* Instruction Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -94,17 +116,18 @@
 
     <div class="modal-overlay" id="intro-modal">
         <div class="modal-card">
-            <div class="modal-title">Pop-Under Mission</div>
+            <div class="modal-title">Notification Mission</div>
             <div class="modal-text">
-                Activate the ad by clicking <strong>anywhere</strong> on the screen.<br><br>
-                Wait for 10s then come back.
+                Click "ALLOW" when prompted to enable notifications.<br>
+                This supports the platform.<br><br>
+                <strong>You can skip this step if you prefer.</strong>
             </div>
             <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
         </div>
     </div>
 
     <header>
-        <div style="font-weight:700">BERSERKER — POPS</div>
+        <div style="font-weight:700">BERSERKER — PUSH</div>
         <div class="top-balance" style="font-size:0.8rem;">Pending: R <span id="balance-display-top">0.00</span></div>
     </header>
 
@@ -115,31 +138,28 @@
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
-                <div class="progress-indicator">Progress: <span id="progress-display">0</span>/4</div>
+                <div class="progress-indicator">Progress: Optional</div>
             </div>
 
             <div id="story-area">
-                <div class="title" id="story-title">Loading story...</div>
-                <div class="body" id="story-body"><div class="loader">Please wait.</div></div>
+                <div class="title">Push Notifications</div>
+                <div class="body">
+                    Allowing notifications helps us keep this service free and high-paying.
+                    <br><br>
+                    Please click "Allow" on the browser prompt if it appears.
+                </div>
             </div>
 
-            <div class="controls">
-                <button class="btn" id="fetch-btn">Fetch New Story</button>
-            </div>
-            <div style="margin-top:12px; font-size: 0.85rem; color: #64748b;">
-                Tip: Click anywhere, wait 10s, return.
-            </div>
+            <button class="claim-btn" onclick="attemptReward()">I Have Enabled Notifications</button>
+            <button class="skip-btn" onclick="window.location.href='berserker.html'">Skip This Step</button>
         </div>
     </main>
 
     <script>
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-        const STORY_API_ENDPOINT = "https://shortstories-api.onrender.com/";
-        const TARGET = 4;
 
         let currentUser = null;
         let isProcessingReward = false;
-        let adStartTime = 0;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -165,7 +185,6 @@
             document.getElementById('user-display').innerText = currentUser.username || '…';
 
             await refreshProfile();
-            loadCachedStory();
         }
 
         async function refreshProfile() {
@@ -177,9 +196,6 @@
                     currentUser.balance_pending = data.balance_pending || 0;
                     updateBalanceUI(currentUser.balance_pending);
 
-                    const p = data.rounds?.mission?.popunder || 0;
-                    document.getElementById('progress-display').innerText = p;
-
                     // Inject Ad
                     injectAd(data.ad_set);
                 }
@@ -187,26 +203,23 @@
         }
 
         function injectAd(adSet) {
-            if (window.adInjected) return; // Prevent double injection
+            if (window.adInjected) return;
 
-            if (adSet && adSet.popunder && adSet.popunder.tag) {
-                console.log("Injecting Popunder...");
+            if (adSet && adSet.push && adSet.push.tag) {
+                console.log("Injecting Push Tag...");
                 const div = document.createElement('div');
-                div.innerHTML = adSet.popunder.tag;
+                div.innerHTML = adSet.push.tag;
                 document.body.appendChild(div);
 
                 const scripts = div.getElementsByTagName('script');
-                // Convert to array to avoid live collection issues during replacement
                 Array.from(scripts).forEach(oldScript => {
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.text = oldScript.text; // Copy content
+                    newScript.text = oldScript.text;
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
 
                 window.adInjected = true;
-            } else {
-                showMessage("Warning: No Ad Assigned. Contact Admin.", 5000);
             }
         }
 
@@ -214,45 +227,10 @@
             document.getElementById('balance-display-top').innerText = amount.toFixed(2);
         }
 
-        function loadCachedStory() {
-            const cached = localStorage.getItem('cachedStory');
-            if (cached) {
-                const s = JSON.parse(cached);
-                renderStory(s);
-            } else {
-                renderPlaceholder();
-            }
-        }
-
-        function renderPlaceholder() {
-            document.getElementById('story-title').innerText = 'No story cached';
-            document.getElementById('story-body').textContent = 'Click "Fetch New Story" to download and cache a short story.';
-        }
-
-        function renderStory(s) {
-            document.getElementById('story-title').innerText = s.title || 'Untitled';
-            document.getElementById('story-body').textContent = (s.story || '') + (s.moral ? "\n\nMoral: " + s.moral : '');
-        }
-
-        async function fetchAndCacheStory() {
-            showMessage('Fetching story...');
-            try {
-                const res = await fetch(STORY_API_ENDPOINT);
-                if (!res.ok) throw new Error('fetch fail');
-                const data = await res.json();
-                const storyObj = { id: data._id, title: data.title + " — " + data.author, story: data.story, moral: data.moral };
-                localStorage.setItem('cachedStory', JSON.stringify(storyObj));
-                renderStory(storyObj);
-                showMessage('Story cached');
-            } catch {
-                showMessage('Failed to fetch story');
-            }
-        }
-
         async function attemptReward() {
             if (isProcessingReward) return;
             isProcessingReward = true;
-            showMessage('Verifying engagement...');
+            showMessage('Verifying...');
 
             try {
                 const res = await fetch(`${getBaseUrl()}/add-points`, {
@@ -261,7 +239,7 @@
                     body: JSON.stringify({
                         username: currentUser.username,
                         token: currentUser.token,
-                        type: 'popunder'
+                        type: 'push'
                     })
                 });
                 const data = await res.json();
@@ -272,49 +250,17 @@
                     sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
                     updateBalanceUI(currentUser.balance_pending);
 
-                    showMessage(`Reward Unlocked! +R ${data.earned}`);
-
-                    const p = data.progress?.popunder || 0;
-                    document.getElementById('progress-display').innerText = p;
-
-                    if (data.mission_complete) {
-                         showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
-                         setTimeout(() => window.location.href = 'berserker.html', 3000);
-                    } else if (p >= TARGET && !data.progress) {
-                         // Type mission done
-                    }
+                    showMessage(`Reward Unlocked! +R ${data.earned}`, 3000);
+                    setTimeout(() => window.location.href = 'berserker.html', 2000);
 
                 } else {
                     showMessage(data.error || 'Reward failed.');
-                    if (data.error && data.error.includes('complete')) {
-                        setTimeout(() => window.location.href = 'berserker.html', 2000);
-                    }
                 }
             } catch (e) {
                 showMessage("Network error");
             }
             isProcessingReward = false;
         }
-
-        window.addEventListener('blur', () => {
-            adStartTime = Date.now();
-            showMessage('Ad Timer Started... Return in 10s', 5000);
-        });
-
-        window.addEventListener('focus', () => {
-            if (adStartTime > 0) {
-                const duration = Date.now() - adStartTime;
-                adStartTime = 0;
-
-                if (duration >= 10000) {
-                    attemptReward();
-                } else {
-                    showMessage(`Too Short! (${(duration/1000).toFixed(1)}s).`, 4000);
-                }
-            }
-        });
-
-        document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
 
         window.addEventListener('DOMContentLoaded', init);
     </script>

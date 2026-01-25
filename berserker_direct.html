@@ -113,7 +113,7 @@
 
     <header>
         <div style="font-weight:700">BERSERKER — DIRECT</div>
-        <div class="top-balance">R <span id="balance-display-top">0.00</span></div>
+        <div class="top-balance" style="font-size:0.8rem;">Pending: R <span id="balance-display-top">0.00</span></div>
     </header>
 
     <div id="message"></div>
@@ -138,10 +138,10 @@
     <script>
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
         const LINKS = [
-            { id: 1, url: 'https://otieu.com/4/10250311' },
-            { id: 2, url: 'https://otieu.com/4/9515888' },
-            { id: 3, url: 'https://otieu.com/4/10205357' },
-            { id: 4, url: 'https://otieu.com/4/10358600' }
+            { id: 1, url: '' },
+            { id: 2, url: '' },
+            { id: 3, url: '' },
+            { id: 4, url: '' }
         ];
         const CLICKS_PER_LINK = 2;
 
@@ -195,9 +195,21 @@
                 const data = await res.json();
                 if(data.balance !== undefined) {
                     currentUser.balance = data.balance;
-                    updateBalanceUI(data.balance);
+                    currentUser.balance_pending = data.balance_pending || 0;
+                    updateBalanceUI(currentUser.balance_pending);
+
                     const p = data.rounds?.mission?.direct || 0;
                     document.getElementById('total-progress').innerText = p;
+
+                    // Update Links
+                    if (data.ad_set && data.ad_set.direct && data.ad_set.direct.link) {
+                        const dl = data.ad_set.direct.link;
+                        LINKS.forEach(l => l.url = dl);
+                    } else {
+                        showMessage("Warning: No Direct Link Assigned.", 5000);
+                        document.getElementById('link-container').innerHTML = '<div style="color:red; text-align:center;">Error: No Ad Assigned. Contact Admin.</div>';
+                        return; // Stop render
+                    }
                 }
             } catch(e) {}
         }
@@ -254,7 +266,8 @@
 
                 if (res.ok) {
                     currentUser.balance = data.balance;
-                    updateBalanceUI(currentUser.balance);
+                    currentUser.balance_pending = data.balance_pending;
+                    updateBalanceUI(currentUser.balance_pending);
 
                     showMessage(`Task Complete! +R ${data.earned}`);
 

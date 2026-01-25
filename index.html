@@ -344,13 +344,24 @@
             <label for="password">Password</label>
             <input id="password" type="password" placeholder="Enter secure key" />
 
+            <div id="reg-fields" style="display:none; animation: fadeIn 0.4s ease;">
+                <label for="email">Email Address</label>
+                <input id="email" type="text" placeholder="name@example.com" />
+
+                <label for="whatsapp">WhatsApp Number</label>
+                <input id="whatsapp" type="text" placeholder="+27..." />
+                <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:15px; margin-top:-10px;">
+                    * We recommend using your WhatsApp number for faster approval.
+                </div>
+            </div>
+
             <div id="ref-display" style="display:none; color:var(--accent); font-size:0.8rem; margin-bottom:15px; text-align:center;">
                 Referred by: <span id="ref-username" style="font-weight:bold;"></span>
             </div>
 
             <div class="btn-group">
-                <button onclick="handleRegister()" class="secondary">New Student</button>
-                <button onclick="handleLogin()">Secure Login</button>
+                <button id="reg-btn" onclick="handleRegister()" class="secondary">New Student</button>
+                <button id="login-btn" onclick="handleLogin()">Secure Login</button>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
@@ -555,16 +566,30 @@
         }
 
         async function handleRegister() {
+          const regFields = document.getElementById('reg-fields');
+          const regBtn = document.getElementById('reg-btn');
+
+          // Step 1: Show Fields
+          if (regFields.style.display === 'none') {
+              regFields.style.display = 'block';
+              regBtn.innerText = 'Confirm Registration';
+              document.getElementById('login-btn').style.display = 'none';
+              return showMessage('Please complete contact details for approval.', 'info');
+          }
+
+          // Step 2: Submit
           const u = document.getElementById('username').value.trim();
           const p = document.getElementById('password').value.trim();
+          const e = document.getElementById('email').value.trim();
+          const w = document.getElementById('whatsapp').value.trim();
 
-          if (!u || !p) return showMessage('Credentials required.', 'error');
+          if (!u || !p || !e || !w) return showMessage('All fields are required.', 'error');
 
           // Validation
           if (u.length <= 5) return showMessage('Username must be more than 5 characters.', 'error');
           if (p.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
 
-          const payload = { username: u, password: p };
+          const payload = { username: u, password: p, email: e, whatsapp: w };
           if(referralCode) payload.referred_by = referralCode;
 
           const res = await fetchJson('/register', {
@@ -572,7 +597,13 @@
             body: JSON.stringify(payload)
           });
 
-          if (res.ok) showMessage('Account created. Please login.', 'success');
+          if (res.ok) {
+              showMessage('Registration Pending. Please wait for admin approval.', 'success');
+              // Reset UI
+              setTimeout(() => {
+                  window.location.reload();
+              }, 3000);
+          }
           else showMessage(res.data?.error || 'Registration failed', 'error');
         }
 
@@ -587,6 +618,11 @@
           });
 
           if (res.ok && res.data) {
+            // Check Status
+            if (res.data.status === 'pending') {
+                return showMessage('Account is pending approval. Please check back later or contact admin.', 'info');
+            }
+
             currentUser = {
               username: u,
               balance: res.data.balance || 0,
