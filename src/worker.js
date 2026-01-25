@@ -57,6 +57,10 @@ export default {
         return await handleAdminUserAction(request, env);
       } else if (path === '/admin/system-action' && request.method === 'POST') {
         return await handleAdminSystemAction(request, env);
+      } else if (path === '/admin/ad-sets' && (request.method === 'GET' || request.method === 'POST')) {
+        return await handleAdSets(request, env);
+      } else if (path === '/admin/reconcile' && request.method === 'POST') {
+        return await handleReconcile(request, env);
       } else {
         return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
       }
@@ -165,10 +169,10 @@ function determineRound(user) {
 // --- Handlers ---
 
 async function handleRegister(request, env) {
-  const { username, password, referred_by } = await request.json();
+  const { username, password, referred_by, email, whatsapp } = await request.json();
 
-  if (!username || !password) {
-    return new Response(JSON.stringify({ error: 'Missing username or password' }), { status: 400, headers: CORS_HEADERS });
+  if (!username || !password || !email || !whatsapp) {
+    return new Response(JSON.stringify({ error: 'Missing fields: Username, Password, Email, WhatsApp' }), { status: 400, headers: CORS_HEADERS });
   }
 
   const existingUser = await env.USERS.get(username);
@@ -188,6 +192,11 @@ async function handleRegister(request, env) {
   const userData = {
     passwordHash: passwordHash,
     balance: 0.00,
+    balance_pending: 0.00, // New pending balance
+    status: 'pending', // New status
+    ad_set_id: null,   // New ad set assignment
+    email: email,
+    whatsapp: whatsapp,
     referral_balance: 0.00,
     referred_by: validReferrer,
     referral_count: 0,
@@ -209,6 +218,21 @@ async function handleRegister(request, env) {
   const stats = await getGlobalStats(env);
   stats.total_users += 1;
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+
+  // Add to Pending List
+  let pendingList = [];
+  try {
+      const raw = await env.USERS.get('PENDING_USERS');
+      if (raw) pendingList = JSON.parse(raw);
+  } catch(e) {}
+
+  pendingList.push({
+      username: username,
+      email: email,
+      whatsapp: whatsapp,
+      date: new Date().toISOString()
+  });
+  await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
 
   // Update Referrer Count (async-ish optimization not needed for KV, just do it)
   if (validReferrer) {
@@ -273,15 +297,16 @@ async function handleLogin(request, env) {
       message: 'Login successful',
       balance: user.balance,
       token: token,
-      username: username
+      username: username,
+      status: user.status || 'active'
   }), { status: 200, headers: CORS_HEADERS });
 }
 
 async function handleAddPoints(request, env) {
-  const { username, token, type } = await request.json(); // Type: popunder, inpage, direct
+  const { username, token, type } = await request.json(); // Type: popunder, inpage, direct, push
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
-  if (!['popunder', 'inpage', 'direct'].includes(type)) {
+  if (!['popunder', 'inpage', 'direct', 'push'].includes(type)) {
       // Default or legacy fallback? No, strict.
       return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: CORS_HEADERS });
   }
@@ -309,11 +334,24 @@ async function handleAddPoints(request, env) {
   let missionComplete = false;
   if (currentRound === 1 || currentRound === 2) {
       if (!user.rounds.mission_progress) {
-          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
       }
 
+      // If push, it's optional, so no target check?
+      // User said "just say you can skip this", but maybe they can also do it for points?
+      // We will allow points for it.
+
       const currentCount = user.rounds.mission_progress[type] || 0;
-      const target = MISSION_TARGETS[type];
+      const target = MISSION_TARGETS[type] || 999; // 999 for optional push
+
+      if (type !== 'push' && currentCount >= target) {
+          return new Response(JSON.stringify({
+              error: `Mission for ${type} complete for this round. Switch ad types.`
+          }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Increment
+      user.rounds.mission_progress[type] = currentCount + 1;
 
       if (currentCount >= target) {
           return new Response(JSON.stringify({
@@ -405,8 +443,8 @@ async function handleAddPoints(request, env) {
       await env.USERS.put('RED_ZONE_USERS', JSON.stringify(redList));
   }
 
-  // Update User Balance
-  user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(2));
+  // Update User Balance (Now goes to pending)
+  user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
   user.daily_count = (user.daily_count || 0) + 1; // Just for stats
 
   // Referral Commission
@@ -438,6 +476,7 @@ async function handleAddPoints(request, env) {
   return new Response(JSON.stringify({
       message: 'Earnings credited',
       balance: user.balance,
+      balance_pending: user.balance_pending,
       earned: earnings,
       round: currentRound,
       mission_complete: missionComplete,
@@ -547,13 +586,25 @@ async function handleGetProfile(request, env) {
     const r1Left = Math.max(0, (60 * 60 * 1000) - (now - (user.rounds?.r1_last_completed || 0)));
     const r2Left = Math.max(0, (20 * 60 * 1000) - (now - (user.rounds?.r2_last_completed || 0)));
 
+    // Fetch Ad Set
+    let adSet = null;
+    if (user.ad_set_id) {
+        try {
+            const rawSet = await env.USERS.get(`ADSET:${user.ad_set_id}`);
+            if (rawSet) adSet = JSON.parse(rawSet);
+        } catch (e) {}
+    }
+
     return new Response(JSON.stringify({
         username: user.username,
         balance: user.balance || 0,
+        balance_pending: user.balance_pending || 0,
         referral_balance: user.referral_balance || 0,
         referral_count: user.referral_count || 0,
         daily_count: user.daily_count || 0,
         history: user.history || [],
+        status: user.status || 'active',
+        ad_set: adSet,
         rounds: {
             current: rInfo.round,
             r1_cooldown_ms: r1Left,
@@ -789,12 +840,154 @@ async function handleAdminUserAction(request, env) {
             stats.liability = parseFloat((stats.liability + delta).toFixed(2));
             await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
         }
-    } else {
+    }
+    else if (action === 'approve') {
+        if (user.status !== 'pending') {
+             return new Response(JSON.stringify({ error: 'User is not pending' }), { status: 400, headers: CORS_HEADERS });
+        }
+
+        // Find Unassigned Ad Set
+        // We need to fetch the index of unassigned sets
+        let unassigned = [];
+        try {
+            const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
+            if (raw) unassigned = JSON.parse(raw);
+        } catch(e) {}
+
+        if (unassigned.length === 0) {
+            return new Response(JSON.stringify({ error: 'No ad sets available. Create one first.' }), { status: 400, headers: CORS_HEADERS });
+        }
+
+        const setId = unassigned.shift(); // Take first
+        user.ad_set_id = setId;
+        user.status = 'active';
+
+        // Update Ad Set Assignment
+        const setKey = `ADSET:${setId}`;
+        const rawSet = await env.USERS.get(setKey);
+        if (rawSet) {
+            const adSet = JSON.parse(rawSet);
+            adSet.assigned_to = username;
+            await env.USERS.put(setKey, JSON.stringify(adSet));
+        }
+
+        // Save Unassigned List
+        await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
+
+        // Remove from Pending List
+        let pendingList = [];
+        try {
+            const raw = await env.USERS.get('PENDING_USERS');
+            if (raw) pendingList = JSON.parse(raw);
+        } catch(e) {}
+
+        pendingList = pendingList.filter(u => u.username !== username);
+        await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
+
+        message = 'User approved and assigned Ad Set ' + setId;
+    }
+    else {
         return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
     }
 
     await env.USERS.put(username, JSON.stringify(user));
     return new Response(JSON.stringify({ message, user }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleAdSets(request, env) {
+    const secret = request.headers.get('X-Admin-Secret');
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+
+    if (request.method === 'GET') {
+        // List all sets
+        // We can fetch AD_SETS_INDEX
+        let index = [];
+        try {
+            const raw = await env.USERS.get('AD_SETS_INDEX');
+            if (raw) index = JSON.parse(raw);
+        } catch(e) {}
+
+        // Fetch details for each (parallel)
+        const sets = await Promise.all(index.map(async id => {
+            const raw = await env.USERS.get(`ADSET:${id}`);
+            return raw ? JSON.parse(raw) : null;
+        }));
+
+        return new Response(JSON.stringify(sets.filter(s => s)), { status: 200, headers: CORS_HEADERS });
+    }
+    else if (request.method === 'POST') {
+        const data = await request.json();
+        // Expected: { popunder, inpage, direct, push } each with relevant fields
+
+        const id = 'SET-' + crypto.randomUUID().split('-')[0].toUpperCase();
+        const newSet = {
+            id: id,
+            created_at: new Date().toISOString(),
+            assigned_to: null,
+            popunder: data.popunder,
+            inpage: data.inpage,
+            direct: data.direct,
+            push: data.push
+        };
+
+        // Save Set
+        await env.USERS.put(`ADSET:${id}`, JSON.stringify(newSet));
+
+        // Update Indexes
+        let index = [];
+        try {
+            const raw = await env.USERS.get('AD_SETS_INDEX');
+            if (raw) index = JSON.parse(raw);
+        } catch(e) {}
+        index.push(id);
+        await env.USERS.put('AD_SETS_INDEX', JSON.stringify(index));
+
+        let unassigned = [];
+        try {
+            const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
+            if (raw) unassigned = JSON.parse(raw);
+        } catch(e) {}
+        unassigned.push(id);
+        await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
+
+        return new Response(JSON.stringify({ message: 'Ad Set created', id: id }), { status: 201, headers: CORS_HEADERS });
+    }
+}
+
+async function handleReconcile(request, env) {
+    const secret = request.headers.get('X-Admin-Secret');
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+
+    const { approvals } = await request.json(); // [{ username, amount }]
+    if (!approvals || !Array.isArray(approvals)) return new Response(JSON.stringify({ error: 'Invalid data' }), { status: 400, headers: CORS_HEADERS });
+
+    let count = 0;
+    const stats = await getGlobalStats(env);
+
+    for (const item of approvals) {
+        if (!item.username || item.amount === undefined) continue;
+
+        const raw = await env.USERS.get(item.username);
+        if (raw) {
+            const user = JSON.parse(raw);
+            const amt = parseFloat(item.amount);
+
+            // Move to Main Balance
+            user.balance = parseFloat(((user.balance || 0) + amt).toFixed(2));
+
+            // Reset Pending (Assume full clearance of pending period)
+            user.balance_pending = 0;
+
+            await env.USERS.put(item.username, JSON.stringify(user));
+
+            // Add to Liability
+            stats.liability = parseFloat((stats.liability + amt).toFixed(2));
+            count++;
+        }
+    }
+
+    await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+    return new Response(JSON.stringify({ message: `Processed ${count} users` }), { status: 200, headers: CORS_HEADERS });
 }
 
 async function handleAdminSystemAction(request, env) {

@@ -180,6 +180,30 @@
         .badge-red { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .badge-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-yellow { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+        /* Ad Form */
+        .ad-config-block {
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+        }
+        .ad-in {
+            width: 100%;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: block;
+        }
+        textarea.ad-in {
+            height: 60px;
+            font-family: monospace;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +263,88 @@
         <h3>Red Zone Activity (Round 3)</h3>
         <div id="red-zone-list" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;">
             <div style="color:#64748b; text-align:center;">No recent activity</div>
+        </div>
+    </div>
+
+    <!-- Approvals -->
+    <div class="card" id="approval-card" style="display:none; border: 2px solid var(--accent);">
+        <h3 style="color:var(--accent);">Pending Approvals <span id="pending-count" class="badge badge-yellow">0</span></h3>
+        <div id="pending-list" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Ad Sets -->
+    <div class="card">
+        <h3>Ad Set Manager</h3>
+        <div style="margin-bottom:15px; font-size:0.85rem; color:#64748b;">
+            Unassigned Sets Available: <strong id="sets-avail">0</strong>
+        </div>
+
+        <button onclick="toggleAdSetForm()" class="secondary" style="margin-bottom:15px;">+ Create New Ad Set</button>
+
+        <div id="adset-form" style="display:none; background:#f8fafc; padding:15px; border:1px solid #e2e8f0; border-radius:8px;">
+            <h4 style="margin-top:0;">New Configuration</h4>
+
+            <div class="ad-config-block">
+                <strong style="display:block; margin-bottom:5px; color:var(--primary);">1. Popunder</strong>
+                <input class="ad-in" data-type="popunder" name="id" placeholder="Zone ID (e.g. 10504195)">
+                <input class="ad-in" data-type="popunder" name="title" placeholder="Title (e.g. Wise Tag)">
+                <textarea class="ad-in" data-type="popunder" name="tag" placeholder="Script Tag"></textarea>
+            </div>
+
+             <div class="ad-config-block">
+                <strong style="display:block; margin-bottom:5px; color:var(--primary);">2. In-Page Push</strong>
+                <input class="ad-in" data-type="inpage" name="id" placeholder="Zone ID">
+                <input class="ad-in" data-type="inpage" name="title" placeholder="Title">
+                <textarea class="ad-in" data-type="inpage" name="tag" placeholder="Script Tag"></textarea>
+            </div>
+
+             <div class="ad-config-block">
+                <strong style="display:block; margin-bottom:5px; color:var(--primary);">3. Direct Link</strong>
+                <input class="ad-in" data-type="direct" name="link" placeholder="Direct URL">
+            </div>
+
+             <div class="ad-config-block">
+                <strong style="display:block; margin-bottom:5px; color:var(--primary);">4. Push Notification</strong>
+                <input class="ad-in" data-type="push" name="id" placeholder="Zone ID">
+                <input class="ad-in" data-type="push" name="title" placeholder="Title">
+                <textarea class="ad-in" data-type="push" name="tag" placeholder="Script Tag"></textarea>
+            </div>
+
+            <button onclick="createAdSet()" class="action">Save Set</button>
+        </div>
+    </div>
+
+    <!-- Reconciliation -->
+    <div class="card">
+        <h3>Monetag Reconciliation</h3>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <div style="flex:1;">
+                <label style="font-size:0.8rem; font-weight:bold;">USD/ZAR Rate</label>
+                <input type="number" id="usd-rate" value="18.00">
+            </div>
+             <div style="flex:3;">
+                <label style="font-size:0.8rem; font-weight:bold;">CSV Data ("Zone ID";Zone;Impressions;Profit...)</label>
+                <textarea id="csv-data" style="width:100%; height:80px; font-family:monospace; border:1px solid #ccc; border-radius:4px;" placeholder="Paste CSV content here..."></textarea>
+            </div>
+        </div>
+        <button onclick="analyzeCSV()" class="action" style="margin-bottom:15px;">Analyze Stats</button>
+
+        <div id="recon-result" style="display:none;">
+            <table style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:1px solid #e2e8f0; color:#64748b;">
+                        <th>User</th>
+                        <th>Pending</th>
+                        <th>Real (Est)</th>
+                        <th>Approve</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody id="recon-body"></tbody>
+            </table>
+            <div style="margin-top:15px; text-align:right;">
+                <button onclick="confirmRecon()" class="action" style="width:auto; background:var(--success);">Confirm & Process</button>
+            </div>
         </div>
     </div>
 
@@ -406,6 +512,40 @@
             remEl.innerText = `R ${remaining.toFixed(2)}`;
             remEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
 
+            // Ad Sets Stats
+            document.getElementById('sets-avail').innerText = data.unassigned_sets_count || 0;
+
+            // Render Pending
+            const list = document.getElementById('pending-list');
+            const card = document.getElementById('approval-card');
+            const countBadge = document.getElementById('pending-count');
+
+            if(data.pending_users && data.pending_users.length > 0) {
+               card.style.display = 'block';
+               countBadge.innerText = data.pending_users.length;
+
+               let html = '';
+               data.pending_users.forEach(u => {
+                   html += `
+                       <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                           <div>
+                               <div style="font-weight:bold; font-size:0.95rem;">${u.username}</div>
+                               <div style="font-size:0.8rem; color:#64748b;">
+                                   ${u.whatsapp ? '📱 ' + u.whatsapp : ''}
+                                   ${u.whatsapp && u.email ? ' | ' : ''}
+                                   ${u.email ? '✉️ ' + u.email : ''}
+                                   <div style="font-size:0.7rem; color:#94a3b8;">${new Date(u.date).toLocaleDateString()}</div>
+                               </div>
+                           </div>
+                           <button onclick="approveUser('${u.username}')" style="width:auto; font-size:0.75rem; padding: 6px 12px;" class="action">Approve</button>
+                       </div>
+                   `;
+               });
+               list.innerHTML = html;
+            } else {
+               card.style.display = 'none';
+            }
+
             // System Buttons
             if(data.system_status) {
                 currentSystem = data.system_status;
@@ -454,6 +594,200 @@
 
         const { ok } = await fetchJson('/admin/system-action', 'POST', { action, value: val });
         if(ok) loadStats();
+    }
+
+    // --- APPROVALS & AD SETS ---
+    async function approveUser(username) {
+        if(!confirm(`Approve ${username} and assign ad set?`)) return;
+        const { ok, data } = await fetchJson('/admin/user-action', 'POST', { username, action: 'approve' });
+        if(ok) {
+            alert(data.message);
+            loadStats();
+        } else {
+            alert("Error: " + (data.error || 'Failed'));
+        }
+    }
+
+    function toggleAdSetForm() {
+        const el = document.getElementById('adset-form');
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function createAdSet() {
+        // Gather Data
+        const getVal = (type, name) => {
+            const el = document.querySelector(`.ad-in[data-type="${type}"][name="${name}"]`);
+            return el ? el.value.trim() : '';
+        };
+
+        const payload = {
+            popunder: {
+                id: getVal('popunder', 'id'),
+                title: getVal('popunder', 'title'),
+                tag: getVal('popunder', 'tag'),
+                type: 'popunder'
+            },
+            inpage: {
+                id: getVal('inpage', 'id'),
+                title: getVal('inpage', 'title'),
+                tag: getVal('inpage', 'tag'),
+                type: 'inpage'
+            },
+            direct: {
+                link: getVal('direct', 'link'),
+                type: 'direct'
+            },
+            push: {
+                id: getVal('push', 'id'),
+                title: getVal('push', 'title'),
+                tag: getVal('push', 'tag'),
+                type: 'push'
+            }
+        };
+
+        if(!payload.direct.link) return alert("Direct Link is required");
+
+        const { ok, data } = await fetchJson('/admin/ad-sets', 'POST', payload);
+        if(ok) {
+            alert('Ad Set Created: ' + data.id);
+            toggleAdSetForm();
+            loadStats();
+            document.querySelectorAll('.ad-in').forEach(el => el.value = '');
+        } else {
+            alert('Error: ' + (data.error || 'Unknown Error'));
+        }
+    }
+
+    // --- RECONCILIATION ---
+    async function analyzeCSV() {
+        // 1. Fetch Ad Sets to build Zone->User Map
+        const { ok, data: sets } = await fetchJson('/admin/ad-sets');
+        if(!ok) return alert("Failed to fetch ad sets");
+
+        const zoneToUser = {};
+        const usersToFetch = new Set();
+
+        sets.forEach(s => {
+            if(s.assigned_to) {
+                usersToFetch.add(s.assigned_to);
+                if(s.popunder && s.popunder.id) zoneToUser[s.popunder.id] = s.assigned_to;
+                if(s.inpage && s.inpage.id) zoneToUser[s.inpage.id] = s.assigned_to;
+                if(s.push && s.push.id) zoneToUser[s.push.id] = s.assigned_to;
+                // Try to extract ID from Direct Link
+                if(s.direct && s.direct.link) {
+                    const match = s.direct.link.match(/\/(\d+)$/);
+                    if(match) zoneToUser[match[1]] = s.assigned_to;
+                }
+            }
+        });
+
+        // 2. Fetch User Pending Balances
+        const userBalances = {}; // username -> pending
+        const rate = parseFloat(document.getElementById('usd-rate').value) || 18.00;
+
+        // Parallel fetch
+        await Promise.all(Array.from(usersToFetch).map(async u => {
+             const { ok, data } = await fetchJson('/admin/user-action', 'POST', { username: u, action: 'get_details' });
+             if(ok && data.user) {
+                 userBalances[u] = data.user.balance_pending || 0;
+             }
+        }));
+
+        // 3. Parse CSV
+        const csv = document.getElementById('csv-data').value;
+        const lines = csv.split('\n');
+
+        // Find Headers line
+        let headerIdx = -1;
+        for(let i=0; i<lines.length; i++) {
+            if(lines[i].includes('Zone ID') && lines[i].includes('Profit')) {
+                headerIdx = i;
+                break;
+            }
+        }
+
+        if(headerIdx === -1) return alert("Invalid CSV: Could not find Headers row");
+
+        const headers = lines[headerIdx].split(';');
+        const idxZone = headers.findIndex(h => h.includes('Zone ID'));
+        const idxProfit = headers.findIndex(h => h.includes('Profit'));
+
+        const userRealProfit = {};
+
+        for(let i=headerIdx+1; i<lines.length; i++) {
+            const row = lines[i].split(';');
+            if(row.length < 2) continue;
+
+            const zone = row[idxZone].replace(/"/g, '').trim();
+            let profitStr = row[idxProfit].replace(/"/g, '').trim();
+            // Handle number format? usually 0.082
+            const profit = parseFloat(profitStr);
+
+            const user = zoneToUser[zone];
+            if(user) {
+                if(!userRealProfit[user]) userRealProfit[user] = 0;
+                userRealProfit[user] += profit;
+            }
+        }
+
+        // 4. Build Table
+        const tbody = document.getElementById('recon-body');
+        tbody.innerHTML = '';
+        window.approvals = [];
+
+        usersToFetch.forEach(u => {
+            const pending = userBalances[u] || 0;
+            const realUSD = userRealProfit[u] || 0;
+            const realZAR = realUSD * rate;
+
+            let target = realZAR * 0.75;
+            let approved = 0;
+            let note = "";
+
+            // "approve 20 - 30% LESS THAN ACTUAL ... IF THATS LESS THAN ESTIMATED THEN APPROVE 90% of ESTIMATED"
+            // So: If Target < Pending => Approve 90% Pending.
+            // Else: Approve Target.
+
+            if(target < pending) {
+                approved = pending * 0.90;
+                note = "Low Real (90% Pend)";
+            } else {
+                approved = target;
+                note = "Std (75% Real)";
+            }
+
+            if(pending > 0 || realZAR > 0) {
+                window.approvals.push({ username: u, amount: parseFloat(approved.toFixed(2)) });
+
+                tbody.innerHTML += `
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:8px;">${u}</td>
+                        <td style="padding:8px;">R ${pending.toFixed(2)}</td>
+                        <td style="padding:8px;">$${realUSD.toFixed(3)} (R${realZAR.toFixed(2)})</td>
+                        <td style="padding:8px; font-weight:bold; color:var(--success);">R ${approved.toFixed(2)}</td>
+                        <td style="padding:8px; font-size:0.8rem; color:#64748b;">${note}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        document.getElementById('recon-result').style.display = 'block';
+    }
+
+    async function confirmRecon() {
+        if(!window.approvals || window.approvals.length === 0) return;
+        if(!confirm(`Process approvals for ${window.approvals.length} users? This will credit their main balance and wipe pending.`)) return;
+
+        const { ok, data } = await fetchJson('/admin/reconcile', 'POST', { approvals: window.approvals });
+        if(ok) {
+            alert(data.message);
+            document.getElementById('recon-result').style.display = 'none';
+            document.getElementById('csv-data').value = '';
+            // Refresh stats
+            loadStats();
+        } else {
+            alert("Error: " + data.error);
+        }
     }
 
     // --- USER MANAGEMENT ---
