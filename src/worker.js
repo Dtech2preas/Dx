@@ -802,6 +802,22 @@ async function handleGetStats(request, env) {
 
     stats.red_zone = redZone;
 
+    // Include Pending Users
+    let pendingUsers = [];
+    try {
+        const raw = await env.USERS.get('PENDING_USERS');
+        if (raw) pendingUsers = JSON.parse(raw);
+    } catch (e) {}
+    stats.pending_users = pendingUsers;
+
+    // Include Unassigned Sets Count
+    let unassignedSets = [];
+    try {
+        const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
+        if (raw) unassignedSets = JSON.parse(raw);
+    } catch (e) {}
+    stats.unassigned_sets_count = unassignedSets.length;
+
     return new Response(JSON.stringify(stats), { status: 200, headers: CORS_HEADERS });
 }
 
