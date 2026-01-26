@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - DTech</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --accent: #d4af37;
+            --accent-hover: #b5952f;
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-light: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #1e293b;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+            border-bottom: 4px solid var(--accent);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 0 20px;
+            box-sizing: border-box;
+            padding-bottom: 50px;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--accent); margin-top: 0; font-family: 'Cinzel', serif; }
+        h3 { color: var(--primary); margin: 0 0 10px 0; font-size: 1.1rem; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: var(--radius);
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--primary);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .contact-method {
+            margin-top: 10px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .calc-box {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .row.net { border-top: 1px solid #334155; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 1.1rem; color: var(--success); }
+
+        button {
+            width: 100%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:disabled { background: #475569; cursor: not-allowed; color: #94a3b8; }
+
+        .back-btn {
+            display: block;
+            margin-bottom: 20px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-btn:hover { color: var(--primary); }
+
+        .alert {
+            padding: 14px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .alert.error { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .alert.success { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+
+        #certCanvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Withdraw Funds</h1>
+    </header>
+
+    <div class="container">
+        <a href="index.html" class="back-btn">← Back to Dashboard</a>
+
+        <!-- Balance Display -->
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 0.85rem; color: var(--text-light); text-transform: uppercase;">Available Balance</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: var(--success); font-family: 'Cinzel', serif; margin: 5px 0;">
+                R <span id="display-balance">0.00</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-light);">
+                (Main Balance + Referral Earnings)
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card">
+            <h3>Step 1: Instructions</h3>
+            <div class="info-box">
+                <strong>IMPORTANT:</strong> Withdrawals are processed manually.
+                <br><br>
+                1. Select your method and generate your <strong>Certificate</strong>.<br>
+                2. Send the Certificate image to us via <strong>Email</strong> or <strong>WhatsApp</strong>.<br>
+                3. For <strong>Airtime</strong> or <strong>Cash Send</strong>, you MUST include the recipient number in your message.
+
+                <div class="contact-method">📧 Email: dtech2services@gmail.com</div>
+                <div class="contact-method">📱 WhatsApp: 0670015423</div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="card">
+            <h3>Step 2: Generate Certificate</h3>
+
+            <label for="method">Payout Method</label>
+            <select id="method">
+                <option value="" disabled selected>Select a method...</option>
+                <option value="Airtime">Airtime (25% Fee)</option>
+                <option value="Voucher">Voucher (30% Fee)</option>
+                <option value="Cash Send">Cash Send (40% Fee)</option>
+            </select>
+
+            <div id="min-hint" style="font-size: 0.8rem; color: var(--accent); margin-bottom: 15px; display: none;"></div>
+
+            <label for="amount">Amount (R)</label>
+            <input type="number" id="amount" placeholder="0.00" step="1">
+
+            <div class="calc-box" id="calc-box">
+                <div class="row"><span>Gross Amount:</span> <span id="c-gross">R 0.00</span></div>
+                <div class="row" style="color: var(--danger);"><span>Fee:</span> <span id="c-fee">R 0.00</span></div>
+                <div class="row net"><span>Net Payout:</span> <span id="c-net">R 0.00</span></div>
+            </div>
+
+            <button id="generate-btn" onclick="handleWithdraw()" disabled>Generate Certificate</button>
+            <div id="msg" class="alert"></div>
+        </div>
+
+    </div>
+
+    <canvas id="certCanvas" width="1200" height="1700"></canvas>
+
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        let currentUser = null;
+
+        // Validation Rules (Gross Minimums to hit Net Targets)
+        // Airtime: Net 10 (Fee 25%) -> 10 / 0.75 = 13.33 -> 14
+        // Voucher: Net 10 (Fee 30%) -> 10 / 0.70 = 14.28 -> 15
+        // Cash Send: Net 20 (Fee 40%) -> 20 / 0.60 = 33.33 -> 34
+
+        const RULES = {
+            'Airtime': { min: 14, fee: 0.25, netTarget: 10 },
+            'Voucher': { min: 15, fee: 0.30, netTarget: 10 },
+            'Cash Send': { min: 34, fee: 0.40, netTarget: 20 }
+        };
+
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        async function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const localUser = JSON.parse(saved);
+
+            try {
+                // Refresh profile to get accurate balance
+                const res = await fetch(`${getBaseUrl()}/profile?username=${localUser.username}`);
+                const data = await res.json();
+                if(data.error) {
+                    alert(data.error);
+                    window.location.href = 'index.html';
+                    return;
+                }
+                currentUser = data;
+                // Update Session
+                localUser.balance = data.balance;
+                sessionStorage.setItem('ad_user', JSON.stringify(localUser));
+
+                // Show Total Withdrawable (Main + Referral)
+                const total = (currentUser.balance || 0) + (currentUser.referral_balance || 0);
+                document.getElementById('display-balance').innerText = total.toFixed(2);
+
+            } catch (e) {
+                console.error(e);
+                alert("Network error");
+            }
+
+            setupListeners();
+        }
+
+        function setupListeners() {
+            const methodEl = document.getElementById('method');
+            const amountEl = document.getElementById('amount');
+            const hintEl = document.getElementById('min-hint');
+            const calcBox = document.getElementById('calc-box');
+            const btn = document.getElementById('generate-btn');
+
+            function update() {
+                const method = methodEl.value;
+                const amount = parseFloat(amountEl.value);
+
+                if (!method) {
+                    hintEl.style.display = 'none';
+                    calcBox.style.display = 'none';
+                    btn.disabled = true;
+                    return;
+                }
+
+                const rule = RULES[method];
+                hintEl.innerText = `Minimum for ${method}: R ${rule.min} (Net Payout: R ${rule.netTarget})`;
+                hintEl.style.display = 'block';
+
+                if (!amount || isNaN(amount)) {
+                    calcBox.style.display = 'none';
+                    btn.disabled = true;
+                    return;
+                }
+
+                // Calculate
+                const fee = amount * rule.fee;
+                const net = amount - fee;
+
+                document.getElementById('c-gross').innerText = `R ${amount.toFixed(2)}`;
+                document.getElementById('c-fee').innerText = `R ${fee.toFixed(2)} (${rule.fee * 100}%)`;
+                document.getElementById('c-net').innerText = `R ${net.toFixed(2)}`;
+                calcBox.style.display = 'block';
+
+                // Validate
+                const totalAvailable = (currentUser.balance || 0) + (currentUser.referral_balance || 0);
+
+                if (amount < rule.min) {
+                    btn.disabled = true;
+                } else if (amount > 250) { // Global Max
+                    btn.disabled = true;
+                    // Optional: Show max error?
+                } else if (amount > totalAvailable) {
+                    btn.disabled = true;
+                } else {
+                    btn.disabled = false;
+                }
+            }
+
+            methodEl.addEventListener('change', update);
+            amountEl.addEventListener('input', update);
+        }
+
+        async function handleWithdraw() {
+            const method = document.getElementById('method').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const btn = document.getElementById('generate-btn');
+            const msg = document.getElementById('msg');
+
+            // Re-validate
+            const rule = RULES[method];
+            const totalAvailable = (currentUser.balance || 0) + (currentUser.referral_balance || 0);
+
+            if (amount < rule.min || amount > 250 || amount > totalAvailable) {
+                msg.innerText = "Invalid amount or insufficient funds.";
+                msg.className = "alert error";
+                msg.style.display = "block";
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to withdraw R ${amount.toFixed(2)} via ${method}?`)) return;
+
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+            msg.style.display = 'none';
+
+            // Need Token from Session
+            const localUser = JSON.parse(sessionStorage.getItem('ad_user'));
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/redeem`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: localUser.token,
+                        amount: amount,
+                        method: method
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Success
+                    msg.innerText = "Certificate Generated! Downloading...";
+                    msg.className = "alert success";
+                    msg.style.display = "block";
+
+                    // Update Balance
+                    const fee = amount * rule.fee;
+                    const net = amount - fee;
+
+                    // Wait for fonts then generate
+                    document.fonts.ready.then(() => {
+                        generateCertificate(currentUser.username, data.cert_id, amount, method, fee, net);
+                    });
+
+                    // Reload after delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 4000);
+                } else {
+                    msg.innerText = data.error || "Transaction failed.";
+                    msg.className = "alert error";
+                    msg.style.display = "block";
+                    btn.disabled = false;
+                    btn.innerText = "Generate Certificate";
+                }
+
+            } catch (e) {
+                console.error(e);
+                msg.innerText = "Network Error.";
+                msg.className = "alert error";
+                msg.style.display = "block";
+                btn.disabled = false;
+                btn.innerText = "Generate Certificate";
+            }
+        }
+
+        // --- Certificate Logic (Ported) ---
+        function generateCertificate(username, certId, amount, method, fee, payout) {
+            const logo = new Image();
+            logo.src = 'logo.png';
+            logo.crossOrigin = "Anonymous";
+
+            logo.onload = () => { drawCert(logo); };
+            logo.onerror = () => { drawCert(null); };
+
+            function drawCert(imgObj) {
+                const canvas = document.getElementById('certCanvas');
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+
+                // 1. BACKGROUND
+                const gradient = ctx.createLinearGradient(0, 0, w, h);
+                gradient.addColorStop(0, '#020617');
+                gradient.addColorStop(1, '#0f172a');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, w, h);
+
+                // 2. BORDERS
+                const margin = 80;
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = '#d4af37';
+                ctx.strokeRect(margin, margin, w - 2*margin, h - 2*margin);
+
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#3b82f6';
+                ctx.strokeRect(margin + 20, margin + 20, w - 2*(margin + 20), h - 2*(margin + 20));
+
+                // 3. HEADER
+                ctx.textAlign = 'center';
+                let currentY = margin + 100;
+
+                if (imgObj) {
+                    const logoWidth = 120;
+                    const logoHeight = logoWidth * (imgObj.height / imgObj.width);
+                    ctx.drawImage(imgObj, w/2 - logoWidth/2, margin + 40, logoWidth, logoHeight);
+                    currentY = margin + logoHeight + 80;
+                }
+
+                ctx.font = 'bold 36px "Cinzel"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, currentY);
+
+                ctx.font = 'bold 64px "Cinzel"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText('CERTIFICATE OF PAYOUT', w/2, currentY + 80);
+
+                ctx.beginPath();
+                ctx.moveTo(w/2 - 300, currentY + 120);
+                ctx.lineTo(w/2 + 300, currentY + 120);
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 4. CONTENT
+                currentY += 200;
+                ctx.font = 'italic 26px "Inter"';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillText('This document certifies that', w/2, currentY);
+
+                currentY += 70;
+                ctx.font = 'normal 110px "Pinyon Script"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(username, w/2, currentY);
+
+                currentY += 100;
+                ctx.font = '22px "Inter"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('has successfully withdrawn funds via', w/2, currentY);
+
+                // 5. DETAILS BOX
+                currentY += 60;
+                const boxY = currentY;
+                ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+                ctx.fillRect(w/2 - 320, boxY, 640, 240);
+                ctx.strokeStyle = '#3b82f6';
+                ctx.strokeRect(w/2 - 320, boxY, 640, 240);
+
+                ctx.font = 'bold 32px "Cinzel"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText(method.toUpperCase(), w/2, boxY + 60);
+
+                ctx.font = '28px "Inter"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(`Gross: R ${amount.toFixed(2)}`, w/2, boxY + 110);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText(`Fee: R ${fee.toFixed(2)}`, w/2, boxY + 150);
+
+                ctx.font = 'bold 42px "Cinzel"';
+                ctx.fillStyle = '#10b981';
+                ctx.fillText(`NET: R ${payout.toFixed(2)}`, w/2, boxY + 200);
+
+                // 6. QR CODE
+                const qrY = boxY + 280;
+                const qrSize = 250;
+
+                const qrCanvas = document.createElement('canvas');
+                const qr = new QRious({
+                    element: qrCanvas,
+                    value: `DTECH_CERT:${certId}:${username}:R${payout}`,
+                    size: qrSize,
+                    level: 'H'
+                });
+
+                ctx.drawImage(qrCanvas, w/2 - qrSize/2, qrY, qrSize, qrSize);
+
+                ctx.font = '16px "Courier New"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(`ID: ${certId}`, w/2, qrY + qrSize + 30);
+
+                // 7. DOWNLOAD
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.download = `DTech_Cert_${certId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, 500);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

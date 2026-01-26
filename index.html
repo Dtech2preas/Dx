@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
     <style>
         :root {
@@ -279,36 +278,6 @@
         .alert.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
         .alert.info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
 
-        /* --- History Table --- */
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 0.85rem;
-        }
-        .history-table th, .history-table td {
-            text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .history-table th {
-            color: var(--text-light);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-        }
-        .status-issued { color: var(--accent-hover); font-weight: bold; }
-        .status-paid { color: var(--success); font-weight: bold; }
-
-        /* --- Canvas Hidden --- */
-        #certCanvas {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
-        }
-
         /* --- Timer --- */
         #timer-status {
             text-align: center;
@@ -388,59 +357,13 @@
             </div>
 
             <div class="btn-group center">
-                <button onclick="toggleHistory()" class="secondary" style="font-size:0.8rem;">History</button>
-                <button onclick="refreshBalance()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
+                <button onclick="window.location.href='withdraw.html'" class="secondary" style="font-size:0.9rem; border-color: var(--success); color: var(--success);">Withdraw Funds</button>
+                <button onclick="refreshBalance()" class="secondary" style="font-size:0.9rem;">Sync Balance</button>
             </div>
             <div class="btn-group center" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
                 <button onclick="window.location.href='berserker.html'" class="gold-action" style="font-size:0.9rem;">⚔️ Berserker Mode ⚔️</button>
                 <button onclick="window.location.href='profile.html'" class="secondary" style="font-size:0.9rem;">My Profile</button>
             </div>
-        </div>
-
-        <div id="history-section" class="card" style="display:none;">
-            <h3>Transaction History</h3>
-            <div id="history-content" style="max-height: 200px; overflow-y: auto;">
-                <p style="text-align:center; color:var(--text-light);">No history found.</p>
-            </div>
-        </div>
-
-        <div id="redeem-section" class="card" style="display:none;">
-            <h3>Withdrawal</h3>
-            <p style="color:var(--text-light); font-size:0.9rem;">
-                Exchange balance for an official <strong>DTech Verification Certificate</strong>.
-            </p>
-
-            <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-                <div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:10px;">
-                    <span>Available</span>
-                    <span>R <span id="redeem-avail-bal">0.00</span></span>
-                </div>
-                <div style="font-size:0.8rem; color:#666; margin-bottom: 10px;">
-                    Min: R 10.00 | Max: R 250.00
-                </div>
-
-                <label for="redeem-method" style="color:#334155; margin-bottom:5px;">Payout Method</label>
-                <select id="redeem-method" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc; margin-bottom:15px; font-family:'Inter';">
-                    <option value="Airtime" data-fee="0.25">Airtime (25% Fee)</option>
-                    <option value="Voucher" data-fee="0.30">Voucher (30% Fee)</option>
-                    <option value="Cash Send" data-fee="0.40">Cash Send (40% Fee)</option>
-                </select>
-
-                <label for="redeem-amount" style="color:#334155; margin-bottom:5px;">Withdrawal Amount</label>
-                <input type="number" id="redeem-amount" placeholder="Enter Amount (e.g. 50)" min="10" max="250" style="background:white; color:#334155; border:1px solid #ccc;" />
-
-                <div id="redeem-calc" style="background:#e2e8f0; padding:10px; border-radius:4px; font-size:0.85rem; color:#334155; display:none;">
-                    <div style="display:flex; justify-content:space-between;"><span>Gross:</span> <span id="calc-gross">R 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; color:#ef4444;"><span>Fee:</span> <span id="calc-fee">R 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:5px; border-top:1px solid #cbd5e1; padding-top:5px;">
-                        <span>Net Payout:</span> <span id="calc-net" style="color:var(--primary);">R 0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <button id="redeem-btn" class="gold-action" onclick="redeemCertificate()" style="width:100%;">
-                Generate Certificate
-            </button>
         </div>
 
         <div id="message" class="alert"></div>
@@ -477,8 +400,6 @@
             </div>
         </div>
     </div>
-
-    <canvas id="certCanvas" width="1200" height="1700"></canvas>
 
     <script>
         // ---------- CONFIG ----------
@@ -532,8 +453,6 @@
         function setAuthUI(loggedIn) {
           document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
           document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
-          document.getElementById('history-section').style.display = 'none'; // Always hide history initially
-          document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
 
           if (!loggedIn) {
             document.getElementById('display-username').innerText = '';
@@ -646,51 +565,12 @@
           }
         }
 
-        function toggleHistory() {
-            const el = document.getElementById('history-section');
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('history-content');
-            if(!currentUser.history || currentUser.history.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:var(--text-light);">No history found.</p>';
-                return;
-            }
-
-            let html = '<table class="history-table"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-            currentUser.history.forEach(item => {
-                const dateStr = new Date(item.date).toLocaleDateString();
-                const statusClass = item.status === 'paid' ? 'status-paid' : 'status-issued';
-                html += `
-                    <tr>
-                        <td>${dateStr}</td>
-                        <td>R ${item.amount.toFixed(2)}</td>
-                        <td class="${statusClass}">${item.status.toUpperCase()}</td>
-                    </tr>
-                `;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-
         function updateUI() {
           if (currentUser) {
             setAuthUI(true);
             document.getElementById('display-username').innerText = currentUser.username;
             const balStr = (currentUser.balance || 0).toFixed(2);
             document.getElementById('display-balance').innerText = balStr;
-            document.getElementById('redeem-avail-bal').innerText = balStr;
-
-            renderHistory();
-
-            // Button Logic
-            const redeemBtn = document.getElementById('redeem-btn');
-            if (currentUser.balance >= 10) {
-                redeemBtn.disabled = false;
-            } else {
-                redeemBtn.disabled = true;
-            }
           } else {
             setAuthUI(false);
           }
@@ -781,428 +661,6 @@
           }
         }
 
-        // ---------- REDEEM ----------
-        function setupRedeemListeners() {
-            const amtInput = document.getElementById('redeem-amount');
-            const methodSelect = document.getElementById('redeem-method');
-
-            const update = () => {
-                const amt = parseFloat(amtInput.value) || 0;
-                const opt = methodSelect.options[methodSelect.selectedIndex];
-                const feePct = parseFloat(opt.getAttribute('data-fee'));
-
-                const calcBox = document.getElementById('redeem-calc');
-                if (amt > 0) {
-                    calcBox.style.display = 'block';
-                    const fee = amt * feePct;
-                    const net = amt - fee;
-
-                    document.getElementById('calc-gross').innerText = `R ${amt.toFixed(2)}`;
-                    document.getElementById('calc-fee').innerText = `R ${fee.toFixed(2)} (${(feePct*100).toFixed(0)}%)`;
-                    document.getElementById('calc-net').innerText = `R ${net.toFixed(2)}`;
-                } else {
-                    calcBox.style.display = 'none';
-                }
-            };
-
-            amtInput.addEventListener('input', update);
-            methodSelect.addEventListener('change', update);
-        }
-
-        async function redeemCertificate() {
-            const input = document.getElementById('redeem-amount');
-            const amount = parseFloat(input.value);
-            const methodSelect = document.getElementById('redeem-method');
-            const method = methodSelect.value;
-
-            if (!amount || amount < 10 || amount > 250) {
-                return showMessage('Invalid amount. Must be between R 10 and R 250.', 'error');
-            }
-
-            if (amount > currentUser.balance) {
-                return showMessage('Insufficient funds.', 'error');
-            }
-
-            const opt = methodSelect.options[methodSelect.selectedIndex];
-            const feePct = parseFloat(opt.getAttribute('data-fee'));
-            const fee = amount * feePct;
-            const net = amount - fee;
-
-            if (!confirm(`Confirm withdrawal via ${method}?\n\nGross: R ${amount.toFixed(2)}\nFee: R ${fee.toFixed(2)}\nNet Payout: R ${net.toFixed(2)}`)) return;
-
-            const res = await fetchJson('/redeem', {
-                method: 'POST',
-                body: JSON.stringify({
-                    username: currentUser.username,
-                    token: currentUser.token,
-                    amount: amount,
-                    method: method
-                })
-            });
-
-            if (res.ok) {
-                currentUser.balance = res.data.balance;
-                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                updateUI();
-
-                document.fonts.ready.then(() => {
-                    generateCertificate(currentUser.username, res.data.cert_id, amount, method, fee, net);
-                });
-                showMessage('Certificate Issued Successfully.', 'success');
-                input.value = ''; // Reset input
-                document.getElementById('redeem-calc').style.display = 'none';
-            } else {
-                showMessage(res.data?.error || 'Redemption failed', 'error');
-            }
-        }
-
-        // ---------- UPDATED PORTRAIT CERTIFICATE GENERATOR ----------
-        function generateCertificate(username, certId, amount, method, fee, payout) {
-            const logo = new Image();
-            logo.src = 'logo.png';
-            logo.crossOrigin = "Anonymous";
-
-            logo.onload = () => {
-                const canvas = document.getElementById('certCanvas');
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-
-                // Clear canvas
-                ctx.clearRect(0, 0, w, h);
-
-                // 1. BACKGROUND - Deep Tech Theme
-                const gradient = ctx.createLinearGradient(0, 0, w, h);
-                gradient.addColorStop(0, '#020617');
-                gradient.addColorStop(1, '#0f172a');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, w, h);
-
-                // 2. DECORATIVE BORDERS (Portrait Style)
-                const margin = 80;
-
-                // Outer Gold Border
-                ctx.lineWidth = 8;
-                ctx.strokeStyle = '#d4af37';
-                ctx.strokeRect(margin, margin, w - 2*margin, h - 2*margin);
-
-                // Inner Blue Border
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = '#3b82f6';
-                ctx.strokeRect(margin + 20, margin + 20, w - 2*(margin + 20), h - 2*(margin + 20));
-
-                // Corner Accents (Gold)
-                ctx.fillStyle = '#d4af37';
-                const cornerSize = 40;
-
-                // Top Left
-                ctx.beginPath();
-                ctx.moveTo(margin, margin);
-                ctx.lineTo(margin + cornerSize, margin);
-                ctx.lineTo(margin, margin + cornerSize);
-                ctx.fill();
-
-                // Top Right
-                ctx.beginPath();
-                ctx.moveTo(w - margin, margin);
-                ctx.lineTo(w - margin - cornerSize, margin);
-                ctx.lineTo(w - margin, margin + cornerSize);
-                ctx.fill();
-
-                // Bottom Left
-                ctx.beginPath();
-                ctx.moveTo(margin, h - margin);
-                ctx.lineTo(margin + cornerSize, h - margin);
-                ctx.lineTo(margin, h - margin - cornerSize);
-                ctx.fill();
-
-                // Bottom Right
-                ctx.beginPath();
-                ctx.moveTo(w - margin, h - margin);
-                ctx.lineTo(w - margin - cornerSize, h - margin);
-                ctx.lineTo(w - margin, h - margin - cornerSize);
-                ctx.fill();
-
-                // 3. HEADER SECTION (Top)
-                ctx.textAlign = 'center';
-
-                // Logo (Top Center)
-                const logoWidth = 120;
-                const logoHeight = logoWidth * (logo.height / logo.width);
-                try {
-                    ctx.drawImage(logo, w/2 - logoWidth/2, margin + 40, logoWidth, logoHeight);
-                } catch(e) {
-                    console.warn("Logo draw failed", e);
-                }
-
-                // Institution Name
-                ctx.font = 'bold 36px "Cinzel"';
-                ctx.fillStyle = '#d4af37';
-                ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, margin + logoHeight + 100);
-
-                // Certificate Title
-                ctx.font = 'bold 64px "Cinzel"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText('CERTIFICATE OF PAYOUT', w/2, margin + logoHeight + 180);
-
-                // Subtitle
-                ctx.font = '22px "Inter"';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText('OFFICIAL VERIFICATION DOCUMENT', w/2, margin + logoHeight + 220);
-
-                // 4. SEPARATOR LINE
-                ctx.beginPath();
-                ctx.moveTo(w/2 - 300, margin + logoHeight + 250);
-                ctx.lineTo(w/2 + 300, margin + logoHeight + 250);
-                ctx.strokeStyle = '#3b82f6';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // 5. BODY CONTENT
-                let currentY = margin + logoHeight + 320;
-
-                // Introductory Text
-                ctx.font = 'italic 26px "Inter"';
-                ctx.fillStyle = '#cbd5e1';
-                ctx.fillText('This document certifies that', w/2, currentY);
-
-                currentY += 60;
-
-                // Student Name (Prominent)
-                ctx.font = 'normal 110px "Pinyon Script"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(username, w/2, currentY);
-
-                // Name Underline
-                ctx.beginPath();
-                ctx.moveTo(w/2 - 280, currentY + 10);
-                ctx.lineTo(w/2 + 280, currentY + 10);
-                ctx.strokeStyle = '#d4af37';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                currentY += 80;
-
-                // Description Text
-                ctx.font = '22px "Inter"';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText('has successfully redeemed value from the DTech Student Rewards Program', w/2, currentY);
-
-                // 6. PAYMENT DETAILS SECTION
-                const detailsY = currentY + 120;
-
-                // Details Box Background
-                ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
-                ctx.fillRect(w/2 - 320, detailsY, 640, 240);
-
-                // Details Border
-                ctx.strokeStyle = '#3b82f6';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(w/2 - 320, detailsY, 640, 240);
-
-                // Payment Method
-                ctx.font = 'bold 32px "Cinzel"';
-                ctx.fillStyle = '#d4af37';
-                ctx.fillText(`PAYMENT METHOD: ${method.toUpperCase()}`, w/2, detailsY + 60);
-
-                // Amount Details
-                ctx.font = '28px "Inter"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(`Gross Amount: R ${amount.toFixed(2)}`, w/2, detailsY + 110);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillText(`Processing Fee: R ${fee.toFixed(2)} (${(fee/amount*100).toFixed(1)}%)`, w/2, detailsY + 150);
-
-                // Net Payout (Prominent)
-                ctx.font = 'bold 42px "Cinzel"';
-                ctx.fillStyle = '#10b981';
-                ctx.fillText(`NET PAYOUT: R ${payout.toFixed(2)}`, w/2, detailsY + 200);
-
-                // 7. QR CODE SECTION (Large and Prominent)
-                const qrY = detailsY + 280;
-                const qrSize = 280; // Larger QR code for easy scanning
-
-                // QR Code Background
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                ctx.fillRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
-
-                // QR Code Border
-                ctx.strokeStyle = '#d4af37';
-                ctx.lineWidth = 4;
-                ctx.strokeRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
-
-                // Generate QR Code
-                const qrCanvas = document.createElement('canvas');
-                qrCanvas.width = qrSize;
-                qrCanvas.height = qrSize;
-
-                const qr = new QRious({
-                    element: qrCanvas,
-                    value: `DTECH_CERT:${certId}:${username}:R${payout}:${method}`,
-                    size: qrSize,
-                    foreground: 'black',
-                    background: 'white',
-                    level: 'H' // High error correction for better scanning
-                });
-
-                // Draw QR Code
-                ctx.drawImage(qrCanvas, w/2 - qrSize/2, qrY, qrSize, qrSize);
-
-                // QR Code Label
-                ctx.font = 'bold 20px "Inter"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText('SCAN TO VERIFY CERTIFICATE', w/2, qrY + qrSize + 40);
-
-                ctx.font = '16px "Courier New"';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText(`ID: ${certId}`, w/2, qrY + qrSize + 70);
-
-                // 8. FOOTER SECTION (Two Columns)
-                const footerY = qrY + qrSize + 120;
-
-                // Left Column: Issuance Details
-                ctx.textAlign = 'left';
-                ctx.font = 'bold 18px "Inter"';
-                ctx.fillStyle = '#d4af37';
-                ctx.fillText('ISSUANCE DETAILS:', margin + 50, footerY);
-
-                ctx.font = '16px "Inter"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(`Date: ${new Date().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                })}`, margin + 50, footerY + 40);
-
-                ctx.fillText(`Time: ${new Date().toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })}`, margin + 50, footerY + 70);
-
-                ctx.fillText(`Student ID: ${username}`, margin + 50, footerY + 100);
-
-                // Right Column: Authorization
-                ctx.textAlign = 'right';
-                ctx.font = 'bold 18px "Inter"';
-                ctx.fillStyle = '#d4af37';
-                ctx.fillText('AUTHORIZATION', w - margin - 50, footerY);
-
-                // Signature Line
-                ctx.beginPath();
-                ctx.moveTo(w - margin - 250, footerY + 60);
-                ctx.lineTo(w - margin - 50, footerY + 60);
-                ctx.strokeStyle = '#f8fafc';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                ctx.font = 'italic 20px "Inter"';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText('Authorized Signature', w - margin - 150, footerY + 90);
-
-                // Official Seal
-                const sealX = w - margin - 150;
-                const sealY = footerY + 150;
-
-                // Seal Outer Circle
-                ctx.beginPath();
-                ctx.arc(sealX, sealY, 50, 0, Math.PI * 2);
-                ctx.fillStyle = '#d4af37';
-                ctx.fill();
-
-                // Seal Inner Circle
-                ctx.beginPath();
-                ctx.arc(sealX, sealY, 40, 0, Math.PI * 2);
-                ctx.fillStyle = '#020617';
-                ctx.fill();
-
-                // Seal Text
-                ctx.font = 'bold 14px "Cinzel"';
-                ctx.fillStyle = '#d4af37';
-                ctx.textAlign = 'center';
-                ctx.fillText('DTECH', sealX, sealY - 10);
-                ctx.fillText('OFFICIAL', sealX, sealY + 10);
-                ctx.font = '12px "Cinzel"';
-                ctx.fillText('VERIFIED', sealX, sealY + 25);
-
-                // 9. SECURITY FEATURES (Subtle Patterns)
-                // Background Pattern (Subtle)
-                ctx.save();
-                ctx.globalAlpha = 0.05;
-                ctx.strokeStyle = '#d4af37';
-                ctx.lineWidth = 1;
-
-                // Diagonal Lines
-                for(let i = -h; i < w + h; i += 30) {
-                    ctx.beginPath();
-                    ctx.moveTo(i, 0);
-                    ctx.lineTo(i + h, h);
-                    ctx.stroke();
-                }
-                ctx.restore();
-
-                // 10. WATERMARK (Subtle)
-                ctx.save();
-                ctx.globalAlpha = 0.03;
-                ctx.font = 'bold 120px "Cinzel"';
-                ctx.fillStyle = '#f8fafc';
-                ctx.textAlign = 'center';
-                ctx.fillText('DTECH VERIFIED', w/2, h/2);
-                ctx.restore();
-
-                // 11. DOWNLOAD CERTIFICATE
-                setTimeout(() => {
-                    const link = document.createElement('a');
-                    link.download = `DTech_Certificate_${username}_${certId}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    showMessage(`Certificate generated successfully!`, 'success');
-                }, 500);
-            };
-
-            logo.onerror = () => {
-                alert("Error loading logo. Certificate will be generated without logo.");
-                // Proceed without logo
-                generateCertificateWithoutLogo(username, certId, amount, method, fee, payout);
-            };
-        }
-
-        // Fallback function if logo fails to load
-        function generateCertificateWithoutLogo(username, certId, amount, method, fee, payout) {
-            const canvas = document.getElementById('certCanvas');
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            // Similar drawing code without logo references
-            // Clear canvas
-            ctx.clearRect(0, 0, w, h);
-
-            // Background
-            const gradient = ctx.createLinearGradient(0, 0, w, h);
-            gradient.addColorStop(0, '#020617');
-            gradient.addColorStop(1, '#0f172a');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, w, h);
-
-            // Draw the rest of the certificate without the logo
-            // ... (similar structure as above but skip logo drawing)
-
-            // For simplicity, you can call the main function and handle the error
-            showMessage("Logo failed to load, generating certificate with default design.", "info");
-
-            // Download anyway
-            setTimeout(() => {
-                const link = document.createElement('a');
-                link.download = `DTech_Certificate_${username}_${certId}.png`;
-                link.href = canvas.toDataURL('image/png');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }, 500);
-        }
-
         // ---------- INIT ----------
         (function init() {
           // Check Referral
@@ -1215,7 +673,6 @@
               d.style.display = 'block';
           }
 
-          setupRedeemListeners();
           const saved = sessionStorage.getItem('ad_user');
           if (saved) {
             try {
