@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berserker Mode - Select Round</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .profile-link {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--surface);
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+
+        .round-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .round-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
+        .round-card.locked { opacity: 0.5; filter: grayscale(0.8); pointer-events: none; }
+        .round-card.cooldown { border-color: var(--muted); }
+
+        .round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .round-title { font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .round-status { font-size: 0.8rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+
+        .status-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .status-cooldown { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .status-locked { background: rgba(148, 163, 184, 0.2); color: var(--muted); }
+
+        .round-info { font-size: 0.9rem; color: var(--muted); margin-bottom: 15px; line-height: 1.5; }
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .mission-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text);
+            transition: background 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .mission-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .m-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+        .m-progress { font-size: 0.75rem; color: var(--accent); }
+        .m-done { color: var(--success); }
+
+        .timer { font-family: monospace; font-size: 1.1rem; color: var(--danger); font-weight: bold; margin-top: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Berserker</h1>
+            <div style="font-size: 0.8rem; color: var(--muted);">Select Your Round</div>
+        </div>
+        <a href="profile.html" class="profile-link">👤 My Profile</a>
+    </header>
+
+    <div id="loading" style="margin-top: 50px; color: var(--muted);">Loading Status...</div>
+
+    <!-- Round 1 -->
+    <div class="round-card" id="card-r1" style="display:none;">
+        <div class="round-header">
+            <div class="round-title">ROUND 1 <span style="font-size:0.8em; color:var(--success);">(High Yield)</span></div>
+            <div class="round-status status-active" id="status-r1">ACTIVE</div>
+        </div>
+        <div class="round-info">
+            Max Revenue (R0.10 - R0.30). Complete all missions to finish round.<br>
+            <span style="color:var(--accent);">Cooldown: 60m after completion.</span>
+        </div>
+
+        <div id="timer-r1" style="display:none; text-align:center;">
+            <div style="font-size:0.8rem; color:var(--muted);">Available in:</div>
+            <div class="timer" id="time-r1">00:00:00</div>
+        </div>
+
+        <div class="mission-grid" id="actions-r1">
+            <a href="berserker_popunder.html" class="mission-btn">
+                <span class="m-label">Popunder</span>
+                <span class="m-progress" id="prog-r1-pop">0/4</span>
+            </a>
+            <a href="berserker_inpage.html" class="mission-btn">
+                <span class="m-label">In-Page</span>
+                <span class="m-progress" id="prog-r1-inpage">0/6</span>
+            </a>
+            <a href="berserker_direct.html" class="mission-btn">
+                <span class="m-label">Direct</span>
+                <span class="m-progress" id="prog-r1-direct">0/8</span>
+            </a>
+            <a href="berserker_notification.html" class="mission-btn">
+                <span class="m-label">Notification</span>
+                <span class="m-progress" style="color:#94a3b8;">Skip / Opt</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Round 2 -->
+    <div class="round-card" id="card-r2" style="display:none;">
+        <div class="round-header">
+            <div class="round-title">ROUND 2 <span style="font-size:0.8em; color:#facc15;">(Medium Yield)</span></div>
+            <div class="round-status status-locked" id="status-r2">LOCKED</div>
+        </div>
+        <div class="round-info">
+            Revenue (R0.10 - R0.30). <span style="font-size:0.85em; color:#94a3b8;">(Higher chance of lower end)</span>.<br>
+            Only available when Round 1 is cooling down.<br>
+            <span style="color:var(--accent);">Cooldown: 20m after completion.</span>
+        </div>
+
+        <div id="timer-r2" style="display:none; text-align:center;">
+            <div style="font-size:0.8rem; color:var(--muted);">Available in:</div>
+            <div class="timer" id="time-r2">00:00:00</div>
+        </div>
+
+        <div class="mission-grid" id="actions-r2" style="display:none;">
+            <a href="berserker_popunder.html" class="mission-btn">
+                <span class="m-label">Popunder</span>
+                <span class="m-progress" id="prog-r2-pop">0/4</span>
+            </a>
+            <a href="berserker_inpage.html" class="mission-btn">
+                <span class="m-label">In-Page</span>
+                <span class="m-progress" id="prog-r2-inpage">0/6</span>
+            </a>
+            <a href="berserker_direct.html" class="mission-btn">
+                <span class="m-label">Direct</span>
+                <span class="m-progress" id="prog-r2-direct">0/8</span>
+            </a>
+            <a href="berserker_notification.html" class="mission-btn">
+                <span class="m-label">Notification</span>
+                <span class="m-progress" style="color:#94a3b8;">Skip / Opt</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Round 3 -->
+    <div class="round-card" id="card-r3" style="display:none;">
+        <div class="round-header">
+            <div class="round-title">ROUND 3 <span style="font-size:0.8em; color:var(--danger);">(Grind Mode)</span></div>
+            <div class="round-status status-locked" id="status-r3">LOCKED</div>
+        </div>
+        <div class="round-info">
+            Low Revenue (R0.001 - R0.10). <strong>Unlimited Clicks.</strong><br>
+            Available when Round 1 & 2 are cooling down.
+        </div>
+
+        <div class="mission-grid" id="actions-r3" style="display:none;">
+            <a href="berserker_popunder.html" class="mission-btn">
+                <span class="m-label">Popunder</span>
+                <span class="m-progress">∞</span>
+            </a>
+            <a href="berserker_inpage.html" class="mission-btn">
+                <span class="m-label">In-Page</span>
+                <span class="m-progress">∞</span>
+            </a>
+            <a href="berserker_direct.html" class="mission-btn">
+                <span class="m-label">Direct</span>
+                <span class="m-progress">∞</span>
+            </a>
+            <a href="berserker_notification.html" class="mission-btn">
+                <span class="m-label">Notification</span>
+                <span class="m-progress">∞</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const MISSION_TARGETS = { popunder: 4, inpage: 6, direct: 8 };
+
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        async function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const localUser = JSON.parse(saved);
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${localUser.username}`);
+                const data = await res.json();
+
+                if(data.error) {
+                    alert("Error loading profile: " + data.error);
+                    return;
+                }
+
+                render(data);
+                document.getElementById('loading').style.display = 'none';
+
+                // Start Timers
+                startTimers(data.rounds);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerText = "Failed to load.";
+            }
+        }
+
+        function render(data) {
+            const r = data.rounds;
+            const now = Date.now();
+
+            // Card Elements
+            const c1 = document.getElementById('card-r1');
+            const c2 = document.getElementById('card-r2');
+            const c3 = document.getElementById('card-r3');
+
+            c1.style.display = 'block';
+            c2.style.display = 'block';
+            c3.style.display = 'block';
+
+            // --- ROUND 1 ---
+            const r1Active = r.current === 1;
+            const r1Cooldown = r.r1_cooldown_ms > 0;
+
+            if (r1Active) {
+                setCardState('r1', 'active', 'ACTIVE');
+                updateMission('r1', r.mission);
+            } else if (r1Cooldown) {
+                setCardState('r1', 'cooldown', 'COOLDOWN');
+                document.getElementById('actions-r1').style.display = 'none';
+                document.getElementById('timer-r1').style.display = 'block';
+            } else {
+                // Should not happen if logic is correct (R1 is default if no cooldown)
+                // But if R1 is waiting but we are in R2?
+                // Backend logic: If R1 cooldown > 0, we check R2.
+                // If R1 cooldown <= 0, we are in R1.
+                // So if current !== 1, it MUST be cooldown.
+                setCardState('r1', 'cooldown', 'COOLDOWN');
+            }
+
+            // --- ROUND 2 ---
+            // Active if current == 2
+            // Locked if R1 is Active (current == 1)
+            // Cooldown if R2 cooldown > 0 (and current == 3)
+
+            if (r.current === 2) {
+                setCardState('r2', 'active', 'ACTIVE');
+                document.getElementById('actions-r2').style.display = 'grid';
+                updateMission('r2', r.mission);
+            } else {
+                if (r.current === 1) {
+                    setCardState('r2', 'locked', 'LOCKED (R1 Active)');
+                } else if (r.r2_cooldown_ms > 0) {
+                     setCardState('r2', 'cooldown', 'COOLDOWN');
+                     document.getElementById('timer-r2').style.display = 'block';
+                } else {
+                    // Logic gap? If R1 is cooldown, R2 should be active.
+                    // Unless R2 is ALSO cooldown.
+                    // If current === 3, then R2 must be cooldown.
+                     setCardState('r2', 'cooldown', 'COOLDOWN'); // assume cooldown if R3 active
+                     if(r.current === 3 && r.r2_cooldown_ms <= 0) {
+                         // Weird state, backend says R3 but R2 cooldown is 0?
+                         // Maybe slight desync.
+                     }
+                }
+            }
+
+            // --- ROUND 3 ---
+            if (r.current === 3) {
+                setCardState('r3', 'active', 'ACTIVE');
+                document.getElementById('actions-r3').style.display = 'grid';
+            } else {
+                setCardState('r3', 'locked', 'LOCKED');
+            }
+        }
+
+        function setCardState(id, type, label) {
+            const c = document.getElementById(`card-${id}`);
+            const s = document.getElementById(`status-${id}`);
+            c.className = `round-card ${type}`;
+            s.className = `round-status status-${type}`;
+            s.innerText = label;
+        }
+
+        function updateMission(rid, m) {
+            const p = m || { popunder:0, inpage:0, direct:0 };
+
+            const setP = (type, val, target) => {
+                const el = document.getElementById(`prog-${rid}-${type}`);
+                if(el) {
+                    el.innerText = `${val}/${target}`;
+                    if(val >= target) {
+                        el.classList.add('m-done');
+                        el.innerText = "DONE";
+                    }
+                }
+            };
+
+            setP('pop', p.popunder, MISSION_TARGETS.popunder);
+            setP('inpage', p.inpage, MISSION_TARGETS.inpage);
+            setP('direct', p.direct, MISSION_TARGETS.direct);
+        }
+
+        function startTimers(r) {
+            if (r.r1_cooldown_ms > 0) {
+                runTimer('time-r1', r.r1_cooldown_ms);
+            }
+            if (r.r2_cooldown_ms > 0) {
+                runTimer('time-r2', r.r2_cooldown_ms);
+            }
+        }
+
+        function runTimer(elId, ms) {
+            let remain = ms;
+            const el = document.getElementById(elId);
+
+            const interval = setInterval(() => {
+                remain -= 1000;
+                if (remain <= 0) {
+                    clearInterval(interval);
+                    el.innerText = "READY (Refresh)";
+                    // Auto reload?
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+
+                // Format
+                const seconds = Math.floor((remain / 1000) % 60);
+                const minutes = Math.floor((remain / (1000 * 60)) % 60);
+                const hours = Math.floor((remain / (1000 * 60 * 60)) % 24);
+
+                el.innerText = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }, 1000);
+        }
+
+        function pad(n) { return n < 10 ? '0'+n : n; }
+
+        init();
+    </script>
+</body>
+</html>
