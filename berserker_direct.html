@@ -119,7 +119,7 @@
     <div id="message"></div>
 
     <main>
-        <a href="berserker.html" class="back-btn">← Back to Menu</a>
+        <a href="app.html" class="back-btn">← Back to Menu</a>
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
@@ -284,14 +284,14 @@
 
                     if (data.mission_complete) {
                         showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
-                        setTimeout(() => window.location.href = 'berserker.html', 3000);
+                        setTimeout(() => window.location.href = 'app.html', 3000);
                     }
 
                 } else {
                     showMessage(data.error || 'Reward failed.');
                     if (data.error && data.error.includes('complete')) {
                         // Maybe backend says mission complete but frontend didn't know
-                         setTimeout(() => window.location.href = 'berserker.html', 2000);
+                         setTimeout(() => window.location.href = 'app.html', 2000);
                     }
                 }
             } catch (e) {

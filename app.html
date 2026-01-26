@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" /> <!-- Prevent Zoom on mobile -->
+    <title>DTech App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-light: #94a3b8;
+            --primary: #3b82f6;
+            --accent: #d4af37;
+            --success: #10b981;
+            --danger: #ef4444;
+            --radius: 12px;
+            --nav-height: 60px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: calc(var(--nav-height) + 20px); /* Space for bottom nav */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .header-balance {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* --- Tabs Layout --- */
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s ease-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            height: var(--nav-height);
+            background: #0f172a;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-size: 0.7rem;
+            text-decoration: none;
+            width: 33%;
+            height: 100%;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 1.2rem; margin-bottom: 3px; }
+
+        /* --- Cards & General UI --- */
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+        }
+
+        h2 { margin-top: 0; font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--primary); }
+        .label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+
+        .btn {
+            background: var(--primary); color: white;
+            border: none; padding: 12px; width: 100%;
+            border-radius: 8px; font-weight: 600; cursor: pointer;
+            text-transform: uppercase; font-size: 0.9rem;
+        }
+        .btn.gold { background: var(--accent); color: #000; font-weight: 800; }
+        .btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+
+        /* --- TAB 1: EARN (Berserker) Styles --- */
+        .round-card {
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 15px; margin-bottom: 15px; border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.3s;
+        }
+        .round-card.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
+        .round-card.locked { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
+        .round-card.cooldown { border-color: var(--text-light); }
+
+        .round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .round-status { font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .status-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .status-locked { background: rgba(148, 163, 184, 0.2); color: var(--text-light); }
+        .status-cooldown { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .mission-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .mission-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 10px 5px; text-align: center;
+            text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center;
+        }
+        .m-label { font-size: 0.7rem; color: var(--text-light); margin-bottom: 3px; }
+        .m-prog { font-size: 0.75rem; font-weight: 700; color: var(--accent); }
+        .m-done { color: var(--success); }
+        .timer { font-family: monospace; color: var(--danger); font-weight: bold; font-size: 0.9rem; }
+
+        /* --- TAB 2: WALLET Styles --- */
+        .balance-hero {
+            text-align: center; padding: 20px 0;
+        }
+        .balance-amount { font-size: 2.5rem; font-family: 'Cinzel', serif; color: var(--accent); font-weight: 700; }
+        .balance-sub { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+        .sub-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; width: 45%; }
+
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: #1e293b; border: 1px solid #334155;
+            color: white; border-radius: 8px; box-sizing: border-box;
+            font-family: 'Inter';
+        }
+
+        .history-item {
+            display: flex; justify-content: space-between; padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;
+        }
+
+        /* --- TAB 3: PROFILE Styles --- */
+        .streak-track { display: flex; justify-content: space-between; margin: 20px 0; position: relative; }
+        .streak-track::before {
+            content: ''; position: absolute; top: 50%; left: 0; right: 0;
+            height: 2px; background: #334155; z-index: 0; transform: translateY(-50%);
+        }
+        .day-node {
+            width: 25px; height: 25px; border-radius: 50%; background: #1e293b;
+            border: 2px solid #334155; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; z-index: 1; position: relative;
+        }
+        .day-node.active { background: var(--accent); color: black; border-color: white; box-shadow: 0 0 8px rgba(212,175,55,0.5); }
+
+        .ref-box {
+            background: #1e293b; padding: 10px; border-radius: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px dashed var(--text-light);
+        }
+
+        /* --- Canvas (Hidden) --- */
+        #certCanvas { display: none; position: fixed; }
+
+        /* --- Toast --- */
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 0.9rem; display: none; z-index: 2000;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">DTECH</div>
+        <div class="header-balance">Pending: R <span id="pending-bal-top">0.00</span></div>
+    </header>
+
+    <!-- TAB 1: EARN -->
+    <div id="tab-earn" class="tab-content active">
+        <div class="card" style="text-align: center; padding: 15px;">
+            <div style="font-size:0.8rem; color:var(--text-light);">CURRENT ROUND STATUS</div>
+        </div>
+
+        <!-- Round 1 -->
+        <div class="round-card" id="card-r1">
+            <div class="round-header">
+                <span style="font-weight:700;">ROUND 1 <span style="font-size:0.7em; color:var(--success);">(High Yield)</span></span>
+                <span class="round-status status-active" id="status-r1">ACTIVE</span>
+            </div>
+
+            <div id="timer-r1" style="display:none; text-align:center; margin:10px 0;">
+                <div style="font-size:0.75rem; color:var(--text-light);">Cooldown</div>
+                <div class="timer" id="time-r1">00:00:00</div>
+            </div>
+
+            <div class="mission-grid" id="actions-r1">
+                <a href="berserker_popunder.html" class="mission-btn">
+                    <span class="m-label">Popunder</span><span class="m-prog" id="prog-r1-pop">0/4</span>
+                </a>
+                <a href="berserker_inpage.html" class="mission-btn">
+                    <span class="m-label">In-Page</span><span class="m-prog" id="prog-r1-inpage">0/6</span>
+                </a>
+                <a href="berserker_direct.html" class="mission-btn">
+                    <span class="m-label">Direct</span><span class="m-prog" id="prog-r1-direct">0/8</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Round 2 -->
+        <div class="round-card" id="card-r2">
+            <div class="round-header">
+                <span style="font-weight:700;">ROUND 2 <span style="font-size:0.7em; color:#facc15;">(Medium)</span></span>
+                <span class="round-status status-locked" id="status-r2">LOCKED</span>
+            </div>
+
+            <div id="timer-r2" style="display:none; text-align:center; margin:10px 0;">
+                <div style="font-size:0.75rem; color:var(--text-light);">Cooldown</div>
+                <div class="timer" id="time-r2">00:00:00</div>
+            </div>
+
+            <div class="mission-grid" id="actions-r2" style="display:none;">
+                <a href="berserker_popunder.html" class="mission-btn">
+                    <span class="m-label">Popunder</span><span class="m-prog" id="prog-r2-pop">0/4</span>
+                </a>
+                <a href="berserker_inpage.html" class="mission-btn">
+                    <span class="m-label">In-Page</span><span class="m-prog" id="prog-r2-inpage">0/6</span>
+                </a>
+                <a href="berserker_direct.html" class="mission-btn">
+                    <span class="m-label">Direct</span><span class="m-prog" id="prog-r2-direct">0/8</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Round 3 -->
+        <div class="round-card" id="card-r3">
+            <div class="round-header">
+                <span style="font-weight:700;">ROUND 3 <span style="font-size:0.7em; color:var(--danger);">(Grind)</span></span>
+                <span class="round-status status-locked" id="status-r3">LOCKED</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-light); margin-bottom:10px;">
+                Unlimited earning. Available when R1 & R2 are cooling down.
+            </div>
+            <div class="mission-grid" id="actions-r3" style="display:none;">
+                 <a href="berserker_popunder.html" class="mission-btn">
+                    <span class="m-label">Popunder</span><span class="m-prog">∞</span>
+                </a>
+                <a href="berserker_inpage.html" class="mission-btn">
+                    <span class="m-label">In-Page</span><span class="m-prog">∞</span>
+                </a>
+                <a href="berserker_direct.html" class="mission-btn">
+                    <span class="m-label">Direct</span><span class="m-prog">∞</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+             <a href="berserker_notification.html" class="btn" style="text-decoration:none; display:block; text-align:center; background:#1e293b; border:1px solid #334155;">
+                 🔔 Enable Notifications (Optional)
+             </a>
+        </div>
+    </div>
+
+    <!-- TAB 2: WALLET -->
+    <div id="tab-wallet" class="tab-content">
+        <div class="card balance-hero">
+            <div class="label">Total Withdrawable Balance</div>
+            <div class="balance-amount">R <span id="wallet-bal">0.00</span></div>
+            <div class="balance-sub">
+                <div class="sub-box">
+                    <div class="label">Earnings</div>
+                    <div style="font-weight:700;">R <span id="sub-earn">0.00</span></div>
+                </div>
+                <div class="sub-box">
+                    <div class="label">Referrals</div>
+                    <div style="font-weight:700;">R <span id="sub-ref">0.00</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Withdraw Funds</h2>
+            <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:15px;">
+                Min: R 10 | Max: R 250
+            </div>
+
+            <label>Payment Method</label>
+            <select id="redeem-method">
+                <option value="Airtime" data-fee="0.25">Airtime (25% Fee)</option>
+                <option value="Voucher" data-fee="0.30">Voucher (30% Fee)</option>
+                <option value="Cash Send" data-fee="0.40">Cash Send (40% Fee)</option>
+            </select>
+
+            <label>Amount (R)</label>
+            <input type="number" id="redeem-amount" placeholder="e.g. 50" />
+
+            <div id="calc-box" style="background:#1e293b; padding:10px; border-radius:6px; margin-bottom:15px; display:none; font-size:0.85rem;">
+                <div style="display:flex; justify-content:space-between;"><span>Fee:</span> <span id="calc-fee" style="color:var(--danger)">R 0.00</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:5px;"><span>Net Payout:</span> <span id="calc-net" style="color:var(--success)">R 0.00</span></div>
+            </div>
+
+            <button id="redeem-btn" class="btn gold" onclick="redeem()">Generate Certificate</button>
+        </div>
+
+        <div class="card">
+            <h2>History</h2>
+            <div id="history-list">
+                <!-- JS Populates -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: PROFILE -->
+    <div id="tab-profile" class="tab-content">
+        <div class="card" style="text-align:center;">
+             <div style="font-size:1.2rem; font-weight:700; margin-bottom:5px;" id="profile-user">User</div>
+             <div class="label">Member Status: <span style="color:var(--success);">Active</span></div>
+             <button onclick="logout()" style="background:transparent; border:1px solid #ef4444; color:#ef4444; padding:5px 15px; border-radius:4px; margin-top:10px; font-size:0.8rem;">Log Out</button>
+        </div>
+
+        <div class="card">
+            <h2>Daily Streak</h2>
+            <p style="font-size:0.8rem; color:var(--text-light);">7 Days of Notifications Enabled</p>
+            <div class="streak-track" id="streak-track"></div>
+            <button class="btn" onclick="checkStreak()" id="streak-btn">Verify Streak</button>
+            <div id="streak-msg" style="text-align:center; font-size:0.8rem; margin-top:10px; height:1.2em;"></div>
+        </div>
+
+        <div class="card">
+            <h2>Refer & Earn</h2>
+            <p style="font-size:0.8rem; color:var(--text-light);">Get 5% of friends' earnings.</p>
+            <div class="ref-box">
+                <span id="ref-link" style="font-family:monospace; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px; color:var(--accent);">...</span>
+                <button onclick="copyRef()" style="background:var(--accent); border:none; border-radius:4px; padding:5px 10px; font-weight:bold; font-size:0.7rem;">COPY</button>
+            </div>
+            <div style="margin-top:10px; font-size:0.85rem;">Total Referrals: <strong id="ref-count">0</strong></div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <a class="nav-item active" onclick="switchTab('earn', this)">
+            <div class="nav-icon">⚔️</div>
+            <div>EARN</div>
+        </a>
+        <a class="nav-item" onclick="switchTab('wallet', this)">
+            <div class="nav-icon">💰</div>
+            <div>WALLET</div>
+        </a>
+        <a class="nav-item" onclick="switchTab('profile', this)">
+            <div class="nav-icon">👤</div>
+            <div>PROFILE</div>
+        </a>
+    </nav>
+
+    <div id="toast"></div>
+
+    <canvas id="certCanvas" width="1200" height="1700"></canvas>
+
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const MISSION_TARGETS = { popunder: 4, inpage: 6, direct: 8 };
+
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        let currentUser = null;
+
+        // --- CORE ---
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function switchTab(tabId, el) {
+            // Update Nav
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if(el) el.classList.add('active');
+
+            // Update Content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        async function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const localUser = JSON.parse(saved);
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/profile?username=${localUser.username}`);
+                const data = await res.json();
+                if(data.error) {
+                    alert("Session Error: " + data.error);
+                    logout();
+                    return;
+                }
+                currentUser = data;
+                renderAll();
+                startTimers(data.rounds);
+            } catch (e) {
+                console.error(e);
+                toast("Network Error");
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('ad_user');
+            window.location.href = 'index.html';
+        }
+
+        function renderAll() {
+            if(!currentUser) return;
+
+            // Header
+            document.getElementById('pending-bal-top').innerText = (currentUser.balance_pending || 0).toFixed(2);
+
+            // Tab 1: Earn
+            renderEarn(currentUser.rounds);
+
+            // Tab 2: Wallet
+            renderWallet();
+
+            // Tab 3: Profile
+            renderProfile();
+        }
+
+        // --- EARN LOGIC ---
+        function renderEarn(r) {
+            const c1 = document.getElementById('card-r1');
+            const c2 = document.getElementById('card-r2');
+            const c3 = document.getElementById('card-r3');
+
+            // R1
+            if (r.current === 1) {
+                c1.className = 'round-card active';
+                document.getElementById('status-r1').innerText = "ACTIVE";
+                document.getElementById('status-r1').className = "round-status status-active";
+                document.getElementById('actions-r1').style.display = 'grid';
+                document.getElementById('timer-r1').style.display = 'none';
+                updateMission('r1', r.mission);
+            } else if (r.r1_cooldown_ms > 0) {
+                c1.className = 'round-card cooldown';
+                document.getElementById('status-r1').innerText = "COOLDOWN";
+                document.getElementById('status-r1').className = "round-status status-cooldown";
+                document.getElementById('actions-r1').style.display = 'none';
+                document.getElementById('timer-r1').style.display = 'block';
+            } else {
+                 c1.className = 'round-card cooldown'; // Fallback
+            }
+
+            // R2
+            if (r.current === 2) {
+                c2.className = 'round-card active';
+                document.getElementById('status-r2').innerText = "ACTIVE";
+                document.getElementById('status-r2').className = "round-status status-active";
+                document.getElementById('actions-r2').style.display = 'grid';
+                document.getElementById('timer-r2').style.display = 'none';
+                updateMission('r2', r.mission);
+            } else {
+                if(r.current === 1) {
+                    c2.className = 'round-card locked';
+                    document.getElementById('status-r2').innerText = "LOCKED";
+                    document.getElementById('status-r2').className = "round-status status-locked";
+                } else if (r.r2_cooldown_ms > 0) {
+                    c2.className = 'round-card cooldown';
+                    document.getElementById('status-r2').innerText = "COOLDOWN";
+                    document.getElementById('status-r2').className = "round-status status-cooldown";
+                    document.getElementById('timer-r2').style.display = 'block';
+                } else {
+                    c2.className = 'round-card cooldown';
+                }
+            }
+
+            // R3
+            if (r.current === 3) {
+                c3.className = 'round-card active';
+                document.getElementById('status-r3').innerText = "ACTIVE";
+                document.getElementById('status-r3').className = "round-status status-active";
+                document.getElementById('actions-r3').style.display = 'grid';
+            } else {
+                c3.className = 'round-card locked';
+                document.getElementById('status-r3').innerText = "LOCKED";
+                document.getElementById('status-r3').className = "round-status status-locked";
+                document.getElementById('actions-r3').style.display = 'none';
+            }
+        }
+
+        function updateMission(rid, m) {
+            const p = m || { popunder:0, inpage:0, direct:0 };
+            const setP = (type, val, target) => {
+                const el = document.getElementById(`prog-${rid}-${type}`);
+                if(el) {
+                    el.innerText = `${val}/${target}`;
+                    if(val >= target) { el.classList.add('m-done'); el.innerText = "DONE"; }
+                }
+            };
+            setP('pop', p.popunder, MISSION_TARGETS.popunder);
+            setP('inpage', p.inpage, MISSION_TARGETS.inpage);
+            setP('direct', p.direct, MISSION_TARGETS.direct);
+        }
+
+        function startTimers(r) {
+            if (r.r1_cooldown_ms > 0) runTimer('time-r1', r.r1_cooldown_ms);
+            if (r.r2_cooldown_ms > 0) runTimer('time-r2', r.r2_cooldown_ms);
+        }
+
+        function runTimer(elId, ms) {
+            let remain = ms;
+            const el = document.getElementById(elId);
+            const int = setInterval(() => {
+                remain -= 1000;
+                if (remain <= 0) { clearInterval(int); el.innerText = "READY (Reload)"; setTimeout(()=>location.reload(),2000); return; }
+                const s = Math.floor((remain/1000)%60), m = Math.floor((remain/60000)%60), h = Math.floor((remain/3600000)%24);
+                el.innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
+            }, 1000);
+        }
+        function pad(n) { return n<10?'0'+n:n; }
+
+
+        // --- WALLET LOGIC ---
+        function renderWallet() {
+            const bal = currentUser.balance || 0;
+            const ref = currentUser.referral_balance || 0;
+            const total = bal + ref;
+
+            document.getElementById('wallet-bal').innerText = total.toFixed(2);
+            document.getElementById('sub-earn').innerText = bal.toFixed(2);
+            document.getElementById('sub-ref').innerText = ref.toFixed(2);
+
+            // History
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            if(!currentUser.history || currentUser.history.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-light);">No history found.</div>';
+            } else {
+                currentUser.history.forEach(h => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    const d = new Date(h.date).toLocaleDateString();
+                    const col = h.status === 'paid' ? 'var(--success)' : 'var(--accent)';
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight:600;">${h.id}</div>
+                            <div style="font-size:0.75rem; color:var(--text-light);">${d}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:700;">R ${h.amount.toFixed(2)}</div>
+                            <div style="font-size:0.7rem; color:${col}; font-weight:700;">${h.status.toUpperCase()}</div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            // Redeem Calc Listener
+            const input = document.getElementById('redeem-amount');
+            const sel = document.getElementById('redeem-method');
+            const updateCalc = () => {
+                const val = parseFloat(input.value) || 0;
+                if(val > 0) {
+                    const feePct = parseFloat(sel.options[sel.selectedIndex].getAttribute('data-fee'));
+                    const fee = val * feePct;
+                    document.getElementById('calc-box').style.display = 'block';
+                    document.getElementById('calc-fee').innerText = `R ${fee.toFixed(2)}`;
+                    document.getElementById('calc-net').innerText = `R ${(val-fee).toFixed(2)}`;
+                } else {
+                    document.getElementById('calc-box').style.display = 'none';
+                }
+            };
+            input.addEventListener('input', updateCalc);
+            sel.addEventListener('change', updateCalc);
+        }
+
+        async function redeem() {
+            const amt = parseFloat(document.getElementById('redeem-amount').value);
+            const method = document.getElementById('redeem-method').value;
+            const saved = JSON.parse(sessionStorage.getItem('ad_user'));
+
+            if(!amt || amt < 10 || amt > 250) return toast("Amount must be between 10 and 250");
+
+            document.getElementById('redeem-btn').disabled = true;
+            document.getElementById('redeem-btn').innerText = "Processing...";
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/redeem`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: saved.token,
+                        amount: amt,
+                        method: method
+                    })
+                });
+                const data = await res.json();
+
+                if(res.ok) {
+                    toast("Success! Certificate Generating...");
+                    // Calc fee for cert
+                    const feePct = parseFloat(document.getElementById('redeem-method').options[document.getElementById('redeem-method').selectedIndex].getAttribute('data-fee'));
+                    const fee = amt * feePct;
+
+                    document.fonts.ready.then(() => {
+                        generateCertificate(currentUser.username, data.cert_id, amt, method, fee, amt - fee);
+                    });
+
+                    // Reload data after delay
+                    setTimeout(init, 2000);
+                } else {
+                    toast(data.error || "Failed");
+                }
+            } catch(e) { toast("Network Error"); }
+
+            document.getElementById('redeem-btn').disabled = false;
+            document.getElementById('redeem-btn').innerText = "Generate Certificate";
+        }
+
+
+        // --- PROFILE LOGIC ---
+        function renderProfile() {
+            document.getElementById('profile-user').innerText = currentUser.username;
+            document.getElementById('ref-count').innerText = currentUser.referral_count || 0;
+            document.getElementById('ref-link').innerText = `${window.location.origin}/index.html?ref=${currentUser.username}`;
+
+            const streak = currentUser.streak || 0;
+            const track = document.getElementById('streak-track');
+            track.innerHTML = '';
+            for(let i=1; i<=7; i++) {
+                const d = document.createElement('div');
+                d.className = `day-node ${i <= streak ? 'active' : ''}`;
+                d.innerText = i;
+                track.appendChild(d);
+            }
+        }
+
+        async function checkStreak() {
+            const btn = document.getElementById('streak-btn');
+            btn.disabled = true;
+            btn.innerText = "...";
+            const saved = JSON.parse(sessionStorage.getItem('ad_user'));
+
+            if (Notification.permission !== "granted") {
+                const p = await Notification.requestPermission();
+                if(p !== "granted") {
+                    document.getElementById('streak-msg').innerText = "Notifications blocked.";
+                    btn.disabled = false;
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/update-notification-streak`, {
+                    method: 'POST',
+                    body: JSON.stringify({ username: currentUser.username, token: saved.token })
+                });
+                const data = await res.json();
+                if(data.days) {
+                    currentUser.streak = data.days;
+                    renderProfile();
+                    document.getElementById('streak-msg').innerText = "Streak Updated!";
+                } else {
+                    document.getElementById('streak-msg').innerText = data.message || "Error";
+                }
+            } catch(e) {}
+            btn.disabled = false;
+            btn.innerText = "Verify Streak";
+        }
+
+        function copyRef() {
+             navigator.clipboard.writeText(document.getElementById('ref-link').innerText);
+             toast("Link Copied!");
+        }
+
+        // --- CERTIFICATE GENERATOR (Minified Logic) ---
+        function generateCertificate(username, certId, amount, method, fee, payout) {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            // BG
+            const grad = ctx.createLinearGradient(0,0,w,h);
+            grad.addColorStop(0, '#020617'); grad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+
+            // Borders
+            ctx.lineWidth = 8; ctx.strokeStyle = '#d4af37'; ctx.strokeRect(80,80,w-160,h-160);
+            ctx.lineWidth = 4; ctx.strokeStyle = '#3b82f6'; ctx.strokeRect(100,100,w-200,h-200);
+
+            // Text
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#d4af37'; ctx.font = 'bold 36px "Cinzel"'; ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, 250);
+            ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 64px "Cinzel"'; ctx.fillText('CERTIFICATE OF PAYOUT', w/2, 330);
+
+            ctx.fillStyle = '#cbd5e1'; ctx.font = 'italic 26px "Inter"'; ctx.fillText('This document certifies that', w/2, 500);
+            ctx.fillStyle = '#f8fafc'; ctx.font = 'normal 110px "Pinyon Script"'; ctx.fillText(username, w/2, 620);
+
+            // Box
+            ctx.fillStyle = 'rgba(30,41,59,0.7)'; ctx.fillRect(w/2-320, 800, 640, 240);
+            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.strokeRect(w/2-320, 800, 640, 240);
+
+            ctx.fillStyle = '#d4af37'; ctx.font = 'bold 32px "Cinzel"'; ctx.fillText(`METHOD: ${method.toUpperCase()}`, w/2, 860);
+            ctx.fillStyle = '#f8fafc'; ctx.font = '28px "Inter"'; ctx.fillText(`Gross: R ${amount.toFixed(2)}`, w/2, 910);
+            ctx.fillStyle = '#ef4444'; ctx.fillText(`Fee: R ${fee.toFixed(2)}`, w/2, 950);
+            ctx.fillStyle = '#10b981'; ctx.font = 'bold 42px "Cinzel"'; ctx.fillText(`NET: R ${payout.toFixed(2)}`, w/2, 1000);
+
+            // QR
+            const qrCanvas = document.createElement('canvas');
+            const qr = new QRious({
+                element: qrCanvas, value: `DTECH:${certId}:${username}`, size: 250
+            });
+            ctx.drawImage(qrCanvas, w/2-125, 1100);
+            ctx.fillStyle = '#94a3b8'; ctx.font = '16px "Inter"'; ctx.fillText(`ID: ${certId}`, w/2, 1380);
+
+            // Footer
+            ctx.fillStyle = '#d4af37'; ctx.font = 'bold 18px "Inter"';
+            ctx.textAlign = 'left'; ctx.fillText('ISSUANCE DETAILS:', 130, 1500);
+            ctx.fillStyle = '#f8fafc'; ctx.font = '16px "Inter"';
+            ctx.fillText(new Date().toLocaleDateString(), 130, 1540);
+
+            // Download
+            const link = document.createElement('a');
+            link.download = `Cert_${certId}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        init();
+    </script>
+</body>
+</html>
