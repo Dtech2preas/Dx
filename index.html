@@ -13,19 +13,21 @@
         :root {
             /* Brand Palette - Blue & Black Theme */
             --primary: #3b82f6;      /* Bright Tech Blue */
+            --primary-dark: #2563eb;
             --primary-light: #60a5fa;
             --accent: #d4af37;       /* Metallic Gold */
             --accent-hover: #b5952f;
             --bg: #020617;           /* Deep Black/Blue */
             --surface: #0f172a;      /* Slate 900 (Dark Blue) */
+            --surface-hover: #1e293b;
             --text-main: #f8fafc;    /* White-ish */
             --text-light: #94a3b8;   /* Slate 400 */
             --success: #10b981;
             --danger: #ef4444;
             --border: #1e293b;
-            --radius: 8px;
+            --radius: 12px;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
         }
 
         body {
@@ -39,32 +41,47 @@
             align-items: center;
         }
 
-        /* --- Header --- */
-        header {
+        /* --- Hero Section --- */
+        .hero-section {
             width: 100%;
-            background: var(--primary);
-            color: white;
-            padding: 1.5rem 0;
+            position: relative;
+            background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            padding: 3rem 0 2rem;
             text-align: center;
-            border-bottom: 4px solid var(--accent);
-            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
             box-shadow: var(--shadow);
         }
 
-        header h1 {
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-content h1 {
             margin: 0;
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            letter-spacing: 1px;
-            font-size: 1.8rem;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        header p {
-            margin: 5px 0 0;
-            color: #94a3b8;
-            font-size: 0.9rem;
+        .hero-content p {
+            margin: 10px 0 0;
+            color: var(--primary-light);
+            font-size: 1rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            animation: fadeInUp 1s ease-out;
         }
 
         /* --- Layout --- */
@@ -74,6 +91,7 @@
             padding: 0 20px;
             box-sizing: border-box;
             flex-grow: 1;
+            z-index: 10;
         }
 
         /* --- Cards --- */
@@ -86,7 +104,7 @@
             border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeInUp 0.6s ease-out;
         }
 
         .card::before {
@@ -98,6 +116,11 @@
             height: 3px;
             background: linear-gradient(90deg, transparent, var(--accent), transparent);
             opacity: 0.5;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h2, h3 {
@@ -135,17 +158,138 @@
         input:focus {
             outline: none;
             border-color: var(--primary);
-            background: #f8fafc; /* Light background on focus */
-            color: #0f172a;       /* Dark text on focus */
-            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+            background: #f8fafc;
+            color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
+
+        /* --- Bento Grid Layout --- */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto auto;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .bento-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            min-height: 100px;
+        }
+
+        .bento-item:hover {
+            transform: translateY(-5px);
+            background: var(--surface-hover);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3);
+        }
+
+        .bento-item:active {
+            transform: scale(0.98);
+        }
+
+        .bento-item .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .bento-item .label {
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bento-item .sub {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* Specific Bento Items */
+        .item-berserker {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), var(--surface));
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+        .item-berserker:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.3);
+        }
+        .item-berserker .icon { font-size: 2.5rem; }
+        .item-berserker .label { color: var(--accent); font-size: 1.2rem; }
+
+        .item-task {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), var(--surface));
+            border-color: rgba(59, 130, 246, 0.3);
+            cursor: default; /* Contains buttons */
+        }
+        .item-task:hover { transform: none; background: var(--surface); } /* Less movement for interactive card */
+        .action-btn {
+            background: var(--primary); border: none; color: white;
+            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; margin: 0 5px; transition: background 0.2s;
+        }
+        .action-btn:hover { background: var(--primary-light); }
+        .action-btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+        .action-btn.secondary { background: transparent; border: 1px solid var(--border); }
+        .action-btn.secondary:hover { border-color: var(--danger); color: var(--danger); }
+        .action-btn.secondary:disabled { border-color: #334155; color: #94a3b8; }
+
+
+        .item-withdraw {
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .item-withdraw:hover { border-color: var(--success); }
+        .item-withdraw .label { color: var(--success); }
+
+        .item-sync {
+            grid-column: span 2;
+            flex-direction: row;
+            min-height: 60px;
+            gap: 10px;
+            background: transparent;
+            border: 1px dashed var(--border);
+        }
+        .item-sync .icon { font-size: 1.2rem; margin-bottom: 0; }
+        .item-sync:hover { background: rgba(255,255,255,0.03); border-color: var(--text-light); }
+
+
+        /* --- Auth Buttons (Legacy Style for Auth Form) --- */
+        .btn-group { display: flex; gap: 12px; margin-top: 10px; }
+        .auth-btn {
+            background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: var(--radius); cursor: pointer;
+            font-weight: 600; flex: 1; transition: all 0.2s;
+        }
+        .auth-btn:hover { background: var(--primary-light); }
+        .auth-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
+        .auth-btn.secondary:hover { border-color: var(--primary); color: white; }
+
 
         /* --- Modals --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 2000;
             display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
         }
         .modal-card {
             background: var(--surface); border: 1px solid var(--accent);
@@ -160,65 +304,6 @@
             font-size: 1.5rem; cursor: pointer;
         }
 
-        /* --- Buttons --- */
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .btn-group.center { justify-content: center; }
-
-        button {
-            background: var(--primary);
-            color: var(--accent);
-            border: 1px solid var(--primary);
-            padding: 12px 24px;
-            border-radius: var(--radius);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95rem;
-            flex: 1;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        button:hover {
-            background: var(--primary-light);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        button:disabled {
-            background: #cbd5e1;
-            border-color: #cbd5e1;
-            color: #94a3b8;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        button.secondary {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid #cbd5e1;
-        }
-
-        button.secondary:hover {
-            background: #f8fafc;
-            border-color: var(--primary);
-        }
-
-        button.gold-action {
-            background: var(--accent);
-            color: var(--primary);
-            border-color: var(--accent);
-            font-weight: 800;
-        }
-        button.gold-action:hover {
-            background: var(--accent-hover);
-        }
-
         /* --- Stats Display --- */
         .dashboard-header {
             display: flex;
@@ -229,73 +314,82 @@
             margin-bottom: 20px;
         }
 
-        .logo-small {
-            height: 40px;
-            width: auto;
-            margin-left: 15px;
-        }
+        .logo-small { height: 35px; width: auto; opacity: 0.8; }
 
         .balance-card {
-            background: linear-gradient(135deg, var(--primary), #334155);
-            color: white;
-            padding: 20px;
+            background: linear-gradient(135deg, var(--surface), #1e293b);
+            padding: 25px;
             border-radius: var(--radius);
             text-align: center;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--accent);
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        /* Gold shine effect */
+        .balance-card::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom right, transparent, rgba(255,255,255,0.03), transparent);
+            transform: rotate(45deg); pointer-events: none;
         }
 
         .balance-label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-light); margin-bottom: 10px;
         }
 
         .balance-amount {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            font-family: 'Cinzel', serif;
-            margin: 5px 0;
+            font-size: 3rem; font-weight: 700; color: var(--accent);
+            font-family: 'Cinzel', serif; text-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
         }
 
         /* --- Alerts --- */
         .alert {
-            padding: 14px;
-            border-radius: var(--radius);
-            margin-top: 20px;
-            font-size: 0.9rem;
-            display: none;
-            text-align: center;
-            font-weight: 500;
+            padding: 14px; border-radius: var(--radius); margin-top: 20px;
+            font-size: 0.9rem; display: none; text-align: center; font-weight: 500;
             animation: fadeIn 0.3s ease;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .alert.success { background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
-        .alert.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
-        .alert.info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        .alert.success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .alert.error { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .alert.info { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border: 1px solid rgba(59, 130, 246, 0.2); }
 
-        /* --- Timer --- */
-        #timer-status {
+        /* --- Footer --- */
+        footer {
+            margin-top: 50px;
+            padding: 20px;
             text-align: center;
-            font-weight: 600;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+            width: 100%;
+            background: #020617;
+        }
+        .footer-brand {
+            font-weight: 800;
             color: var(--primary);
-            height: 20px;
-            margin-top: 10px;
-            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        .footer-tagline {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            font-style: italic;
+            opacity: 0.7;
         }
 
     </style>
 
 </head>
 <body>
-    <header>
-        <h1>DTech Rewards</h1>
-        <p>Student Accreditation Portal</p>
-    </header>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>D-TECH</h1>
+            <p>Unlock Potential. <br>Earn Rewards.</p>
+        </div>
+    </div>
 
     <main>
         <div id="auth-section" class="card">
@@ -329,50 +423,93 @@
             </div>
 
             <div class="btn-group">
-                <button id="reg-btn" onclick="handleRegister()" class="secondary">New Student</button>
-                <button id="login-btn" onclick="handleLogin()">Secure Login</button>
+                <button id="reg-btn" onclick="handleRegister()" class="auth-btn secondary">New Student</button>
+                <button id="login-btn" onclick="handleLogin()" class="auth-btn">Secure Login</button>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
-                <button onclick="openTerms()" style="background:none; border:none; color:var(--text-light); font-size:0.8rem; text-decoration:underline; padding:0; box-shadow:none;">
+                <button onclick="openTerms()" style="background:none; border:none; color:var(--text-light); font-size:0.8rem; text-decoration:underline; padding:0; box-shadow:none; cursor: pointer;">
                     Terms & Conditions
                 </button>
             </div>
         </div>
 
-        <div id="dashboard-section" class="card" style="display:none;">
-            <div class="dashboard-header">
-                <div style="font-weight:600; display: flex; align-items: center;">
-                    Hello, <span id="display-username" style="color:var(--primary); margin-left: 5px;"></span>
+        <div id="dashboard-section" style="display:none;">
+
+            <div class="card" style="padding: 20px;">
+                <div class="dashboard-header" style="margin-bottom: 10px; border-bottom: none;">
+                    <div style="font-weight:600; display: flex; align-items: center; color: var(--text-light);">
+                        Hello, <span id="display-username" style="color:var(--primary-light); margin-left: 5px; font-weight: 700;"></span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-size:0.75rem; cursor:pointer; margin-right: 10px; text-transform: uppercase;">Logout</button>
+                        <img src="logo.png" alt="Logo" class="logo-small">
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center;">
-                    <button onclick="logout()" class="secondary" style="padding: 6px 12px; font-size: 0.75rem; flex:initial;">LOGOUT</button>
-                    <img src="logo.png" alt="Logo" class="logo-small">
+
+                <div class="balance-card">
+                    <div class="balance-label">Current Balance</div>
+                    <div class="balance-amount">R <span id="display-balance">0.00</span></div>
                 </div>
             </div>
 
-            <div class="balance-card">
-                <div class="balance-label">Current Balance</div>
-                <div class="balance-amount">R <span id="display-balance">0.00</span></div>
+            <div class="bento-grid">
+                <!-- Berserker: Main Action -->
+                <a href="berserker.html" class="bento-item item-berserker">
+                    <span class="icon">⚔️</span>
+                    <span class="label">Berserker Mode</span>
+                    <span class="sub">High Yield Tasks</span>
+                </a>
+
+                <!-- Standard Task (Restored) -->
+                <div class="bento-item item-task">
+                    <span class="icon">⚡</span>
+                    <span class="label">Quick Task</span>
+                    <span class="sub">Standard Yield (15s)</span>
+
+                    <div id="timer-status" style="margin: 10px 0; font-weight:bold; color:var(--accent); min-height: 20px;"></div>
+
+                    <div class="btn-group" style="width:100%; justify-content:center; margin-top:0;">
+                         <button id="watch-btn" onclick="startAdWatch()" class="action-btn">Start</button>
+                         <button id="cancel-ad-btn" onclick="cancelAdWatch()" class="action-btn secondary" disabled>Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Profile -->
+                <a href="profile.html" class="bento-item">
+                    <span class="icon">👤</span>
+                    <span class="label">My Profile</span>
+                    <span class="sub">Stats & Info</span>
+                </a>
+
+                <!-- Withdraw -->
+                <a href="withdraw.html" class="bento-item item-withdraw">
+                    <span class="icon">💸</span>
+                    <span class="label">Withdraw</span>
+                    <span class="sub">Cash Out</span>
+                </a>
+
+                <!-- Sync -->
+                <div onclick="refreshBalance()" class="bento-item item-sync">
+                    <span class="icon">🔄</span>
+                    <span class="label" style="font-size: 0.85rem;">Sync Balance</span>
+                </div>
             </div>
 
-            <div class="btn-group center">
-                <button onclick="window.location.href='withdraw.html'" class="secondary" style="font-size:0.9rem; border-color: var(--success); color: var(--success);">Withdraw Funds</button>
-                <button onclick="refreshBalance()" class="secondary" style="font-size:0.9rem;">Sync Balance</button>
+             <div style="text-align:center; margin-top:30px; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                 <a href="guide.html" style="color:var(--text-light); text-decoration:none; font-size: 0.85rem; border-bottom: 1px dotted var(--text-light);">How To Use Guide</a>
+                 <a href="admin.html" style="color:#334155; font-size:0.75rem; text-decoration:none;">Admin Console</a>
             </div>
-            <div class="btn-group center" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                <button onclick="window.location.href='berserker.html'" class="gold-action" style="font-size:0.9rem;">⚔️ Berserker Mode ⚔️</button>
-                <button onclick="window.location.href='profile.html'" class="secondary" style="font-size:0.9rem;">My Profile</button>
-            </div>
+
         </div>
 
         <div id="message" class="alert"></div>
-
-        <div style="text-align:center; margin-top:30px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
-             <button onclick="window.location.href='guide.html'" class="secondary" style="width: auto; padding: 8px 16px; font-size: 0.8rem;">How To Use</button>
-             <a href="admin.html" style="color:#cbd5e1; font-size:0.75rem; text-decoration:none;">Admin Console</a>
-        </div>
     </main>
+
+    <footer>
+        <div class="footer-brand">MADE BY PREASX24</div>
+        <div class="footer-tagline">"Empowering the youth through digital innovation"</div>
+    </footer>
 
     <!-- Terms Modal -->
     <div id="terms-modal" class="modal-overlay">
@@ -396,7 +533,7 @@
             </div>
 
             <div style="margin-top:20px; text-align:center;">
-                <button onclick="closeTerms()" style="width:100%;">I Agree</button>
+                <button onclick="closeTerms()" class="auth-btn">I Agree</button>
             </div>
         </div>
     </div>
@@ -552,6 +689,9 @@
 
         async function refreshBalance() {
           if (!currentUser) return;
+          const icon = document.querySelector('.item-sync .icon');
+          if(icon) icon.style.transform = "rotate(360deg)";
+
           const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
           if (res.ok && res.data) {
              if (res.data.status === 'pending') {
@@ -562,7 +702,9 @@
             currentUser.history = res.data.history || [];
             sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
             updateUI();
+            showMessage('Balance Synced', 'success');
           }
+          if(icon) setTimeout(() => icon.style.transform = "none", 500);
         }
 
         function updateUI() {
@@ -585,7 +727,7 @@
           adWindow = window.open(AD_LINK, '_blank');
 
           document.getElementById('watch-btn').disabled = true;
-          document.getElementById('watch-btn').innerText = 'Verification in progress...';
+          document.getElementById('watch-btn').innerText = 'Verifying...';
           document.getElementById('cancel-ad-btn').disabled = false;
 
           // Visual Timer
@@ -613,7 +755,7 @@
 
         function resetAdUI() {
             document.getElementById('watch-btn').disabled = false;
-            document.getElementById('watch-btn').innerText = 'Initiate Task';
+            document.getElementById('watch-btn').innerText = 'Start';
             document.getElementById('cancel-ad-btn').disabled = true;
             document.getElementById('timer-status').innerText = '';
         }
