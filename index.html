@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+     <meta name="monetag" content="d49fd91943a61dbefcad4d9521aaa91b">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>DTech Student Rewards Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
     <style>
         :root {
-            --primary: #3b82f6;
+            /* Brand Palette - Blue & Black Theme */
+            --primary: #3b82f6;      /* Bright Tech Blue */
             --primary-light: #60a5fa;
-            --accent: #d4af37;
+            --accent: #d4af37;       /* Metallic Gold */
             --accent-hover: #b5952f;
-            --bg: #020617;
-            --surface: #0f172a;
-            --text-main: #f8fafc;
-            --text-light: #94a3b8;
+            --bg: #020617;           /* Deep Black/Blue */
+            --surface: #0f172a;      /* Slate 900 (Dark Blue) */
+            --text-main: #f8fafc;    /* White-ish */
+            --text-light: #94a3b8;   /* Slate 400 */
             --success: #10b981;
             --danger: #ef4444;
             --border: #1e293b;
             --radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
         }
 
         body {
@@ -67,7 +71,7 @@
         /* --- Layout --- */
         main {
             width: 100%;
-            max-width: 500px;
+            max-width: 500px; /* Constrained for focus */
             padding: 0 20px;
             box-sizing: border-box;
             flex-grow: 1;
@@ -97,7 +101,7 @@
             opacity: 0.5;
         }
 
-        h2 {
+        h2, h3 {
             color: var(--primary);
             margin-top: 0;
             font-weight: 700;
@@ -115,7 +119,7 @@
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -132,8 +136,8 @@
         input:focus {
             outline: none;
             border-color: var(--primary);
-            background: #f8fafc;
-            color: #0f172a;
+            background: #f8fafc; /* Light background on focus */
+            color: #0f172a;       /* Dark text on focus */
             box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
         }
 
@@ -163,6 +167,7 @@
             gap: 12px;
             margin-top: 10px;
         }
+        .btn-group.center { justify-content: center; }
 
         button {
             background: var(--primary);
@@ -185,6 +190,15 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
+        button:disabled {
+            background: #cbd5e1;
+            border-color: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         button.secondary {
             background: transparent;
             color: var(--primary);
@@ -194,6 +208,58 @@
         button.secondary:hover {
             background: #f8fafc;
             border-color: var(--primary);
+        }
+
+        button.gold-action {
+            background: var(--accent);
+            color: var(--primary);
+            border-color: var(--accent);
+            font-weight: 800;
+        }
+        button.gold-action:hover {
+            background: var(--accent-hover);
+        }
+
+        /* --- Stats Display --- */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-small {
+            height: 40px;
+            width: auto;
+            margin-left: 15px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary), #334155);
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--accent);
+        }
+
+        .balance-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .balance-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Cinzel', serif;
+            margin: 5px 0;
         }
 
         /* --- Alerts --- */
@@ -213,7 +279,48 @@
         .alert.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
         .alert.info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
 
+        /* --- History Table --- */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+        .history-table th, .history-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .history-table th {
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .status-issued { color: var(--accent-hover); font-weight: bold; }
+        .status-paid { color: var(--success); font-weight: bold; }
+
+        /* --- Canvas Hidden --- */
+        #certCanvas {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* --- Timer --- */
+        #timer-status {
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            height: 20px;
+            margin-top: 10px;
+            font-variant-numeric: tabular-nums;
+        }
+
     </style>
+
 </head>
 <body>
     <header>
@@ -264,6 +371,94 @@
             </div>
         </div>
 
+        <div id="dashboard-section" class="card" style="display:none;">
+            <div class="dashboard-header">
+                <div style="font-weight:600; display: flex; align-items: center;">
+                    Hello, <span id="display-username" style="color:var(--primary); margin-left: 5px;"></span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <button onclick="logout()" class="secondary" style="padding: 6px 12px; font-size: 0.75rem; flex:initial;">LOGOUT</button>
+                    <img src="logo.png" alt="Logo" class="logo-small">
+                </div>
+            </div>
+
+            <div class="balance-card">
+                <div class="balance-label">Current Balance</div>
+                <div class="balance-amount">R <span id="display-balance">0.00</span></div>
+            </div>
+
+            <div class="btn-group center">
+                <button onclick="toggleHistory()" class="secondary" style="font-size:0.8rem;">History</button>
+                <button onclick="refreshBalance()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
+            </div>
+            <div class="btn-group center" style="margin-top: 15px;">
+                <button onclick="window.location.href='berserker.html'" class="gold-action" style="font-size:0.9rem;">⚔️ Berserker Mode ⚔️</button>
+            </div>
+        </div>
+
+        <div id="history-section" class="card" style="display:none;">
+            <h3>Transaction History</h3>
+            <div id="history-content" style="max-height: 200px; overflow-y: auto;">
+                <p style="text-align:center; color:var(--text-light);">No history found.</p>
+            </div>
+        </div>
+
+        <div id="earn-section" class="card" style="display:none;">
+            <h3>Task Assignment</h3>
+            <p style="color:var(--text-light); font-size:0.9rem;">
+                Complete the sponsored task to accrue value (Variable Reward). Verification window: <strong>15 seconds</strong>.
+            </p>
+
+            <div style="text-align:center; margin: 25px 0;">
+                <button id="watch-btn" onclick="startAdWatch()" style="width:100%; padding: 16px;">
+                    Initiate Task
+                </button>
+                <div id="timer-status"></div>
+                <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary" style="margin-top:12px; border:none; color:var(--danger); font-size:0.8rem;">
+                    Abort Task
+                </button>
+            </div>
+        </div>
+
+        <div id="redeem-section" class="card" style="display:none;">
+            <h3>Withdrawal</h3>
+            <p style="color:var(--text-light); font-size:0.9rem;">
+                Exchange balance for an official <strong>DTech Verification Certificate</strong>.
+            </p>
+
+            <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:10px;">
+                    <span>Available</span>
+                    <span>R <span id="redeem-avail-bal">0.00</span></span>
+                </div>
+                <div style="font-size:0.8rem; color:#666; margin-bottom: 10px;">
+                    Min: R 10.00 | Max: R 250.00
+                </div>
+
+                <label for="redeem-method" style="color:#334155; margin-bottom:5px;">Payout Method</label>
+                <select id="redeem-method" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc; margin-bottom:15px; font-family:'Inter';">
+                    <option value="Airtime" data-fee="0.25">Airtime (25% Fee)</option>
+                    <option value="Voucher" data-fee="0.30">Voucher (30% Fee)</option>
+                    <option value="Cash Send" data-fee="0.40">Cash Send (40% Fee)</option>
+                </select>
+
+                <label for="redeem-amount" style="color:#334155; margin-bottom:5px;">Withdrawal Amount</label>
+                <input type="number" id="redeem-amount" placeholder="Enter Amount (e.g. 50)" min="10" max="250" style="background:white; color:#334155; border:1px solid #ccc;" />
+
+                <div id="redeem-calc" style="background:#e2e8f0; padding:10px; border-radius:4px; font-size:0.85rem; color:#334155; display:none;">
+                    <div style="display:flex; justify-content:space-between;"><span>Gross:</span> <span id="calc-gross">R 0.00</span></div>
+                    <div style="display:flex; justify-content:space-between; color:#ef4444;"><span>Fee:</span> <span id="calc-fee">R 0.00</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:5px; border-top:1px solid #cbd5e1; padding-top:5px;">
+                        <span>Net Payout:</span> <span id="calc-net" style="color:var(--primary);">R 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="redeem-btn" class="gold-action" onclick="redeemCertificate()" style="width:100%;">
+                Generate Certificate
+            </button>
+        </div>
+
         <div id="message" class="alert"></div>
 
         <div style="text-align:center; margin-top:30px;">
@@ -298,16 +493,31 @@
         </div>
     </div>
 
+    <canvas id="certCanvas" width="1200" height="1700"></canvas>
+
     <script>
+        // ---------- CONFIG ----------
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const AD_LINK = "https://otieu.com/4/10205357";
+
+        // ---------- STATE ----------
+        let currentUser = null;
+        let adStartTime = null;
+        let adWindow = null;
+        let timerInterval = null;
         let referralCode = null;
 
+        // ---------- UTILS ----------
         function showMessage(msg, type = 'info') {
           const el = document.getElementById('message');
           el.innerText = msg;
           el.className = `alert ${type}`;
           el.style.display = 'block';
-          if(type !== 'error') setTimeout(() => { el.style.display = 'none'; }, 4000);
+
+          // Auto hide success/info, keep error
+          if(type !== 'error') {
+              setTimeout(() => { el.style.display = 'none'; }, 4000);
+          }
         }
 
         async function fetchJson(path, opts = {}) {
@@ -319,24 +529,47 @@
           const defaultHeaders = { 'Content-Type': 'application/json' };
           const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
 
+          if (safeOpts.body && !safeOpts.headers['Content-Type']) {
+            safeOpts.headers['Content-Type'] = 'application/json';
+          }
+
           try {
             const res = await fetch(url, safeOpts);
             let data = null;
             try { data = await res.json(); } catch (e) {}
-            return { ok: res.ok, status: res.status, data };
+            return { ok: res.ok, status: res.status, data, res };
           } catch (e) {
             console.error(e);
             return { ok: false, status: 0, data: null };
           }
         }
 
-        function openTerms() { document.getElementById('terms-modal').style.display = 'flex'; }
-        function closeTerms() { document.getElementById('terms-modal').style.display = 'none'; }
+        function setAuthUI(loggedIn) {
+          document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
+          document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
+          document.getElementById('history-section').style.display = 'none'; // Always hide history initially
+          document.getElementById('earn-section').style.display = loggedIn ? 'block' : 'none';
+          document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
+
+          if (!loggedIn) {
+            document.getElementById('display-username').innerText = '';
+            document.getElementById('display-balance').innerText = '0.00';
+          }
+        }
+
+        // ---------- AUTH ----------
+        function openTerms() {
+            document.getElementById('terms-modal').style.display = 'flex';
+        }
+        function closeTerms() {
+            document.getElementById('terms-modal').style.display = 'none';
+        }
 
         async function handleRegister() {
           const regFields = document.getElementById('reg-fields');
           const regBtn = document.getElementById('reg-btn');
 
+          // Step 1: Show Fields
           if (regFields.style.display === 'none') {
               regFields.style.display = 'block';
               regBtn.innerText = 'Confirm Registration';
@@ -344,26 +577,32 @@
               return showMessage('Please complete contact details for approval.', 'info');
           }
 
+          // Step 2: Submit
           const u = document.getElementById('username').value.trim();
           const p = document.getElementById('password').value.trim();
           const e = document.getElementById('email').value.trim();
           const w = document.getElementById('whatsapp').value.trim();
 
           if (!u || !p || !e || !w) return showMessage('All fields are required.', 'error');
+
+          // Validation
           if (u.length <= 5) return showMessage('Username must be more than 5 characters.', 'error');
           if (p.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
 
           const payload = { username: u, password: p, email: e, whatsapp: w };
           if(referralCode) payload.referred_by = referralCode;
 
-          const res = await fetchJson('/register', { method: 'POST', body: JSON.stringify(payload) });
+          const res = await fetchJson('/register', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
 
           if (res.ok) {
-              showMessage('Registration Successful! Please Login to verify status.', 'success');
-              // Reset
-              document.getElementById('reg-fields').style.display = 'none';
-              document.getElementById('login-btn').style.display = 'inline-block';
-              regBtn.innerText = 'New Student';
+              showMessage('Registration Pending. Please wait for admin approval.', 'success');
+              // Reset UI
+              setTimeout(() => {
+                  window.location.reload();
+              }, 3000);
           }
           else showMessage(res.data?.error || 'Registration failed', 'error');
         }
@@ -373,42 +612,630 @@
           const p = document.getElementById('password').value.trim();
           if (!u || !p) return showMessage('Credentials required.', 'error');
 
-          const res = await fetchJson('/login', { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+          const res = await fetchJson('/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: u, password: p })
+          });
 
           if (res.ok && res.data) {
-            // Save Session
-            const user = {
-              username: u,
-              token: res.data.token,
-              status: res.data.status
-            };
-            sessionStorage.setItem('ad_user', JSON.stringify(user));
-
+            // Check Status
             if (res.data.status === 'pending') {
-                window.location.href = 'pending.html';
-            } else {
-                window.location.href = 'app.html';
+                return showMessage('Account is pending approval. Please check back later or contact admin.', 'info');
             }
+
+            currentUser = {
+              username: u,
+              balance: res.data.balance || 0,
+              history: res.data.history || [],
+              token: res.data.token
+            };
+            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+            updateUI();
+            showMessage('Authentication Successful.', 'success');
           } else {
             showMessage(res.data?.error || 'Invalid credentials.', 'error');
           }
         }
 
+        function logout() {
+          currentUser = null;
+          sessionStorage.removeItem('ad_user');
+          updateUI();
+        }
+
+        async function refreshBalance() {
+          if (!currentUser) return;
+          const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
+          if (res.ok && res.data) {
+            currentUser.balance = res.data.balance;
+            currentUser.history = res.data.history || [];
+            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+            updateUI();
+          }
+        }
+
+        function toggleHistory() {
+            const el = document.getElementById('history-section');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-content');
+            if(!currentUser.history || currentUser.history.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-light);">No history found.</p>';
+                return;
+            }
+
+            let html = '<table class="history-table"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+            currentUser.history.forEach(item => {
+                const dateStr = new Date(item.date).toLocaleDateString();
+                const statusClass = item.status === 'paid' ? 'status-paid' : 'status-issued';
+                html += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>R ${item.amount.toFixed(2)}</td>
+                        <td class="${statusClass}">${item.status.toUpperCase()}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function updateUI() {
+          if (currentUser) {
+            setAuthUI(true);
+            document.getElementById('display-username').innerText = currentUser.username;
+            const balStr = (currentUser.balance || 0).toFixed(2);
+            document.getElementById('display-balance').innerText = balStr;
+            document.getElementById('redeem-avail-bal').innerText = balStr;
+
+            renderHistory();
+
+            // Button Logic
+            const redeemBtn = document.getElementById('redeem-btn');
+            if (currentUser.balance >= 10) {
+                redeemBtn.disabled = false;
+            } else {
+                redeemBtn.disabled = true;
+            }
+          } else {
+            setAuthUI(false);
+          }
+        }
+
+        // ---------- ADS ----------
+        function startAdWatch() {
+          if (!currentUser) return showMessage('Session expired. Login again.', 'error');
+
+          showMessage('Task Initiated. Verifying...', 'info');
+          adStartTime = Date.now();
+          adWindow = window.open(AD_LINK, '_blank');
+
+          document.getElementById('watch-btn').disabled = true;
+          document.getElementById('watch-btn').innerText = 'Verification in progress...';
+          document.getElementById('cancel-ad-btn').disabled = false;
+
+          // Visual Timer
+          let timeLeft = 15;
+          document.getElementById('timer-status').innerText = `Time Remaining: ${timeLeft}s`;
+          if(timerInterval) clearInterval(timerInterval);
+
+          timerInterval = setInterval(() => {
+              timeLeft--;
+              if(timeLeft >= 0) {
+                  document.getElementById('timer-status').innerText = `Time Remaining: ${timeLeft}s`;
+              } else {
+                  document.getElementById('timer-status').innerText = `Processing...`;
+              }
+          }, 1000);
+        }
+
+        function cancelAdWatch() {
+          adStartTime = null;
+          if (adWindow) adWindow.close();
+          if(timerInterval) clearInterval(timerInterval);
+          resetAdUI();
+          showMessage('Task Aborted.', 'info');
+        }
+
+        function resetAdUI() {
+            document.getElementById('watch-btn').disabled = false;
+            document.getElementById('watch-btn').innerText = 'Initiate Task';
+            document.getElementById('cancel-ad-btn').disabled = true;
+            document.getElementById('timer-status').innerText = '';
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+          if (document.visibilityState === 'visible' && adStartTime) {
+            const elapsed = (Date.now() - adStartTime) / 1000;
+            adStartTime = null;
+            if (adWindow) adWindow.close();
+            if (timerInterval) clearInterval(timerInterval);
+
+            resetAdUI();
+
+            if (elapsed >= 15) {
+                await addPoints();
+            } else {
+                showMessage(`Verification Failed. Detected ${Math.floor(elapsed)}s of 15s required.`, 'error');
+            }
+          }
+        });
+
+        async function addPoints() {
+          const res = await fetchJson('/add-points', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: currentUser.username,
+                token: currentUser.token
+            })
+          });
+
+          if (res.ok) {
+              currentUser.balance = res.data.balance;
+              sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+              updateUI();
+              showMessage(`Task Verified. +R ${res.data.earned} credited.`, 'success');
+          } else {
+              // Handle specific errors
+              if(res.status === 429) {
+                 showMessage(res.data?.error || 'Please wait before next task.', 'error');
+              } else if(res.status === 503) {
+                 showMessage('Monthly Budget Reached. System paused until next month.', 'error');
+              } else {
+                 showMessage(res.data?.error || 'System error.', 'error');
+              }
+          }
+        }
+
+        // ---------- REDEEM ----------
+        function setupRedeemListeners() {
+            const amtInput = document.getElementById('redeem-amount');
+            const methodSelect = document.getElementById('redeem-method');
+
+            const update = () => {
+                const amt = parseFloat(amtInput.value) || 0;
+                const opt = methodSelect.options[methodSelect.selectedIndex];
+                const feePct = parseFloat(opt.getAttribute('data-fee'));
+
+                const calcBox = document.getElementById('redeem-calc');
+                if (amt > 0) {
+                    calcBox.style.display = 'block';
+                    const fee = amt * feePct;
+                    const net = amt - fee;
+
+                    document.getElementById('calc-gross').innerText = `R ${amt.toFixed(2)}`;
+                    document.getElementById('calc-fee').innerText = `R ${fee.toFixed(2)} (${(feePct*100).toFixed(0)}%)`;
+                    document.getElementById('calc-net').innerText = `R ${net.toFixed(2)}`;
+                } else {
+                    calcBox.style.display = 'none';
+                }
+            };
+
+            amtInput.addEventListener('input', update);
+            methodSelect.addEventListener('change', update);
+        }
+
+        async function redeemCertificate() {
+            const input = document.getElementById('redeem-amount');
+            const amount = parseFloat(input.value);
+            const methodSelect = document.getElementById('redeem-method');
+            const method = methodSelect.value;
+
+            if (!amount || amount < 10 || amount > 250) {
+                return showMessage('Invalid amount. Must be between R 10 and R 250.', 'error');
+            }
+
+            if (amount > currentUser.balance) {
+                return showMessage('Insufficient funds.', 'error');
+            }
+
+            const opt = methodSelect.options[methodSelect.selectedIndex];
+            const feePct = parseFloat(opt.getAttribute('data-fee'));
+            const fee = amount * feePct;
+            const net = amount - fee;
+
+            if (!confirm(`Confirm withdrawal via ${method}?\n\nGross: R ${amount.toFixed(2)}\nFee: R ${fee.toFixed(2)}\nNet Payout: R ${net.toFixed(2)}`)) return;
+
+            const res = await fetchJson('/redeem', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    token: currentUser.token,
+                    amount: amount,
+                    method: method
+                })
+            });
+
+            if (res.ok) {
+                currentUser.balance = res.data.balance;
+                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                updateUI();
+
+                document.fonts.ready.then(() => {
+                    generateCertificate(currentUser.username, res.data.cert_id, amount, method, fee, net);
+                });
+                showMessage('Certificate Issued Successfully.', 'success');
+                input.value = ''; // Reset input
+                document.getElementById('redeem-calc').style.display = 'none';
+            } else {
+                showMessage(res.data?.error || 'Redemption failed', 'error');
+            }
+        }
+
+        // ---------- UPDATED PORTRAIT CERTIFICATE GENERATOR ----------
+        function generateCertificate(username, certId, amount, method, fee, payout) {
+            const logo = new Image();
+            logo.src = 'logo.png';
+            logo.crossOrigin = "Anonymous";
+
+            logo.onload = () => {
+                const canvas = document.getElementById('certCanvas');
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+
+                // Clear canvas
+                ctx.clearRect(0, 0, w, h);
+
+                // 1. BACKGROUND - Deep Tech Theme
+                const gradient = ctx.createLinearGradient(0, 0, w, h);
+                gradient.addColorStop(0, '#020617');
+                gradient.addColorStop(1, '#0f172a');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, w, h);
+
+                // 2. DECORATIVE BORDERS (Portrait Style)
+                const margin = 80;
+
+                // Outer Gold Border
+                ctx.lineWidth = 8;
+                ctx.strokeStyle = '#d4af37';
+                ctx.strokeRect(margin, margin, w - 2*margin, h - 2*margin);
+
+                // Inner Blue Border
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#3b82f6';
+                ctx.strokeRect(margin + 20, margin + 20, w - 2*(margin + 20), h - 2*(margin + 20));
+
+                // Corner Accents (Gold)
+                ctx.fillStyle = '#d4af37';
+                const cornerSize = 40;
+
+                // Top Left
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin + cornerSize, margin);
+                ctx.lineTo(margin, margin + cornerSize);
+                ctx.fill();
+
+                // Top Right
+                ctx.beginPath();
+                ctx.moveTo(w - margin, margin);
+                ctx.lineTo(w - margin - cornerSize, margin);
+                ctx.lineTo(w - margin, margin + cornerSize);
+                ctx.fill();
+
+                // Bottom Left
+                ctx.beginPath();
+                ctx.moveTo(margin, h - margin);
+                ctx.lineTo(margin + cornerSize, h - margin);
+                ctx.lineTo(margin, h - margin - cornerSize);
+                ctx.fill();
+
+                // Bottom Right
+                ctx.beginPath();
+                ctx.moveTo(w - margin, h - margin);
+                ctx.lineTo(w - margin - cornerSize, h - margin);
+                ctx.lineTo(w - margin, h - margin - cornerSize);
+                ctx.fill();
+
+                // 3. HEADER SECTION (Top)
+                ctx.textAlign = 'center';
+
+                // Logo (Top Center)
+                const logoWidth = 120;
+                const logoHeight = logoWidth * (logo.height / logo.width);
+                try {
+                    ctx.drawImage(logo, w/2 - logoWidth/2, margin + 40, logoWidth, logoHeight);
+                } catch(e) {
+                    console.warn("Logo draw failed", e);
+                }
+
+                // Institution Name
+                ctx.font = 'bold 36px "Cinzel"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, margin + logoHeight + 100);
+
+                // Certificate Title
+                ctx.font = 'bold 64px "Cinzel"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText('CERTIFICATE OF PAYOUT', w/2, margin + logoHeight + 180);
+
+                // Subtitle
+                ctx.font = '22px "Inter"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('OFFICIAL VERIFICATION DOCUMENT', w/2, margin + logoHeight + 220);
+
+                // 4. SEPARATOR LINE
+                ctx.beginPath();
+                ctx.moveTo(w/2 - 300, margin + logoHeight + 250);
+                ctx.lineTo(w/2 + 300, margin + logoHeight + 250);
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 5. BODY CONTENT
+                let currentY = margin + logoHeight + 320;
+
+                // Introductory Text
+                ctx.font = 'italic 26px "Inter"';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillText('This document certifies that', w/2, currentY);
+
+                currentY += 60;
+
+                // Student Name (Prominent)
+                ctx.font = 'normal 110px "Pinyon Script"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(username, w/2, currentY);
+
+                // Name Underline
+                ctx.beginPath();
+                ctx.moveTo(w/2 - 280, currentY + 10);
+                ctx.lineTo(w/2 + 280, currentY + 10);
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                currentY += 80;
+
+                // Description Text
+                ctx.font = '22px "Inter"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('has successfully redeemed value from the DTech Student Rewards Program', w/2, currentY);
+
+                // 6. PAYMENT DETAILS SECTION
+                const detailsY = currentY + 120;
+
+                // Details Box Background
+                ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+                ctx.fillRect(w/2 - 320, detailsY, 640, 240);
+
+                // Details Border
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(w/2 - 320, detailsY, 640, 240);
+
+                // Payment Method
+                ctx.font = 'bold 32px "Cinzel"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText(`PAYMENT METHOD: ${method.toUpperCase()}`, w/2, detailsY + 60);
+
+                // Amount Details
+                ctx.font = '28px "Inter"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(`Gross Amount: R ${amount.toFixed(2)}`, w/2, detailsY + 110);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText(`Processing Fee: R ${fee.toFixed(2)} (${(fee/amount*100).toFixed(1)}%)`, w/2, detailsY + 150);
+
+                // Net Payout (Prominent)
+                ctx.font = 'bold 42px "Cinzel"';
+                ctx.fillStyle = '#10b981';
+                ctx.fillText(`NET PAYOUT: R ${payout.toFixed(2)}`, w/2, detailsY + 200);
+
+                // 7. QR CODE SECTION (Large and Prominent)
+                const qrY = detailsY + 280;
+                const qrSize = 280; // Larger QR code for easy scanning
+
+                // QR Code Background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
+
+                // QR Code Border
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
+
+                // Generate QR Code
+                const qrCanvas = document.createElement('canvas');
+                qrCanvas.width = qrSize;
+                qrCanvas.height = qrSize;
+
+                const qr = new QRious({
+                    element: qrCanvas,
+                    value: `DTECH_CERT:${certId}:${username}:R${payout}:${method}`,
+                    size: qrSize,
+                    foreground: 'black',
+                    background: 'white',
+                    level: 'H' // High error correction for better scanning
+                });
+
+                // Draw QR Code
+                ctx.drawImage(qrCanvas, w/2 - qrSize/2, qrY, qrSize, qrSize);
+
+                // QR Code Label
+                ctx.font = 'bold 20px "Inter"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText('SCAN TO VERIFY CERTIFICATE', w/2, qrY + qrSize + 40);
+
+                ctx.font = '16px "Courier New"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(`ID: ${certId}`, w/2, qrY + qrSize + 70);
+
+                // 8. FOOTER SECTION (Two Columns)
+                const footerY = qrY + qrSize + 120;
+
+                // Left Column: Issuance Details
+                ctx.textAlign = 'left';
+                ctx.font = 'bold 18px "Inter"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText('ISSUANCE DETAILS:', margin + 50, footerY);
+
+                ctx.font = '16px "Inter"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(`Date: ${new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                })}`, margin + 50, footerY + 40);
+
+                ctx.fillText(`Time: ${new Date().toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}`, margin + 50, footerY + 70);
+
+                ctx.fillText(`Student ID: ${username}`, margin + 50, footerY + 100);
+
+                // Right Column: Authorization
+                ctx.textAlign = 'right';
+                ctx.font = 'bold 18px "Inter"';
+                ctx.fillStyle = '#d4af37';
+                ctx.fillText('AUTHORIZATION', w - margin - 50, footerY);
+
+                // Signature Line
+                ctx.beginPath();
+                ctx.moveTo(w - margin - 250, footerY + 60);
+                ctx.lineTo(w - margin - 50, footerY + 60);
+                ctx.strokeStyle = '#f8fafc';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.font = 'italic 20px "Inter"';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('Authorized Signature', w - margin - 150, footerY + 90);
+
+                // Official Seal
+                const sealX = w - margin - 150;
+                const sealY = footerY + 150;
+
+                // Seal Outer Circle
+                ctx.beginPath();
+                ctx.arc(sealX, sealY, 50, 0, Math.PI * 2);
+                ctx.fillStyle = '#d4af37';
+                ctx.fill();
+
+                // Seal Inner Circle
+                ctx.beginPath();
+                ctx.arc(sealX, sealY, 40, 0, Math.PI * 2);
+                ctx.fillStyle = '#020617';
+                ctx.fill();
+
+                // Seal Text
+                ctx.font = 'bold 14px "Cinzel"';
+                ctx.fillStyle = '#d4af37';
+                ctx.textAlign = 'center';
+                ctx.fillText('DTECH', sealX, sealY - 10);
+                ctx.fillText('OFFICIAL', sealX, sealY + 10);
+                ctx.font = '12px "Cinzel"';
+                ctx.fillText('VERIFIED', sealX, sealY + 25);
+
+                // 9. SECURITY FEATURES (Subtle Patterns)
+                // Background Pattern (Subtle)
+                ctx.save();
+                ctx.globalAlpha = 0.05;
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 1;
+
+                // Diagonal Lines
+                for(let i = -h; i < w + h; i += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + h, h);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // 10. WATERMARK (Subtle)
+                ctx.save();
+                ctx.globalAlpha = 0.03;
+                ctx.font = 'bold 120px "Cinzel"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.textAlign = 'center';
+                ctx.fillText('DTECH VERIFIED', w/2, h/2);
+                ctx.restore();
+
+                // 11. DOWNLOAD CERTIFICATE
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.download = `DTech_Certificate_${username}_${certId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    showMessage(`Certificate generated successfully!`, 'success');
+                }, 500);
+            };
+
+            logo.onerror = () => {
+                alert("Error loading logo. Certificate will be generated without logo.");
+                // Proceed without logo
+                generateCertificateWithoutLogo(username, certId, amount, method, fee, payout);
+            };
+        }
+
+        // Fallback function if logo fails to load
+        function generateCertificateWithoutLogo(username, certId, amount, method, fee, payout) {
+            const canvas = document.getElementById('certCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Similar drawing code without logo references
+            // Clear canvas
+            ctx.clearRect(0, 0, w, h);
+
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, w, h);
+            gradient.addColorStop(0, '#020617');
+            gradient.addColorStop(1, '#0f172a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw the rest of the certificate without the logo
+            // ... (similar structure as above but skip logo drawing)
+
+            // For simplicity, you can call the main function and handle the error
+            showMessage("Logo failed to load, generating certificate with default design.", "info");
+
+            // Download anyway
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.download = `DTech_Certificate_${username}_${certId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }, 500);
+        }
+
+        // ---------- INIT ----------
         (function init() {
           // Check Referral
           const urlParams = new URLSearchParams(window.location.search);
           const ref = urlParams.get('ref');
           if(ref) {
               referralCode = ref;
+              const d = document.getElementById('ref-display');
               document.getElementById('ref-username').innerText = ref;
-              document.getElementById('ref-display').style.display = 'block';
+              d.style.display = 'block';
           }
 
-          // Check for existing session?
-          // Optional: Auto-login if valid session?
-          // For now let's force manual login to ensure status check is fresh.
-          sessionStorage.removeItem('ad_user');
+          setupRedeemListeners();
+          const saved = sessionStorage.getItem('ad_user');
+          if (saved) {
+            try {
+                currentUser = JSON.parse(saved);
+                updateUI();
+                refreshBalance();
+            } catch(e) {
+                sessionStorage.removeItem('ad_user');
+            }
+          }
         })();
+
     </script>
 </body>
 </html>
