@@ -966,7 +966,7 @@
                 ctx.fillStyle = '#cbd5e1';
                 ctx.fillText('This document certifies that', w/2, currentY);
 
-                currentY += 60;
+                currentY += 140;
 
                 // Student Name (Prominent)
                 ctx.font = 'normal 110px "Pinyon Script"';
@@ -981,7 +981,7 @@
                 ctx.lineWidth = 3;
                 ctx.stroke();
 
-                currentY += 80;
+                currentY += 100;
 
                 // Description Text
                 ctx.font = '22px "Inter"';
@@ -1094,6 +1094,12 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
+                // Digital Signature
+                ctx.textAlign = 'center';
+                ctx.font = 'normal 45px "Pinyon Script"';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText('DTECH ,SJ', w - margin - 150, footerY + 50);
+
                 ctx.font = 'italic 20px "Inter"';
                 ctx.fillStyle = '#94a3b8';
                 ctx.fillText('Authorized Signature', w - margin - 150, footerY + 90);
@@ -1175,19 +1181,282 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // Similar drawing code without logo references
             // Clear canvas
             ctx.clearRect(0, 0, w, h);
 
-            // Background
+            // 1. BACKGROUND - Deep Tech Theme
             const gradient = ctx.createLinearGradient(0, 0, w, h);
             gradient.addColorStop(0, '#020617');
             gradient.addColorStop(1, '#0f172a');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, w, h);
 
-            // Draw the rest of the certificate without the logo
-            // ... (similar structure as above but skip logo drawing)
+            // 2. DECORATIVE BORDERS (Portrait Style)
+            const margin = 80;
+
+            // Outer Gold Border
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#d4af37';
+            ctx.strokeRect(margin, margin, w - 2*margin, h - 2*margin);
+
+            // Inner Blue Border
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.strokeRect(margin + 20, margin + 20, w - 2*(margin + 20), h - 2*(margin + 20));
+
+            // Corner Accents (Gold)
+            ctx.fillStyle = '#d4af37';
+            const cornerSize = 40;
+
+            // Top Left
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin + cornerSize, margin);
+            ctx.lineTo(margin, margin + cornerSize);
+            ctx.fill();
+
+            // Top Right
+            ctx.beginPath();
+            ctx.moveTo(w - margin, margin);
+            ctx.lineTo(w - margin - cornerSize, margin);
+            ctx.lineTo(w - margin, margin + cornerSize);
+            ctx.fill();
+
+            // Bottom Left
+            ctx.beginPath();
+            ctx.moveTo(margin, h - margin);
+            ctx.lineTo(margin + cornerSize, h - margin);
+            ctx.lineTo(margin, h - margin - cornerSize);
+            ctx.fill();
+
+            // Bottom Right
+            ctx.beginPath();
+            ctx.moveTo(w - margin, h - margin);
+            ctx.lineTo(w - margin - cornerSize, h - margin);
+            ctx.lineTo(w - margin, h - margin - cornerSize);
+            ctx.fill();
+
+            // 3. HEADER SECTION (Top)
+            ctx.textAlign = 'center';
+            // SKIP LOGO
+
+            // Institution Name
+            ctx.font = 'bold 36px "Cinzel"';
+            ctx.fillStyle = '#d4af37';
+            // Adjusted Y position slightly since logo is missing
+            const logoHeightPlaceholder = 80; 
+            ctx.fillText('DTECH EDUCATION SYSTEMS', w/2, margin + logoHeightPlaceholder + 100);
+
+            // Certificate Title
+            ctx.font = 'bold 64px "Cinzel"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText('CERTIFICATE OF PAYOUT', w/2, margin + logoHeightPlaceholder + 180);
+
+            // Subtitle
+            ctx.font = '22px "Inter"';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('OFFICIAL VERIFICATION DOCUMENT', w/2, margin + logoHeightPlaceholder + 220);
+
+            // 4. SEPARATOR LINE
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 300, margin + logoHeightPlaceholder + 250);
+            ctx.lineTo(w/2 + 300, margin + logoHeightPlaceholder + 250);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 5. BODY CONTENT
+            let currentY = margin + logoHeightPlaceholder + 320;
+
+            // Introductory Text
+            ctx.font = 'italic 26px "Inter"';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('This document certifies that', w/2, currentY);
+
+            currentY += 140;
+
+            // Student Name (Prominent)
+            ctx.font = 'normal 110px "Pinyon Script"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(username, w/2, currentY);
+
+            // Name Underline
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 280, currentY + 10);
+            ctx.lineTo(w/2 + 280, currentY + 10);
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            currentY += 100;
+
+            // Description Text
+            ctx.font = '22px "Inter"';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('has successfully redeemed value from the DTech Student Rewards Program', w/2, currentY);
+
+            // 6. PAYMENT DETAILS SECTION
+            const detailsY = currentY + 120;
+
+            // Details Box Background
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+            ctx.fillRect(w/2 - 320, detailsY, 640, 240);
+
+            // Details Border
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(w/2 - 320, detailsY, 640, 240);
+
+            // Payment Method
+            ctx.font = 'bold 32px "Cinzel"';
+            ctx.fillStyle = '#d4af37';
+            ctx.fillText(`PAYMENT METHOD: ${method.toUpperCase()}`, w/2, detailsY + 60);
+
+            // Amount Details
+            ctx.font = '28px "Inter"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(`Gross Amount: R ${amount.toFixed(2)}`, w/2, detailsY + 110);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText(`Processing Fee: R ${fee.toFixed(2)} (${(fee/amount*100).toFixed(1)}%)`, w/2, detailsY + 150);
+
+            // Net Payout (Prominent)
+            ctx.font = 'bold 42px "Cinzel"';
+            ctx.fillStyle = '#10b981';
+            ctx.fillText(`NET PAYOUT: R ${payout.toFixed(2)}`, w/2, detailsY + 200);
+
+            // 7. QR CODE SECTION (Large and Prominent)
+            const qrY = detailsY + 280;
+            const qrSize = 280; // Larger QR code for easy scanning
+
+            // QR Code Background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
+
+            // QR Code Border
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(w/2 - qrSize/2 - 20, qrY - 20, qrSize + 40, qrSize + 40);
+
+            // Generate QR Code
+            const qrCanvas = document.createElement('canvas');
+            qrCanvas.width = qrSize;
+            qrCanvas.height = qrSize;
+
+            const qr = new QRious({
+                element: qrCanvas,
+                value: `DTECH_CERT:${certId}:${username}:R${payout}:${method}`,
+                size: qrSize,
+                foreground: 'black',
+                background: 'white',
+                level: 'H'
+            });
+
+            // Draw QR Code
+            ctx.drawImage(qrCanvas, w/2 - qrSize/2, qrY, qrSize, qrSize);
+
+            // QR Code Label
+            ctx.font = 'bold 20px "Inter"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText('SCAN TO VERIFY CERTIFICATE', w/2, qrY + qrSize + 40);
+
+            ctx.font = '16px "Courier New"';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`ID: ${certId}`, w/2, qrY + qrSize + 70);
+
+            // 8. FOOTER SECTION (Two Columns)
+            const footerY = qrY + qrSize + 120;
+
+            // Left Column: Issuance Details
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 18px "Inter"';
+            ctx.fillStyle = '#d4af37';
+            ctx.fillText('ISSUANCE DETAILS:', margin + 50, footerY);
+
+            ctx.font = '16px "Inter"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(`Date: ${new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}`, margin + 50, footerY + 40);
+
+            ctx.fillText(`Time: ${new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}`, margin + 50, footerY + 70);
+
+            ctx.fillText(`Student ID: ${username}`, margin + 50, footerY + 100);
+
+            // Right Column: Authorization
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 18px "Inter"';
+            ctx.fillStyle = '#d4af37';
+            ctx.fillText('AUTHORIZATION', w - margin - 50, footerY);
+
+            // Signature Line
+            ctx.beginPath();
+            ctx.moveTo(w - margin - 250, footerY + 60);
+            ctx.lineTo(w - margin - 50, footerY + 60);
+            ctx.strokeStyle = '#f8fafc';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Digital Signature
+            ctx.textAlign = 'center';
+            ctx.font = 'normal 45px "Pinyon Script"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText('DTECH ,SJ', w - margin - 150, footerY + 50);
+
+            ctx.font = 'italic 20px "Inter"';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Authorized Signature', w - margin - 150, footerY + 90);
+
+            // Official Seal
+            const sealX = w - margin - 150;
+            const sealY = footerY + 150;
+
+            // Seal Outer Circle
+            ctx.beginPath();
+            ctx.arc(sealX, sealY, 50, 0, Math.PI * 2);
+            ctx.fillStyle = '#d4af37';
+            ctx.fill();
+
+            // Seal Inner Circle
+            ctx.beginPath();
+            ctx.arc(sealX, sealY, 40, 0, Math.PI * 2);
+            ctx.fillStyle = '#020617';
+            ctx.fill();
+
+            // Seal Text
+            ctx.font = 'bold 14px "Cinzel"';
+            ctx.fillStyle = '#d4af37';
+            ctx.textAlign = 'center';
+            ctx.fillText('DTECH', sealX, sealY - 10);
+            ctx.fillText('OFFICIAL', sealX, sealY + 10);
+            ctx.font = '12px "Cinzel"';
+            ctx.fillText('VERIFIED', sealX, sealY + 25);
+
+            // 9. SECURITY FEATURES
+            ctx.save();
+            ctx.globalAlpha = 0.05;
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 1;
+            for(let i = -h; i < w + h; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + h, h);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // 10. WATERMARK
+            ctx.save();
+            ctx.globalAlpha = 0.03;
+            ctx.font = 'bold 120px "Cinzel"';
+            ctx.fillStyle = '#f8fafc';
+            ctx.textAlign = 'center';
+            ctx.fillText('DTECH VERIFIED', w/2, h/2);
+            ctx.restore();
 
             // For simplicity, you can call the main function and handle the error
             showMessage("Logo failed to load, generating certificate with default design.", "info");
