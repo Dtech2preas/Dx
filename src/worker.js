@@ -775,6 +775,8 @@ async function handleGetUser(request, env) {
   return new Response(JSON.stringify({
       username: username,
       balance: user.balance || 0,
+      balance_pending: user.balance_pending || 0,
+      status: user.status || 'active',
       history: user.history || []
   }), { status: 200, headers: CORS_HEADERS });
 }
