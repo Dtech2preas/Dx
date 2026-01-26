@@ -391,8 +391,9 @@
                 <button onclick="toggleHistory()" class="secondary" style="font-size:0.8rem;">History</button>
                 <button onclick="refreshBalance()" class="secondary" style="font-size:0.8rem;">Sync Balance</button>
             </div>
-            <div class="btn-group center" style="margin-top: 15px;">
+            <div class="btn-group center" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
                 <button onclick="window.location.href='berserker.html'" class="gold-action" style="font-size:0.9rem;">⚔️ Berserker Mode ⚔️</button>
+                <button onclick="window.location.href='profile.html'" class="secondary" style="font-size:0.9rem;">My Profile</button>
             </div>
         </div>
 
@@ -400,23 +401,6 @@
             <h3>Transaction History</h3>
             <div id="history-content" style="max-height: 200px; overflow-y: auto;">
                 <p style="text-align:center; color:var(--text-light);">No history found.</p>
-            </div>
-        </div>
-
-        <div id="earn-section" class="card" style="display:none;">
-            <h3>Task Assignment</h3>
-            <p style="color:var(--text-light); font-size:0.9rem;">
-                Complete the sponsored task to accrue value (Variable Reward). Verification window: <strong>15 seconds</strong>.
-            </p>
-
-            <div style="text-align:center; margin: 25px 0;">
-                <button id="watch-btn" onclick="startAdWatch()" style="width:100%; padding: 16px;">
-                    Initiate Task
-                </button>
-                <div id="timer-status"></div>
-                <button id="cancel-ad-btn" onclick="cancelAdWatch()" disabled class="secondary" style="margin-top:12px; border:none; color:var(--danger); font-size:0.8rem;">
-                    Abort Task
-                </button>
             </div>
         </div>
 
@@ -461,7 +445,8 @@
 
         <div id="message" class="alert"></div>
 
-        <div style="text-align:center; margin-top:30px;">
+        <div style="text-align:center; margin-top:30px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+             <button onclick="window.location.href='guide.html'" class="secondary" style="width: auto; padding: 8px 16px; font-size: 0.8rem;">How To Use</button>
              <a href="admin.html" style="color:#cbd5e1; font-size:0.75rem; text-decoration:none;">Admin Console</a>
         </div>
     </main>
@@ -548,7 +533,6 @@
           document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
           document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
           document.getElementById('history-section').style.display = 'none'; // Always hide history initially
-          document.getElementById('earn-section').style.display = loggedIn ? 'block' : 'none';
           document.getElementById('redeem-section').style.display = loggedIn ? 'block' : 'none';
 
           if (!loggedIn) {
@@ -620,14 +604,18 @@
           if (res.ok && res.data) {
             // Check Status
             if (res.data.status === 'pending') {
-                return showMessage('Account is pending approval. Please check back later or contact admin.', 'info');
+                const tempUser = { username: u, status: 'pending' };
+                sessionStorage.setItem('ad_user', JSON.stringify(tempUser));
+                window.location.href = 'pending.html';
+                return;
             }
 
             currentUser = {
               username: u,
               balance: res.data.balance || 0,
               history: res.data.history || [],
-              token: res.data.token
+              token: res.data.token,
+              status: res.data.status
             };
             sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
             updateUI();
@@ -647,6 +635,10 @@
           if (!currentUser) return;
           const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
           if (res.ok && res.data) {
+             if (res.data.status === 'pending') {
+                 window.location.href = 'pending.html';
+                 return;
+             }
             currentUser.balance = res.data.balance;
             currentUser.history = res.data.history || [];
             sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
@@ -1228,6 +1220,10 @@
           if (saved) {
             try {
                 currentUser = JSON.parse(saved);
+                if(currentUser.status === 'pending') {
+                    window.location.href = 'pending.html';
+                    return;
+                }
                 updateUI();
                 refreshBalance();
             } catch(e) {

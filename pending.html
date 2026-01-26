@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Pending - DTech</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --accent: #d4af37;
+            --bg: #020617;
+            --surface: #0f172a;
+            --text-main: #f8fafc;
+            --text-light: #94a3b8;
+            --radius: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h1 { font-family: 'Cinzel', serif; color: var(--accent); margin-top: 0; }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+
+        p { line-height: 1.6; color: var(--text-light); font-size: 0.95rem; }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        button:hover { background: #60a5fa; transform: translateY(-2px); }
+
+        .info-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 25px;
+            text-align: left;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .info-title { font-weight: bold; color: var(--text-main); margin-bottom: 8px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="status-icon">⏳</div>
+        <h1>Approval Pending</h1>
+        <p>Your account has been registered and is currently awaiting manual verification by our administrators.</p>
+        <p>This process typically takes a few hours. We verify your details to ensure the integrity of the rewards program.</p>
+
+        <button onclick="checkStatus()" id="check-btn">Check Status</button>
+
+        <div class="info-box">
+            <span class="info-title">How DTech Rewards Works:</span>
+            <ul style="margin: 0; padding-left: 20px; color: var(--text-light);">
+                <li style="margin-bottom: 5px;"><strong>Watch Ads:</strong> Complete ad tasks in "Berserker Mode" to earn points.</li>
+                <li style="margin-bottom: 5px;"><strong>Pending Balance:</strong> Earnings are first added to your "Pending Balance".</li>
+                <li style="margin-bottom: 5px;"><strong>Verification:</strong> Admins review clicks. Once verified, funds move to your "Withdrawable Balance".</li>
+                <li><strong>Withdraw:</strong> Redeem balance for Airtime, Vouchers, or Cash Send.</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 20px;">
+             <a href="index.html" style="color: var(--text-light); font-size: 0.8rem; text-decoration: none;">Back to Login</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+
+        function getBaseUrl() {
+            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : API_URL;
+        }
+
+        async function checkStatus() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const user = JSON.parse(saved);
+            const btn = document.getElementById('check-btn');
+
+            btn.innerText = "Checking...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${getBaseUrl()}/user?username=${user.username}`);
+                const data = await res.json();
+
+                if (data.status === 'active') {
+                    // Update session
+                    user.status = 'active';
+                    user.balance = data.balance;
+                    sessionStorage.setItem('ad_user', JSON.stringify(user));
+
+                    btn.innerText = "Approved!";
+                    btn.style.background = "var(--accent)";
+                    setTimeout(() => window.location.href = 'index.html', 1000);
+                } else {
+                    btn.innerText = "Still Pending";
+                    setTimeout(() => {
+                        btn.innerText = "Check Status";
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (e) {
+                console.error(e);
+                btn.innerText = "Error";
+                setTimeout(() => { btn.disabled = false; }, 2000);
+            }
+        }
+
+        // Auto-check on load if session exists
+        window.onload = function() {
+            const saved = sessionStorage.getItem('ad_user');
+            if(!saved) {
+                // Do not redirect immediately, maybe user just arrived.
+                // But if no session, they can't check status.
+                // Let them stay or login.
+            }
+        };
+    </script>
+</body>
+</html>
