@@ -134,7 +134,7 @@
     <div id="message"></div>
 
     <main>
-        <a href="berserker.html" class="back-btn">← Back to Menu</a>
+        <a href="app.html" class="back-btn">← Back to Menu</a>
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
@@ -151,7 +151,7 @@
             </div>
 
             <button class="claim-btn" onclick="attemptReward()">I Have Enabled Notifications</button>
-            <button class="skip-btn" onclick="window.location.href='berserker.html'">Skip This Step</button>
+            <button class="skip-btn" onclick="window.location.href='app.html'">Skip This Step</button>
         </div>
     </main>
 
@@ -251,7 +251,7 @@
                     updateBalanceUI(currentUser.balance_pending);
 
                     showMessage(`Reward Unlocked! +R ${data.earned}`, 3000);
-                    setTimeout(() => window.location.href = 'berserker.html', 2000);
+                    setTimeout(() => window.location.href = 'app.html', 2000);
 
                 } else {
                     showMessage(data.error || 'Reward failed.');
