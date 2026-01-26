@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>User Guide - DTech</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,27 +30,28 @@
             line-height: 1.6;
         }
 
-        .container { max-width: 700px; width: 100%; }
+        .container { max-width: 820px; width: 100%; }
 
-        h1 { color: var(--accent); font-size: 2rem; margin-bottom: 30px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-        h2 { color: #fff; margin-top: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        h3 { color: var(--muted); margin-top: 25px; font-size: 1.1rem; }
+        h1 { color: var(--accent); font-size: 2rem; margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { color: #fff; margin-top: 28px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; }
+        h3 { color: var(--muted); margin-top: 18px; font-size: 1.05rem; }
 
         .card {
             background: var(--surface);
-            padding: 25px;
+            padding: 20px;
             border-radius: var(--radius);
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 18px;
+            border: 1px solid rgba(255,255,255,0.04);
         }
 
         .highlight { color: var(--accent); font-weight: bold; }
-        .green { color: var(--success); font-weight: bold; }
-        .yellow { color: #facc15; font-weight: bold; }
-        .red { color: var(--danger); font-weight: bold; }
+        .green { color: var(--success); font-weight: 700; }
+        .yellow { color: #facc15; font-weight: 700; }
+        .red { color: var(--danger); font-weight: 700; }
 
         ul { padding-left: 20px; }
-        li { margin-bottom: 10px; }
+        li { margin-bottom: 8px; }
+        code { background: rgba(255,255,255,0.02); padding: 2px 6px; border-radius: 6px; color: var(--muted); }
 
         .btn {
             display: block;
@@ -58,67 +59,209 @@
             text-align: center;
             background: var(--accent);
             color: #000;
-            padding: 15px;
+            padding: 14px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 800;
-            margin-top: 40px;
+            margin-top: 26px;
         }
+
+        .small { font-size: 0.9rem; color: var(--muted); }
+        .kbd { display:inline-block; padding:2px 6px; border-radius:6px; background:rgba(255,255,255,0.02); color:var(--text); }
+        .section-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media (max-width:700px) { .section-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1>How to Earn</h1>
+        <h1>How to Earn — DTech Rewards (Clear & Simple)</h1>
 
         <div class="card">
-            <h2>The Rounds System</h2>
-            <p>Our earning system is divided into 3 rounds. To maximize your revenue, you should aim to complete the higher rounds first.</p>
-
-            <h3>1. <span class="green">Round 1 (High Revenue)</span></h3>
+            <h2>Quick summary (read this first)</h2>
             <ul>
-                <li><strong>Earnings:</strong> R0.10 - R0.30 per click.</li>
-                <li><strong>Mission:</strong> You must complete a specific number of ads (4 Popunders, 6 In-Page, 8 Direct Links).</li>
-                <li><strong>Cooldown:</strong> Once finished, this round locks for <span class="highlight">60 minutes</span>.</li>
-            </ul>
-
-            <h3>2. <span class="yellow">Round 2 (Medium Revenue)</span></h3>
-            <ul>
-                <li><strong>Availability:</strong> Opens only when Round 1 is on cooldown.</li>
-                <li><strong>Earnings:</strong> R0.10 - R0.30 (Lower chance of high rewards).</li>
-                <li><strong>Cooldown:</strong> Locks for <span class="highlight">20 minutes</span> after completion.</li>
-            </ul>
-
-            <h3>3. <span class="red">Round 3 (Grind Mode)</span></h3>
-            <ul>
-                <li><strong>Availability:</strong> Opens when both Round 1 & 2 are cooling down.</li>
-                <li><strong>Earnings:</strong> R0.001 - R0.10.</li>
-                <li><strong>Limits:</strong> <span class="highlight">Unlimited Clicks.</span> No cooldowns. Grind as much as you want!</li>
+                <li>You earn by completing ad tasks inside <span class="highlight">Berserker</span> rounds. Each ad view increases your <strong>pending balance</strong>.</li>
+                <li>Pending money is **not withdrawable** until it is approved by the admin after we reconcile real ad revenue from Monetag.</li>
+                <li>Enabling push notifications gives a bonus — but we never pay per push click. Instead we reward the user state + behavior (explained below).</li>
+                <li>We use small processing fees for withdrawals (airtime 25%, voucher 30%, cash send 40%) — see Withdrawals section.</li>
             </ul>
         </div>
 
         <div class="card">
-            <h2>Bonuses</h2>
+            <h2>The Rounds System (how sessions work)</h2>
+            <p>There are three earning rounds. Each round has its own risk & reward profile. Start with Round 1 (highest yield) and complete the required tasks to finish the round.</p>
 
-            <h3>Referral Program</h3>
-            <p>Invite friends using your unique link found on your <a href="profile.html" style="color:var(--accent)">Profile</a>. You earn <span class="highlight">5%</span> of everything they earn, forever. This is paid from our system budget, so it doesn't affect their earnings.</p>
+            <div class="section-grid">
+                <div>
+                    <h3><span class="green">Round 1 — High Yield</span></h3>
+                    <ul>
+                        <li><strong>Earnings:</strong> R0.10 — R0.30 per valid ad view</li>
+                        <li><strong>Missions:</strong> Complete the assigned ad clicks (example: Popunder 4, In-Page 6, Direct 8 — numbers show on the Berserker screen)</li>
+                        <li><strong>Validation:</strong> You must spend at least <span class="highlight">10 seconds</span> after clicking an ad (the system checks this).</li>
+                        <li><strong>Cooldown:</strong> When you finish Round 1 it locks for <span class="highlight">60 minutes</span>.</li>
+                    </ul>
+                </div>
 
-            <h3>Notification Streak</h3>
-            <p>Keep push notifications enabled and check in daily. Maintaining a <span class="highlight">7-Day Streak</span> verifies you as an active user and unlocks special rewards.</p>
+                <div>
+                    <h3><span class="yellow">Round 2 — Medium Yield</span></h3>
+                    <ul>
+                        <li><strong>When:</strong> Opens while Round 1 is cooling down.</li>
+                        <li><strong>Earnings:</strong> R0.10 — R0.30 (more likely on the lower end).</li>
+                        <li><strong>Cooldown:</strong> Locks for <span class="highlight">20 minutes</span> after completion.</li>
+                    </ul>
+                </div>
+
+                <div style="grid-column: 1 / -1;">
+                    <h3><span class="red">Round 3 — Grind Mode</span></h3>
+                    <ul>
+                        <li><strong>When:</strong> Available only when both Round 1 & 2 are cooling down.</li>
+                        <li><strong>Earnings:</strong> R0.001 — R0.10 (low reward but unlimited clicks).</li>
+                        <li><strong>Limits:</strong> Unlimited clicks — use for steady earning.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <div class="card">
-            <h2>Rules</h2>
+            <h2>Ad Sets & How Ads are assigned</h2>
+            <p>Each user gets a unique <strong>Ad Set</strong> when approved. That set contains the exact ad code (popunder, in-page push, direct link, push) that will be shown to that user only. This makes reconciliation accurate and fair.</p>
+
+            <h3>What this means for you</h3>
             <ul>
-                <li>Do not use ad-blockers.</li>
-                <li>Do not use VPNs.</li>
-                <li>When clicking an ad, you must wait <span class="highlight">10 seconds</span> on the destination page for it to count.</li>
-                <li>Withdrawals are processed manually via Certificates. Scan the QR code to redeem.</li>
+                <li>When your account is approved we assign a unique ad set to you — no other user uses the same set.</li>
+                <li>We store the ad set on the server and the page dynamically injects only your set. You do <em>not</em> get a separate HTML file — we keep everything fast and tidy.</li>
+                <li>This allows admin to match Monetag stats to your exact traffic when reconciling payouts.</li>
             </ul>
         </div>
 
-        <a href="berserker.html" class="btn">START EARNING</a>
+        <div class="card">
+            <h2>Pending vs Approved balance — the most important bit</h2>
+            <p>We use two balances so the system stays sustainable and fair:</p>
+
+            <div class="section-grid">
+                <div>
+                    <h3>Pending balance</h3>
+                    <p>Every time you complete a valid ad task the estimated reward is added to your <strong>Pending</strong> balance. This is an estimate only and cannot be withdrawn yet.</p>
+                </div>
+                <div>
+                    <h3>Approved balance</h3>
+                    <p>After admin reconciles Monetag stats (we match actual revenue), an approval process moves money from Pending → Approved. Approved balance is withdrawable.</p>
+                </div>
+            </div>
+
+            <h3>How we decide the approved amount (simple)</h3>
+            <ol>
+                <li>We upload Monetag report for the ad zones and see the <em>actual</em> revenue (what Monetag paid).</li>
+                <li>We calculate a system target amount by reducing actual Monetag revenue by <strong>20%–30%</strong> (this is our safety margin to cover fees, unmeasurable loss, and risk).</li>
+                <li>If that system target is <strong>greater than or equal</strong; to the total of the users' estimated amounts for that zone, we approve the system target share for each user.</li>
+                <li>If the system target is <strong>less than</strong> the users’ combined estimated totals, we fall back to approving <strong>90% of each user’s estimated pending amount</strong> (so users still get most of what they were shown).</li>
+            </ol>
+
+            <p class="small">This formula protects the system while keeping users fairly paid. Admin shows the approvals in the panel and you can see what will be approved before final confirmation.</p>
+        </div>
+
+        <div class="card">
+            <h2>Push notifications — FAQ & rules</h2>
+            <h3>Why we ask for permission</h3>
+            <p>Push permission lets us send a few timely notifications to bring you back when high-yield rounds are available. Users with push enabled earn a small bonus because push traffic typically earns more.</p>
+
+            <h3>Important technical facts</h3>
+            <ul>
+                <li>You cannot be paid per push click — browser push clicks open external pages and we cannot track the click directly.</li>
+                <li>Instead we give a <strong>Push Bonus</strong> to users who have notifications enabled and who return and engage after a push. This is safe and compliant.</li>
+            </ul>
+
+            <h3>Typical push bonus</h3>
+            <p>When notifications are enabled and verified, you get a bonus multiplier (example: <strong>+10% — +20%</strong>) on your eligible rewards. The exact percentage is shown in the app when you enable it.</p>
+
+            <h3>How to enable push (quick)</h3>
+            <ol>
+                <li>When prompted, choose <kbd>Allow</kbd> in the browser notification popup.</li>
+                <li>If you accidentally block, open browser settings → site settings → notifications → allow for <code>student.dtech-services.co.za</code>.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h2>Health bar — why it matters</h2>
+            <p>We track how often you click ads and show a health bar so you don’t over-click and reduce your CPM. The colors tell you:</p>
+            <ul>
+                <li><span class="green">Green</span> — Safe. You may continue clicking normally.</li>
+                <li><span class="yellow">Yellow</span> — Slow down. You are clicking frequently; take short breaks to keep CPM healthy.</li>
+                <li><span class="red">Red</span> — Pause. If you keep clicking you risk reduced approvals or temporary claim locks.</li>
+            </ul>
+            <p class="small">We recommend staying in green or yellow. If you hit red the claim button may be temporarily disabled for the safety of the system.</p>
+        </div>
+
+        <div class="card">
+            <h2>Registration & verification — what we need</h2>
+            <ul>
+                <li>Sign up as usual (username, email, password).</li>
+                <li>Provide <strong>WhatsApp number</strong> (recommended) — admins use it to contact you for fast approval.</li>
+                <li>New accounts are placed in a review queue. Admin assigns a unique ad set before the account can earn.</li>
+                <li>If you register but aren’t assigned an ad set yet, you’ll be shown in the admin “approval” panel and contacted via WhatsApp or email.</li>
+            </ul>
+            <p class="small">This manual step helps keep bad actors out and ensure each user gets a unique ad set for accurate payout reconciliation.</p>
+        </div>
+
+        <div class="card">
+            <h2>Withdrawals & Certificates</h2>
+            <h3>How withdrawals work</h3>
+            <ul>
+                <li>Withdrawals are paid from your <strong>Approved</strong> balance only.</li>
+                <li>Before payout we generate a Certificate (a verification document) that shows gross amount, processing fee, and net payout.</li>
+            </ul>
+
+            <h3>Conversion / processing fees</h3>
+            <ul>
+                <li><strong>Airtime</strong> — 25% fee</li>
+                <li><strong>Voucher</strong> — 30% fee</li>
+                <li><strong>Cash Send</strong> — 40% fee</li>
+            </ul>
+
+            <p class="small">The fee is deducted at the moment you create the certificate. The certificate shows both gross and net amounts. Admin must authorize the certificate for payout.</p>
+        </div>
+
+        <div class="card">
+            <h2>What we check for (don’t do these)</h2>
+            <ul>
+                <li>Do not use ad-blockers or automation tools.</li>
+                <li>Do not create multiple accounts to cheat the system.</li>
+                <li>Do not rapidly click without reading — the system checks for realistic time-on-page.</li>
+                <li>Do not mask yourself with unusual VPNs/proxies (we may flag high-risk traffic).</li>
+            </ul>
+            <p class="small">We prefer to resolve issues gently: accounts may be paused, or pending amounts reduced if activity looks fraudulent. Admin will contact you before harsh actions whenever possible.</p>
+        </div>
+
+        <div class="card">
+            <h2>Admin verification & reconciliation (how you get paid)</h2>
+            <p>Daily or periodically, admin uploads Monetag stats for the exact zone IDs. The admin panel then:</p>
+            <ol>
+                <li>Matches each zone's actual Monetag profit with the users assigned to that zone.</li>
+                <li>Calculates system target (actual − 20%–30%).</li>
+                <li>If system target ≥ estimated totals → approve system target share.</li>
+                <li>If system target &lt; estimated totals → approve 90% of each user's estimate.</li>
+                <li>Admin reviews the pre-calculated approvals and clicks <em>Approve</em> to move pending → approved.</li>
+            </ol>
+            <p class="small">You will see the pre-calculated approval amounts in your admin panel so the admin can confirm before finalizing.</p>
+        </div>
+
+        <div class="card">
+            <h2>Support & contact</h2>
+            <ul>
+                <li>Need help? Use the support button in the app or email <strong>support@dtech-services.co.za</strong>.</li>
+                <li>If admin requests verification via WhatsApp we recommend replying for faster approval.</li>
+                <li>Always keep your profile contact details up to date.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Examples (quick)</h2>
+            <ul>
+                <li><strong>Example 1 — Pending to approved:</strong> You earn R10 pending today. Admin uploads Monetag report and the system target is R8. Admin approves R8 → R8 moves to Approved.</li>
+                <li><strong>Example 2 — Push bonus:</strong> You have notifications ON and return after a push. Your eligible rewards get a +15% boost (displayed on the app).</li>
+            </ul>
+        </div>
+
+        <a href="/berserker.html" class="btn">START EARNING — BERSERKER MODE</a>
     </div>
-
 </body>
 </html>
