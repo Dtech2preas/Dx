@@ -429,6 +429,15 @@
                 <button id="btn-sys-ads" onclick="toggleSys('toggle_ads')">RUNNING</button>
             </div>
         </div>
+
+        <div class="card" style="margin-top:12px;">
+            <h3>Message of the Day</h3>
+            <textarea id="sys-motd" rows="3" placeholder="Enter announcement text to display on dashboard..." style="width:100%; border:1px solid #e6eef6; border-radius:10px; padding:12px; margin-bottom:10px; font-family:inherit;"></textarea>
+            <div style="display:flex; gap:8px;">
+                 <button class="accent" onclick="saveMotd()">Update Banner</button>
+                 <button onclick="clearMotd()" style="background:#f3f4f6; color:#0f172a;">Clear / Remove</button>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -576,6 +585,10 @@
                 setBtn('btn-sys-withdraw', s.withdrawals_enabled, 'ENABLED', 'DISABLED', false);
                 setBtn('btn-sys-ads', s.ads_enabled, 'RUNNING', 'STOPPED', false);
             }
+
+            // MOTD
+            if(data.motd) document.getElementById('sys-motd').value = data.motd;
+
         } else {
             console.warn('Failed to load stats', data);
         }
@@ -600,6 +613,20 @@
 
         await api('/admin/system-action', 'POST', { action, value: val });
         loadStats();
+    }
+
+    async function saveMotd() {
+        const val = document.getElementById('sys-motd').value;
+        if(!val) return;
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'set_motd', value: val });
+        if(ok) alert('Updated');
+        else alert('Error: ' + (data.error || 'Unknown'));
+    }
+
+    async function clearMotd() {
+        if(!confirm('Clear MOTD?')) return;
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'set_motd', value: '' });
+        if(ok) { document.getElementById('sys-motd').value = ''; alert('Cleared'); }
     }
 
     // --- USERS ---

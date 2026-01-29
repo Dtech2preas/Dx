@@ -1,6 +1,8 @@
-127.0.0.1 - - [26/Jan/2026 10:59:17] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [26/Jan/2026 10:59:17] "GET /logo.png HTTP/1.1" 200 -
-127.0.0.1 - - [26/Jan/2026 10:59:19] "GET /index.html HTTP/1.1" 304 -
-127.0.0.1 - - [26/Jan/2026 11:02:51] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [26/Jan/2026 11:02:51] "GET /logo.png HTTP/1.1" 200 -
-127.0.0.1 - - [26/Jan/2026 11:02:52] "GET /index.html HTTP/1.1" 304 -
+127.0.0.1 - - [29/Jan/2026 20:15:47] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:15:47] "GET /logo.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:24] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:24] "GET /logo.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:24] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:24] "GET /logo.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:24] "GET /profile.html HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jan/2026 20:16:25] "GET /admin.html HTTP/1.1" 200 -

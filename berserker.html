@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <style>
         :root {
             --bg: #050617;
@@ -97,13 +98,25 @@
             cursor: pointer;
             text-decoration: none;
             color: var(--text);
-            transition: background 0.2s;
+            transition: all 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
         }
-        .mission-btn:hover { background: rgba(255,255,255,0.1); }
+        .mission-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .mission-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: var(--prog, 0%);
+            background: rgba(212, 175, 55, 0.2);
+            z-index: -1;
+            transition: width 0.8s ease-out;
+        }
 
         .m-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
         .m-progress { font-size: 0.75rem; color: var(--accent); }
@@ -347,14 +360,19 @@
 
         function updateMission(rid, m) {
             const p = m || { popunder:0, inpage:0, direct:0 };
+            let completedCount = 0;
 
             const setP = (type, val, target) => {
                 const el = document.getElementById(`prog-${rid}-${type}`);
                 if(el) {
+                    const pct = Math.min(100, (val / target) * 100);
+                    el.parentElement.style.setProperty('--prog', `${pct}%`);
+
                     el.innerText = `${val}/${target}`;
                     if(val >= target) {
                         el.classList.add('m-done');
                         el.innerText = "DONE";
+                        completedCount++;
                     }
                 }
             };
@@ -362,6 +380,32 @@
             setP('pop', p.popunder, MISSION_TARGETS.popunder);
             setP('inpage', p.inpage, MISSION_TARGETS.inpage);
             setP('direct', p.direct, MISSION_TARGETS.direct);
+
+            if (completedCount === 3) launchConfetti();
+        }
+
+        function launchConfetti() {
+            // Check if already fired to avoid spam on reload (basic check)
+            if (sessionStorage.getItem('confetti_fired') === 'true') return;
+
+            var duration = 3000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInOut(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+              var timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                sessionStorage.setItem('confetti_fired', 'true');
+                return clearInterval(interval);
+              }
+
+              var particleCount = 50 * (timeLeft / duration);
+              confetti({ ...defaults, particleCount, origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 } });
+              confetti({ ...defaults, particleCount, origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
         }
 
         function startTimers(r) {

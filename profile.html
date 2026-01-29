@@ -271,6 +271,9 @@
                 <span class="ref-link" id="ref-link">Loading...</span>
                 <button class="copy-btn" onclick="copyRef()">COPY</button>
             </div>
+            <button onclick="shareProfile()" style="width:100%; margin-top:10px; background:#25D366; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span>📤</span> Share Link
+            </button>
             <div style="margin-top: 15px; font-size: 0.9rem;">
                 Total Referrals: <strong id="ref-count">0</strong>
             </div>
@@ -297,6 +300,7 @@
     <script>
         const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
         let currentUser = null;
+        let currentUsername = null;
         let statsData = {};
 
         function getBaseUrl() {
@@ -312,6 +316,7 @@
                 return;
             }
             const localUser = JSON.parse(saved);
+            currentUsername = localUser.username;
 
             try {
                 const res = await fetch(`${getBaseUrl()}/profile?username=${localUser.username}`);
@@ -344,7 +349,8 @@
             document.getElementById('ref-balance').innerText = `R ${ref.toFixed(2)}`;
 
             // Referrals
-            const link = `${window.location.origin}/index.html?ref=${currentUser.username}`;
+            const username = currentUser.username || currentUsername; // Fallback to session username if backend returns undefined
+            const link = `${window.location.origin}/index.html?ref=${username}`;
             document.getElementById('ref-link').innerText = link;
             document.getElementById('ref-count').innerText = currentUser.referral_count || 0;
 
@@ -468,6 +474,25 @@
         function copyRef() {
             const txt = document.getElementById('ref-link').innerText;
             navigator.clipboard.writeText(txt).then(() => alert('Link copied!'));
+        }
+
+        function shareProfile() {
+            const username = currentUser.username || currentUsername;
+            const link = `${window.location.origin}/index.html?ref=${username}`;
+            const text = `Join D-TECH and earn rewards! Use my link to sign up:`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'D-TECH Rewards',
+                    text: text,
+                    url: link
+                }).catch(console.error);
+            } else {
+                // WhatsApp Fallback
+                const fullText = `${text} ${link}`;
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+                window.open(waUrl, '_blank');
+            }
         }
 
         init();
