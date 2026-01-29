@@ -3,12 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DTech Admin Console</title>
+    <title>DTech Admin Console — Mobile</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <style>
         :root {
@@ -20,21 +23,23 @@
             --text: #334155;
             --danger: #ef4444;
             --success: #10b981;
-            --radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.25);
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
             margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            padding-bottom: 86px; /* bottom nav */
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
         }
 
-        /* Login Overlay */
+        /* Login Overlay (mobile-friendly) */
         #login-overlay {
             position: fixed; top:0; left:0; right:0; bottom:0;
             background: rgba(15, 23, 42, 0.98);
@@ -42,156 +47,218 @@
             z-index: 2000;
             color: white;
         }
-
-        /* Layout */
-        #sidebar {
-            width: 250px;
-            background: var(--sidebar);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        #content-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        h1 { font-family: 'Cinzel', serif; margin: 0 0 30px 0; color: var(--accent); }
-        h2 { margin-top: 0; color: var(--primary); }
-
-        /* Nav */
-        .nav-item {
-            padding: 12px 15px;
-            margin-bottom: 5px;
+        #login-overlay .card {
+            width: 92%;
+            max-width: 420px;
             border-radius: var(--radius);
-            cursor: pointer;
-            transition: background 0.2s;
-            font-weight: 600;
-            color: #cbd5e1;
+            padding: 28px;
+            text-align: center;
+            border: 1px solid var(--accent);
+            box-shadow: 0 8px 30px rgba(2,6,23,0.6);
         }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: var(--accent); color: var(--primary); }
+        #admin-secret {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(255,255,255,0.03);
+            color: white;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
 
-        /* Cards & Grids */
+        /* Content area */
+        #content-area {
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        h1 { font-family: 'Cinzel', serif; margin: 0 0 14px 0; color: var(--accent); font-size: 20px; }
+        h2 { margin: 0 0 12px 0; color: var(--primary); font-size: 18px; }
+        h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--primary); }
+
+        /* Nav bottom */
+        #bottom-nav {
+            position: fixed;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,1));
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            padding: 8px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(2,6,23,0.35);
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .bn-item {
+            flex: 1;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 6px 6px;
+            border-radius: 8px;
+            user-select: none;
+        }
+        .bn-item .icon { display:block; font-size: 18px; line-height: 1; margin-bottom: 2px; }
+        .bn-item.active {
+            background: linear-gradient(180deg,var(--accent), #cfa43b);
+            color: var(--primary);
+            box-shadow: 0 6px 16px rgba(212,175,55,0.18);
+        }
+
+        /* Cards & Spacing */
         .card {
             background: var(--surface);
             border-radius: var(--radius);
-            padding: 25px;
+            padding: 16px;
             box-shadow: var(--shadow);
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
-        /* Forms */
+        /* Large stat tiles */
+        .stat {
+            text-align: center;
+            padding: 14px;
+            border-radius: 12px;
+            background: linear-gradient(180deg,#fff,#fbfbfb);
+        }
+        .stat .label { color:#64748b; font-size: 12px; }
+        .stat .value { font-weight: 700; font-size: 20px; margin-top: 6px; color: var(--primary); }
+
+        /* Buttons & Inputs */
         input, select, textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #e6eef6;
+            border-radius: 10px;
             box-sizing: border-box;
             margin-bottom: 10px;
             font-family: inherit;
+            font-size: 15px;
         }
-
         button {
             background: var(--primary);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 15px;
         }
         button.accent { background: var(--accent); color: var(--primary); }
         button.danger { background: var(--danger); }
         button.success { background: var(--success); }
-        button:hover { opacity: 0.9; }
+        button.icon-btn {
+            display:inline-flex; align-items:center; gap:8px; padding:10px 12px;
+        }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { text-align: left; padding: 10px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        tr:last-child td { border-bottom: none; }
+        /* Table mobile */
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; display:block; overflow:auto; white-space:nowrap; }
+        th { text-align: left; padding: 10px; border-bottom: 2px solid #eaeef3; color: #64748b; font-size: 11px; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 1px solid #f3f6fb; font-size: 14px; }
 
         /* Badges */
-        .badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+        .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: 700; display:inline-block; }
         .bg-yellow { background: #fef9c3; color: #854d0e; }
         .bg-green { background: #dcfce7; color: #166534; }
         .bg-red { background: #fee2e2; color: #dc2626; }
 
-        /* Ad Config */
-        .ad-group {
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        .ad-title { font-weight: bold; margin-bottom: 8px; color: var(--primary); font-size: 0.9rem; }
+        /* Ad config simplified */
+        .ad-group { border: 1px solid #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+        .ad-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
 
         /* Views */
         .view-section { display: none; }
         .view-section.active { display: block; }
+
+        /* Certificate big upload */
+        .cert-drop {
+            border: 2px dashed #e6eef6;
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(180deg,#fff,#fcfdff);
+        }
+
+        /* Responsive tuning */
+        @media (min-width: 720px) {
+            .grid-4 { grid-template-columns: repeat(4, 1fr); }
+            #content-area { padding: 24px; max-width: 1100px; margin: 0 auto; }
+            #bottom-nav { left: 20%; right: 20%; bottom: 18px; border-radius: 18px; }
+        }
     </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login-overlay">
-    <div style="background: var(--primary); padding: 40px; border-radius: var(--radius); text-align: center; border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-        <h2 style="color:white; margin-bottom: 20px;">SYSTEM ACCESS</h2>
-        <input type="password" id="admin-secret" placeholder="Secret Key" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2);">
-        <button onclick="auth()" class="accent" style="width: 100%;">UNLOCK</button>
+    <div class="card">
+        <h2 style="color:white; margin-bottom: 14px;">SYSTEM ACCESS</h2>
+        <input type="password" id="admin-secret" placeholder="Secret Key" />
+        <button onclick="auth()" class="accent" style="width:100%;">UNLOCK</button>
     </div>
 </div>
 
-<div id="sidebar">
-    <h1>DTECH ADMIN</h1>
-    <div class="nav-item active" onclick="nav('dashboard')">Dashboard</div>
-    <div class="nav-item" onclick="nav('users')">User Manager</div>
-    <div class="nav-item" onclick="nav('adsets')">Ad Sets</div>
-    <div class="nav-item" onclick="nav('reconcile')">Reconciliation</div>
-    <div class="nav-item" onclick="nav('certs')">Certificates</div>
-    <div class="nav-item" onclick="nav('system')">System Control</div>
-</div>
-
+<!-- CONTENT -->
 <div id="content-area">
 
     <!-- DASHBOARD -->
     <div id="view-dashboard" class="view-section active">
-        <h2>Overview</h2>
-        <div class="grid-4">
-            <div class="card" style="text-align:center;">
-                <div style="color:#64748b; font-size:0.8rem;">TOTAL USERS</div>
-                <div style="font-size:2rem; font-weight:bold;" id="s-users">0</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div>
+                <h1>DTECH ADMIN</h1>
+                <div style="font-size:13px; color:#64748b;">Mobile Console</div>
             </div>
-            <div class="card" style="text-align:center;">
-                <div style="color:#64748b; font-size:0.8rem;">ACTIVE TODAY</div>
-                <div style="font-size:2rem; font-weight:bold; color:var(--success);" id="s-active">0</div>
-            </div>
-            <div class="card" style="text-align:center;">
-                <div style="color:#64748b; font-size:0.8rem;">REWARDS TODAY</div>
-                <div style="font-size:2rem; font-weight:bold; color:var(--accent);" id="s-rewards">R 0.00</div>
-            </div>
-            <div class="card" style="text-align:center;">
-                <div style="color:#64748b; font-size:0.8rem;">LIABILITY</div>
-                <div style="font-size:2rem; font-weight:bold; color:var(--danger);" id="s-liability">R 0.00</div>
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:#94a3b8;">Signed in as</div>
+                <div style="font-weight:700; color:var(--primary);">Admin</div>
             </div>
         </div>
 
-        <div class="grid-2">
-            <div class="card">
-                <h3>Pending Approvals <span id="pending-badge" class="badge bg-yellow">0</span></h3>
-                <div id="pending-list" style="max-height: 300px; overflow-y: auto;"></div>
+        <div class="grid-4" style="margin-bottom:12px;">
+            <div class="card stat">
+                <div class="label">TOTAL USERS</div>
+                <div id="s-users" class="value">0</div>
             </div>
-            <div class="card">
-                <h3>Red Zone (Suspicious/R3)</h3>
-                <div id="red-zone-list" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></div>
+            <div class="card stat">
+                <div class="label">ACTIVE TODAY</div>
+                <div id="s-active" class="value" style="color:var(--success);">0</div>
             </div>
+            <div class="card stat">
+                <div class="label">REWARDS TODAY</div>
+                <div id="s-rewards" class="value" style="color:var(--accent);">R 0.00</div>
+            </div>
+            <div class="card stat">
+                <div class="label">LIABILITY</div>
+                <div id="s-liability" class="value" style="color:var(--danger);">R 0.00</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Pending Approvals <span id="pending-badge" class="badge bg-yellow" style="margin-left:8px;">0</span></h3>
+            <div id="pending-list" style="max-height:260px; overflow:auto; margin-top:10px;"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+            <h3>Red Zone (Suspicious / R3)</h3>
+            <div id="red-zone-list" style="max-height:220px; overflow:auto; margin-top:8px; font-size:14px;"></div>
         </div>
     </div>
 
@@ -200,35 +267,35 @@
         <h2>User Management</h2>
         <div class="card">
             <div style="display:flex; gap:10px;">
-                <input id="u-search" placeholder="Enter Username to Search">
-                <button onclick="lookupUser()" style="width:auto;">Search</button>
+                <input id="u-search" placeholder="Enter Username to Search" />
+                <button onclick="lookupUser()">Search</button>
             </div>
 
-            <div id="u-details" style="display:none; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:20px;">
+            <div id="u-details" style="display:none; margin-top:16px; border-top:1px solid #eef5fb; padding-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h3 id="u-name" style="margin:0;">User</h3>
-                    <div id="u-status"></div>
+                    <div id="u-status" style="font-size:13px; color:#64748b;"></div>
                 </div>
 
-                <div class="grid-2" style="margin-top:20px;">
+                <div class="grid-4" style="margin-top:14px;">
                     <div>
-                        <strong>Balance:</strong> <span id="u-bal" style="font-size:1.2rem; color:var(--accent); font-weight:bold;"></span><br>
-                        <strong>Pending:</strong> <span id="u-pend"></span><br>
-                        <strong>Referral:</strong> <span id="u-ref"></span>
+                        <strong>Balance:</strong> <div id="u-bal" style="font-size:16px; color:var(--accent); font-weight:700;">R 0.00</div>
+                        <div style="margin-top:8px;"><strong>Pending:</strong> <span id="u-pend">R 0.00</span></div>
+                        <div style="margin-top:6px;"><strong>Referral:</strong> <span id="u-ref">R 0.00</span></div>
                     </div>
                     <div style="text-align:right;">
-                        <button class="danger" onclick="actUser('freeze')" id="btn-freeze">Freeze</button>
+                        <button class="danger" onclick="actUser('freeze')" id="btn-freeze" style="margin-bottom:8px;">Freeze</button>
                         <button onclick="actUser('shadowban')" id="btn-shadow">Shadowban</button>
                     </div>
                 </div>
 
-                <div style="margin-top:20px;">
-                    <h4>Recent Daily Stats (Pending/Approved)</h4>
-                    <div id="u-daily-stats" style="font-size:0.8rem; background:#f8fafc; padding:10px; border-radius:6px;"></div>
+                <div style="margin-top:14px;">
+                    <h4 style="margin-bottom:8px;">Recent Daily Stats (Pending / Approved)</h4>
+                    <div id="u-daily-stats" style="font-size:13px; background:#fbfcff; padding:10px; border-radius:8px;"></div>
                 </div>
 
-                <div style="margin-top:20px;">
-                    <button onclick="adjustBal()" style="background:#cbd5e1; color:#334155;">Adjust Balance Manual</button>
+                <div style="margin-top:12px;">
+                    <button onclick="adjustBal()" style="background:#e6eef6; color:#0f172a; font-weight:700;">Adjust Balance Manually</button>
                 </div>
             </div>
         </div>
@@ -237,36 +304,44 @@
     <!-- AD SETS -->
     <div id="view-adsets" class="view-section">
         <h2>Ad Configurations</h2>
-        <div class="card">
-            <button class="accent" onclick="toggleAdForm()">+ Create New Ad Set</button>
-            <div style="margin-top:10px;">Unassigned Sets: <strong id="sets-avail">0</strong></div>
+        <div class="card" style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+            <div>
+                <button class="accent" onclick="toggleAdForm()">+ Create New Ad Set</button>
+                <div style="margin-top:8px; font-size:13px; color:#64748b;">Unassigned Sets: <strong id="sets-avail">0</strong></div>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">Tip: Use zone IDs for quick recon</div>
         </div>
 
-        <div id="adset-form" class="card" style="display:none; border:2px solid var(--accent);">
+        <div id="adset-form" class="card" style="display:none; border:2px solid rgba(212,175,55,0.18);">
             <h3>New Ad Set</h3>
-            <div class="grid-2">
-                <div class="ad-group">
-                    <div class="ad-title">1. Popunder</div>
-                    <input class="ad-in" data-type="popunder" name="id" placeholder="Zone ID (Required for Recon)">
-                    <input class="ad-in" data-type="popunder" name="tag" placeholder="Script Tag">
-                </div>
-                <div class="ad-group">
-                    <div class="ad-title">2. In-Page Push</div>
-                    <input class="ad-in" data-type="inpage" name="id" placeholder="Zone ID (Required for Recon)">
-                    <input class="ad-in" data-type="inpage" name="tag" placeholder="Script Tag">
-                </div>
-                <div class="ad-group">
-                    <div class="ad-title">3. Direct Link</div>
-                    <input class="ad-in" data-type="direct" name="link" placeholder="Direct URL">
-                    <input class="ad-in" data-type="direct" name="id" placeholder="Zone ID (Extract from URL if possible, else manual)">
-                </div>
-                <div class="ad-group">
-                    <div class="ad-title">4. Push Notification</div>
-                    <input class="ad-in" data-type="push" name="id" placeholder="Zone ID (Required for Recon)">
-                    <input class="ad-in" data-type="push" name="tag" placeholder="Script Tag">
-                </div>
+            <div class="ad-group">
+                <div class="ad-title">1. Popunder</div>
+                <input class="ad-in" data-type="popunder" name="id" placeholder="Zone ID (Required for Recon)">
+                <input class="ad-in" data-type="popunder" name="tag" placeholder="Script Tag">
             </div>
-            <button onclick="createAdSet()" class="success">Save Configuration</button>
+
+            <div class="ad-group">
+                <div class="ad-title">2. In-Page Push</div>
+                <input class="ad-in" data-type="inpage" name="id" placeholder="Zone ID (Required for Recon)">
+                <input class="ad-in" data-type="inpage" name="tag" placeholder="Script Tag">
+            </div>
+
+            <div class="ad-group">
+                <div class="ad-title">3. Direct Link</div>
+                <input class="ad-in" data-type="direct" name="link" placeholder="Direct URL">
+                <input class="ad-in" data-type="direct" name="id" placeholder="Zone ID (Extract or manual)">
+            </div>
+
+            <div class="ad-group">
+                <div class="ad-title">4. Push Notification</div>
+                <input class="ad-in" data-type="push" name="id" placeholder="Zone ID (Required for Recon)">
+                <input class="ad-in" data-type="push" name="tag" placeholder="Script Tag">
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:8px;">
+                <button class="success" onclick="createAdSet()">Save Configuration</button>
+                <button onclick="toggleAdForm()" style="background:#f3f4f6; color:#0f172a;">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -274,35 +349,41 @@
     <div id="view-reconcile" class="view-section">
         <h2>Reconciliation Engine</h2>
         <div class="card">
-            <div class="grid-2">
+            <div style="display:grid; gap:10px;">
                 <div>
-                    <label><strong>1. Select Date</strong> (Target for Reconciliation)</label>
+                    <label><strong>1. Select Date</strong></label>
                     <input type="date" id="recon-date">
                 </div>
                 <div>
                     <label><strong>2. Upload Monetag CSV</strong></label>
                     <input type="file" id="csv-file" accept=".csv">
                 </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="accent" onclick="processRecon()">Analyze & Calculate</button>
+                    <button onclick="document.getElementById('csv-file').click()" style="background:#eef2ff; color:#0f172a;">Choose File</button>
+                </div>
             </div>
-            <button onclick="processRecon()" class="accent" style="margin-top:10px;">Analyze & Calculate</button>
         </div>
 
         <div id="recon-preview" class="card" style="display:none;">
             <h3>Reconciliation Preview</h3>
-            <table style="margin-bottom:20px;">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Game Pending</th>
-                        <th>Real (CSV)</th>
-                        <th>Approved (Calc)</th>
-                        <th>Breakdown (Pop/In/Dir/Push)</th>
-                    </tr>
-                </thead>
-                <tbody id="recon-body"></tbody>
-            </table>
-            <div style="text-align:right;">
-                <button onclick="confirmRecon()" class="success" style="padding:15px 30px;">CONFIRM & PROCESS PAYOUTS</button>
+            <div style="overflow:auto;">
+                <table style="margin-bottom:12px;">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Game Pending</th>
+                            <th>Real (CSV)</th>
+                            <th>Approved (Calc)</th>
+                            <th>Breakdown</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recon-body"></tbody>
+                </table>
+            </div>
+
+            <div style="text-align:center;">
+                <button class="success" onclick="confirmRecon()" style="padding:12px 18px;">CONFIRM & PROCESS PAYOUTS</button>
             </div>
         </div>
     </div>
@@ -311,17 +392,20 @@
     <div id="view-certs" class="view-section">
         <h2>Certificate Scanner</h2>
         <div class="card" style="text-align:center;">
-            <div style="border: 3px dashed #cbd5e1; padding: 40px; border-radius: 10px; cursor: pointer;" onclick="document.getElementById('cert-upload').click()">
-                <div style="font-size:3rem;">📸</div>
+            <div class="cert-drop" onclick="document.getElementById('cert-upload').click()">
+                <div style="font-size:2.6rem;">📸</div>
                 <h3>Upload Certificate Image</h3>
+                <div style="font-size:13px; color:#64748b;">Tap to choose or take a picture</div>
                 <input type="file" id="cert-upload" accept="image/*" style="display:none;" onchange="handleCertFile(this.files)">
             </div>
-            <div style="margin-top:20px;">
-                <input id="cert-manual-id" placeholder="Or enter CERT-ID manually" style="width:200px; display:inline-block;">
-                <button onclick="verifyCertManual()">Check</button>
+
+            <div style="margin-top:14px;">
+                <input id="cert-manual-id" placeholder="Or enter CERT-ID manually" style="width:72%; display:inline-block; vertical-align:middle;">
+                <button onclick="verifyCertManual()" style="width:26%; display:inline-block; vertical-align:middle; margin-left:6px;">Check</button>
             </div>
         </div>
-        <div id="cert-result" class="card" style="display:none; border:2px solid var(--accent);"></div>
+
+        <div id="cert-result" class="card" style="display:none; border:2px solid rgba(212,175,55,0.18);"></div>
     </div>
 
     <!-- SYSTEM -->
@@ -349,9 +433,27 @@
 
 </div>
 
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+    <div class="bn-item active" data-view="dashboard" onclick="nav('dashboard', this)">
+        <div class="icon">🏠</div><div>Home</div>
+    </div>
+    <div class="bn-item" data-view="users" onclick="nav('users', this)">
+        <div class="icon">👤</div><div>Users</div>
+    </div>
+    <div class="bn-item" data-view="adsets" onclick="nav('adsets', this)">
+        <div class="icon">📢</div><div>Ads</div>
+    </div>
+    <div class="bn-item" data-view="reconcile" onclick="nav('reconcile', this)">
+        <div class="icon">💰</div><div>Money</div>
+    </div>
+    <div class="bn-item" data-view="system" onclick="nav('system', this)">
+        <div class="icon">⚙️</div><div>System</div>
+    </div>
+</div>
+
 <script>
     const API_URL = "https://student.dtech-services.co.za";
-    // const API_URL = "http://localhost:8787"; // For dev, but we are deploying
     let SECRET = "";
 
     // --- AUTH & NAV ---
@@ -366,15 +468,27 @@
             const d = new Date();
             d.setDate(d.getDate() - 1);
             document.getElementById('recon-date').value = d.toISOString().split('T')[0];
+
+            // Ensure dashboard view active
+            nav('dashboard');
+        } else {
+            alert('Enter secret key');
         }
     }
 
-    function nav(view) {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.getElementById('view-' + view).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
+    function nav(view, el) {
+        // Show relevant view
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('view-' + view);
+        if(target) target.classList.add('active');
 
+        // Update bottom nav active state
+        document.querySelectorAll('#bottom-nav .bn-item').forEach(item => {
+            if(item.dataset.view === view) item.classList.add('active');
+            else item.classList.remove('active');
+        });
+
+        // On dashboard open, refresh stats
         if(view === 'dashboard') loadStats();
     }
 
@@ -386,7 +500,7 @@
             };
             if(body) opts.body = JSON.stringify(body);
 
-            // Use current host logic
+            // Use current host logic (keeps your original fallback)
             const baseUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
                 ? 'http://localhost:8000'
                 : 'https://dark-mud-87fb.jonasmochebane.workers.dev';
@@ -403,27 +517,33 @@
     async function loadStats() {
         const { ok, data } = await api('/admin-stats');
         if(ok) {
-            document.getElementById('s-users').innerText = data.total_users;
-            document.getElementById('s-active').innerText = data.active_today;
-            document.getElementById('s-rewards').innerText = 'R ' + (data.rewards_today || 0).toFixed(2);
-            document.getElementById('s-liability').innerText = 'R ' + (data.liability || 0).toFixed(2);
-            document.getElementById('sets-avail').innerText = data.unassigned_sets_count || 0;
+            document.getElementById('s-users').innerText = data.total_users ?? 0;
+            document.getElementById('s-active').innerText = data.active_today ?? 0;
+            document.getElementById('s-rewards').innerText = 'R ' + ((data.rewards_today || 0)).toFixed(2);
+            document.getElementById('s-liability').innerText = 'R ' + ((data.liability || 0)).toFixed(2);
+            document.getElementById('sets-avail').innerText = data.unassigned_sets_count ?? 0;
 
             // Pending
             const pList = document.getElementById('pending-list');
             pList.innerHTML = '';
-            document.getElementById('pending-badge').innerText = data.pending_users?.length || 0;
+            document.getElementById('pending-badge').innerText = (data.pending_users?.length) ?? 0;
 
             if(data.pending_users) {
                 data.pending_users.forEach(u => {
                     const div = document.createElement('div');
                     div.style.padding = '10px';
-                    div.style.borderBottom = '1px solid #eee';
+                    div.style.borderBottom = '1px solid #f3f6fb';
                     div.style.display = 'flex';
                     div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
                     div.innerHTML = `
-                        <div><strong>${u.username}</strong><br><span style="font-size:0.8rem; color:#64748b;">${u.whatsapp}</span></div>
-                        <button class="success" onclick="approveUser('${u.username}')" style="font-size:0.7rem;">APPROVE</button>
+                        <div style="max-width:68%;">
+                            <div style="font-weight:700;">${u.username}</div>
+                            <div style="font-size:13px; color:#64748b;">${u.whatsapp || ''}</div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="success" style="padding:8px 10px; font-size:13px;" onclick="approveUser('${u.username}')">APPROVE</button>
+                        </div>
                     `;
                     pList.appendChild(div);
                 });
@@ -435,9 +555,10 @@
             if(data.red_zone) {
                 data.red_zone.forEach(r => {
                     const div = document.createElement('div');
-                    div.innerHTML = `<div style="padding:5px; border-bottom:1px solid #eee;">
-                        <strong>${r.username}</strong> - R${r.earned} <span style="color:#64748b; font-size:0.7rem;">${new Date(r.time).toLocaleTimeString()}</span>
-                    </div>`;
+                    div.style.padding = '8px 0';
+                    div.style.borderBottom = '1px solid #f7f9fc';
+                    div.innerHTML = `<div style="font-weight:700;">${r.username}</div>
+                        <div style="font-size:13px; color:#64748b;">R${r.earned} · ${new Date(r.time).toLocaleString()}</div>`;
                     rList.appendChild(div);
                 });
             }
@@ -450,33 +571,27 @@
                     el.innerText = val ? txtOn : txtOff;
                     el.className = (val === warnOn) ? 'danger' : 'success';
                 };
-                setBtn('btn-sys-rewards', !s.freeze_rewards, 'NORMAL', 'PAUSED', false); // true=paused(warn)
+                setBtn('btn-sys-rewards', !s.freeze_rewards, 'NORMAL', 'PAUSED', false); 
                 setBtn('btn-sys-cut', s.emergency_cut, 'ON (50%)', 'OFF', true);
                 setBtn('btn-sys-withdraw', s.withdrawals_enabled, 'ENABLED', 'DISABLED', false);
                 setBtn('btn-sys-ads', s.ads_enabled, 'RUNNING', 'STOPPED', false);
             }
+        } else {
+            console.warn('Failed to load stats', data);
         }
     }
 
     async function approveUser(username) {
         if(!confirm(`Approve ${username}?`)) return;
         const { ok, data } = await api('/admin/user-action', 'POST', { username, action: 'approve' });
-        if(ok) { alert(data.message); loadStats(); }
-        else alert(data.error);
+        if(ok) { alert(data.message || 'Approved'); loadStats(); }
+        else alert(data.error || 'Error');
     }
 
     async function toggleSys(action) {
-        // Toggle logic handled by backend based on current state? No, backend needs explicit value.
-        // Quick hack: just send !current in a way, but here we just send 'true' to toggle?
-        // Actually backend logic I wrote earlier: "stats.system_status.freeze_rewards = !!value".
-        // So I need to know current state. loadStats gets it.
-        // Let's assume the button click passes the *desired* state or just generic toggle.
-        // My backend logic was: `stats.system_status.freeze_rewards = !!value`.
-        // I need to fetch current state first or track it globally.
-        // For simplicity, let's just make the backend toggle if I send a specific flag or just read UI.
-        // Let's reload stats, check state, flip it.
         const { data } = await api('/admin-stats');
-        const s = data.system_status;
+        if(!data) return alert('Unable to fetch system state');
+        const s = data.system_status || {};
         let val = false;
         if(action === 'toggle_freeze_rewards') val = !s.freeze_rewards;
         if(action === 'toggle_emergency_cut') val = !s.emergency_cut;
@@ -489,66 +604,60 @@
 
     // --- USERS ---
     async function lookupUser() {
-        const u = document.getElementById('u-search').value;
+        const u = document.getElementById('u-search').value.trim();
+        if(!u) return alert('Enter username');
         const { ok, data } = await api('/admin/user-action', 'POST', { username: u, action: 'get_details' });
         if(ok && data.user) {
             const user = data.user;
             document.getElementById('u-details').style.display = 'block';
             document.getElementById('u-name').innerText = user.username;
-            document.getElementById('u-bal').innerText = 'R ' + (user.balance||0).toFixed(2);
-            document.getElementById('u-pend').innerText = 'R ' + (user.balance_pending||0).toFixed(2);
-            document.getElementById('u-ref').innerText = 'R ' + (user.referral_balance||0).toFixed(2);
+            document.getElementById('u-bal').innerText = 'R ' + ((user.balance||0)).toFixed(2);
+            document.getElementById('u-pend').innerText = 'R ' + ((user.balance_pending||0)).toFixed(2);
+            document.getElementById('u-ref').innerText = 'R ' + ((user.referral_balance||0)).toFixed(2);
 
             document.getElementById('btn-freeze').innerText = user.is_frozen ? "UNFREEZE" : "FREEZE";
 
-            // Daily Stats
             const ds = document.getElementById('u-daily-stats');
             ds.innerHTML = '';
             if(user.daily_stats) {
                 Object.keys(user.daily_stats).sort().reverse().slice(0,5).forEach(date => {
                     const d = user.daily_stats[date];
-                    ds.innerHTML += `<div><strong>${date}</strong>: Pending R${(d.total_pending||0).toFixed(2)} | Approved R${(d.total_approved||0).toFixed(2)} (${d.status})</div>`;
+                    ds.innerHTML += `<div style="margin-bottom:6px;"><strong>${date}</strong>: Pending R${(d.total_pending||0).toFixed(2)} | Approved R${(d.total_approved||0).toFixed(2)} <span style="color:#94a3b8">(${d.status||'—'})</span></div>`;
                 });
-            }
+            } else ds.innerHTML = '<div style="color:#94a3b8">No recent stats</div>';
         } else {
             alert('User not found');
         }
     }
 
     async function actUser(action) {
-        const u = document.getElementById('u-search').value;
-        // Logic for value toggling
-        // Simplified: assume toggle for boolean flags
-        // For 'freeze', lookupUser sets button text.
-        // We need to know current state.
-        // Let's just assume we want to FLIP.
-        // We'll rely on the button text or just send the opposite of what we see?
-        // Better: Backend action 'freeze' sets true, 'unfreeze' sets false.
+        const u = document.getElementById('u-search').value.trim();
+        if(!u) return alert('Enter username first');
         const btn = document.getElementById(action === 'freeze' ? 'btn-freeze' : 'btn-shadow');
         let realAction = action;
-        let val = true;
-
         if(action === 'freeze') {
-            if(btn.innerText === 'UNFREEZE') realAction = 'unfreeze';
+            if(btn && btn.innerText === 'UNFREEZE') realAction = 'unfreeze';
         }
-
-        await api('/admin/user-action', 'POST', { username: u, action: realAction, value: val });
+        await api('/admin/user-action', 'POST', { username: u, action: realAction, value: true });
         lookupUser();
     }
 
     async function adjustBal() {
         const amt = prompt("Amount to add (use negative to subtract):");
-        if(amt) {
-            const u = document.getElementById('u-search').value;
-            await api('/admin/user-action', 'POST', { username: u, action: 'adjust_balance', value: amt });
-            lookupUser();
-        }
+        if(amt === null) return;
+        if(isNaN(Number(amt))) return alert('Enter a number');
+        const u = document.getElementById('u-search').value.trim();
+        if(!u) return alert('Enter username first');
+        await api('/admin/user-action', 'POST', { username: u, action: 'adjust_balance', value: Number(amt) });
+        lookupUser();
     }
 
     // --- AD SETS ---
     function toggleAdForm() {
         const el = document.getElementById('adset-form');
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        // scroll into view on mobile
+        if(el.style.display === 'block') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     async function createAdSet() {
@@ -562,8 +671,8 @@
         };
 
         const { ok, data } = await api('/admin/ad-sets', 'POST', payload);
-        if(ok) { alert('Created Set: ' + data.id); toggleAdForm(); loadStats(); }
-        else alert(data.error);
+        if(ok) { alert('Created Set: ' + (data.id || 'OK')); toggleAdForm(); loadStats(); }
+        else alert(data.error || 'Error creating set');
     }
 
     // --- RECONCILIATION ---
@@ -578,70 +687,81 @@
         reader.onload = async (e) => {
             const csv = e.target.result;
             await analyzeCSV(csv, date);
+            // scroll preview into view
+            const preview = document.getElementById('recon-preview');
+            if(preview) preview.scrollIntoView({ behavior: 'smooth', block: 'center' });
         };
         reader.readAsText(file);
     }
 
     async function analyzeCSV(csv, date) {
         // 1. Fetch Ad Sets to map Zone ID -> User
-        const { data: sets } = await api('/admin/ad-sets');
+        const { data: sets } = await api('/admin/ad-sets') || { data: [] };
         const zoneMap = {}; // ZoneID -> { user: username, type: 'popunder'|'inpage'... }
 
-        sets.forEach(s => {
+        (sets || []).forEach(s => {
             if(s.assigned_to) {
                 const u = s.assigned_to;
-                if(s.popunder?.id) zoneMap[s.popunder.id] = { user: u, type: 'popunder' };
-                if(s.inpage?.id) zoneMap[s.inpage.id] = { user: u, type: 'inpage' };
-                if(s.push?.id) zoneMap[s.push.id] = { user: u, type: 'push' };
-                if(s.direct?.id) zoneMap[s.direct.id] = { user: u, type: 'direct' };
+                if(s.popunder?.id) zoneMap[String(s.popunder.id).trim()] = { user: u, type: 'popunder', popunder: s.popunder };
+                if(s.inpage?.id) zoneMap[String(s.inpage.id).trim()] = { user: u, type: 'inpage', inpage: s.inpage };
+                if(s.push?.id) zoneMap[String(s.push.id).trim()] = { user: u, type: 'push', push: s.push };
+                if(s.direct?.id) zoneMap[String(s.direct.id).trim()] = { user: u, type: 'direct', direct: s.direct };
             }
         });
 
-        // 2. Parse CSV
-        const lines = csv.split('\n');
-        const userReal = {}; // username -> { popunder: 0, inpage: 0... }
+        // 2. Parse CSV (supports both ; and ,)
+        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        const userReal = {}; // username -> { popunder: 0, inpage: 0... , total: 0 }
 
-        // Headers
-        let idxZone = -1, idxProfit = -1;
+        // Find header line with Zone ID and Profit
+        let headerParts = null;
+        let delimiter = ';';
+        for(const line of lines.slice(0, 6)) {
+            if(line.includes('Zone ID') || line.toLowerCase().includes('zone')) {
+                headerParts = line.split(/[,;]+/).map(p => p.replace(/"/g,'').trim());
+                delimiter = line.includes(',') && !line.includes(';') ? ',' : ';';
+                break;
+            }
+        }
 
-        lines.forEach(line => {
-            if(line.includes('Zone ID') && line.includes('Profit')) {
-                const parts = line.split(';');
-                idxZone = parts.findIndex(p => p.includes('Zone ID'));
-                idxProfit = parts.findIndex(p => p.includes('Profit'));
-            } else if(idxZone > -1) {
-                const parts = line.split(';');
-                if(parts.length > idxProfit) {
-                    const zone = parts[idxZone].replace(/"/g, '').trim();
-                    const profit = parseFloat(parts[idxProfit].replace(/"/g, '').trim()) || 0;
+        // fallback: try first line as header
+        if(!headerParts && lines.length) {
+            headerParts = lines[0].split(/[,;]+/).map(p => p.replace(/"/g,'').trim());
+        }
 
-                    const map = zoneMap[zone];
-                    if(map) {
-                        if(!userReal[map.user]) userReal[map.user] = { popunder:0, inpage:0, direct:0, push:0, total:0 };
-                        userReal[map.user][map.type] += profit;
-                        userReal[map.user].total += profit;
-                    }
+        const idxZone = headerParts ? headerParts.findIndex(p => /zone\s*id/i.test(p) || /zone/i.test(p)) : -1;
+        const idxProfit = headerParts ? headerParts.findIndex(p => /profit/i.test(p) || /revenue|earning/i.test(p)) : -1;
+
+        // iterate over data rows (skip header if we used first line)
+        const dataRows = headerParts && lines[0].split(/[,;]+/).length === headerParts.length ? lines.slice(1) : lines;
+        dataRows.forEach(line => {
+            const parts = line.split(new RegExp(`[${delimiter}]`)).map(p => p.replace(/"/g,'').trim());
+            if(idxZone >= 0 && idxProfit >= 0 && parts.length > Math.max(idxZone, idxProfit)) {
+                const zone = parts[idxZone];
+                const profit = parseFloat(parts[idxProfit].replace(/[^0-9.\-]/g,'')) || 0;
+                const map = zoneMap[String(zone).trim()];
+                if(map) {
+                    if(!userReal[map.user]) userReal[map.user] = { popunder:0, inpage:0, direct:0, push:0, total:0 };
+                    userReal[map.user][map.type] += profit;
+                    userReal[map.user].total += profit;
                 }
             }
         });
 
         // 3. Fetch User Pendings for that Date
-        // We need to fetch details for all users found in CSV or ALL users?
-        // Better to fetch all users involved.
         const users = Object.keys(userReal);
         const userPending = {}; // username -> { popunder: 0 ... total: 0 }
 
         await Promise.all(users.map(async u => {
             const { data } = await api('/admin/user-action', 'POST', { username: u, action: 'get_details' });
-            if(data.user && data.user.daily_stats && data.user.daily_stats[date]) {
+            if(data?.user && data.user.daily_stats && data.user.daily_stats[date]) {
                 const s = data.user.daily_stats[date];
                 userPending[u] = {
                     total: s.total_pending || 0,
-                    // If breakdown exists in pending, use it. Usually `handleAddPoints` adds to specific type.
                     popunder: s.popunder?.pending || 0,
                     inpage: s.inpage?.pending || 0,
                     direct: s.direct?.pending || 0,
-                    push: 0 // Push has no pending
+                    push: s.push?.pending || 0
                 };
             } else {
                 userPending[u] = { total: 0, popunder:0, inpage:0, direct:0, push:0 };
@@ -652,53 +772,36 @@
         const tbody = document.getElementById('recon-body');
         tbody.innerHTML = '';
         reconApprovals = [];
-        const RATE = 18.00; // Hardcode or input? User said "default 16 rands".
-        const CONV = 16.00;
+        const CONV = 16.00; // conversion rate (USD -> ZAR)
 
         users.forEach(u => {
             const p = userPending[u];
             const r = userReal[u];
 
-            const rZar = r.total * CONV;
-            const pZar = p.total; // Already in Rands
+            const rZar = (r.total || 0) * CONV;
+            const pZar = p.total || 0; // Already in ZAR
 
             let approvedTotal = 0;
 
-            // Logic:
-            // If Pending < Real: Approved = Pending * (0.80 - 0.95)
-            // If Pending > Real: Approved = Real * (0.90 - 0.95)
-            // Note: Real is usually USD, converted to ZAR.
-            // Wait, the prompt implies comparison in ZAR.
-
             if (pZar < rZar) {
-                // Pending is LESS than Real. Limit to Pending, apply deduction.
                 const ded = 0.05 + Math.random() * 0.15; // 0.05 - 0.20
                 approvedTotal = pZar * (1 - ded);
             } else {
-                // Pending is MORE than Real. Limit to Real, apply deduction.
                 const ded = 0.05 + Math.random() * 0.05; // 0.05 - 0.10
                 approvedTotal = rZar * (1 - ded);
             }
 
             approvedTotal = parseFloat(approvedTotal.toFixed(2));
 
-            // Distribute approvedTotal based on Real breakdown
-            // If Real Total is 0 (edge case), approved is 0.
-            const ratio = r.total > 0 ? (approvedTotal / rZar) : 0; // Ratio of ZAR Approved to ZAR Real
-
-            // Wait, ratio should be applied to the ZAR value of each component.
-            // Component ZAR = Component USD * CONV
-            // Approved Component = Component ZAR * Ratio
+            const ratio = rZar > 0 ? (approvedTotal / rZar) : 0;
 
             const breakdown = {
-                popunder: parseFloat((r.popunder * CONV * ratio).toFixed(2)),
-                inpage: parseFloat((r.inpage * CONV * ratio).toFixed(2)),
-                direct: parseFloat((r.direct * CONV * ratio).toFixed(2)),
-                push: parseFloat((r.push * CONV * ratio).toFixed(2))
+                popunder: parseFloat(((r.popunder || 0) * CONV * ratio).toFixed(2)),
+                inpage: parseFloat(((r.inpage || 0) * CONV * ratio).toFixed(2)),
+                direct: parseFloat(((r.direct || 0) * CONV * ratio).toFixed(2)),
+                push: parseFloat(((r.push || 0) * CONV * ratio).toFixed(2))
             };
 
-            // Fix rounding error on total?
-            // Sum might slightly differ from approvedTotal. Trust the sum?
             const checkSum = breakdown.popunder + breakdown.inpage + breakdown.direct + breakdown.push;
             approvedTotal = parseFloat(checkSum.toFixed(2));
 
@@ -712,9 +815,9 @@
                 <tr>
                     <td>${u}</td>
                     <td>R ${pZar.toFixed(2)}</td>
-                    <td>$${r.total.toFixed(2)} (R${rZar.toFixed(2)})</td>
-                    <td style="font-weight:bold; color:var(--success);">R ${approvedTotal}</td>
-                    <td style="font-size:0.8rem;">
+                    <td>$${(r.total||0).toFixed(2)} (R${rZar.toFixed(2)})</td>
+                    <td style="font-weight:bold; color:var(--success);">R ${approvedTotal.toFixed(2)}</td>
+                    <td style="font-size:12px;">
                         Pop: ${breakdown.popunder} | In: ${breakdown.inpage} | Dir: ${breakdown.direct} | Push: ${breakdown.push}
                     </td>
                 </tr>
@@ -729,10 +832,10 @@
         const date = document.getElementById('recon-date').value;
         const { ok, data } = await api('/admin/reconcile', 'POST', { date, approvals: reconApprovals });
         if(ok) {
-            alert(data.message);
+            alert(data.message || 'Processed');
             document.getElementById('recon-preview').style.display = 'none';
         } else {
-            alert(data.error);
+            alert(data.error || 'Error processing payouts');
         }
     }
 
@@ -762,39 +865,47 @@
     }
 
     function verifyCertManual() {
-        const id = document.getElementById('cert-manual-id').value;
+        const id = document.getElementById('cert-manual-id').value.trim();
         if(id) verifyCertId(id);
     }
 
     async function verifyCertId(idStr) {
-        // ID might be full URL or "CERT-..."
         let id = idStr;
         if(id.includes('CERT-')) {
              const match = id.match(/CERT-[A-Z0-9-]+/);
              if(match) id = match[0];
         }
 
-        const { ok, data } = await api(`/certificate?id=${id}`);
+        const { ok, data } = await api(`/certificate?id=${encodeURIComponent(id)}`);
         const res = document.getElementById('cert-result');
         res.style.display = 'block';
 
-        if(ok) {
+        if(ok && data) {
             res.innerHTML = `
-                <h3>${data.status.toUpperCase()}</h3>
-                <div>User: ${data.username}</div>
-                <div>Amount: R${data.amount} (Payout R${data.payout})</div>
-                ${data.status !== 'paid' ? `<button class="success" onclick="payCert('${data.id}')">MARK PAID</button>` : ''}
+                <h3 style="margin-bottom:8px;">${(data.status || '').toUpperCase()}</h3>
+                <div style="margin-bottom:6px;">User: <strong>${data.username || '—'}</strong></div>
+                <div style="margin-bottom:8px;">Amount: R${data.amount ?? '0.00'} (Payout R${data.payout ?? '0.00'})</div>
+                ${(data.status !== 'paid') ? `<button class="success" onclick="payCert('${data.id}')">MARK PAID</button>` : `<div style="color:var(--success); font-weight:700;">Already Paid</div>`}
             `;
         } else {
-            res.innerHTML = `<span style="color:red;">Invalid Certificate</span>`;
+            res.innerHTML = `<div style="color:#ef4444; font-weight:700;">Invalid Certificate</div>`;
         }
     }
 
     async function payCert(id) {
         const { ok, data } = await api('/mark-cert-paid', 'POST', { id, admin_secret: SECRET });
         if(ok) { alert('Paid'); verifyCertId(id); }
+        else alert(data.error || 'Failed to mark paid');
     }
 
+    // Initialize: hide all sections except default
+    document.addEventListener('DOMContentLoaded', () => {
+        // By default keep dashboard visible; other views hidden already by class.
+        // Ensure recon date defaults if login skipped (dev)
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        if(!document.getElementById('recon-date').value) document.getElementById('recon-date').value = d.toISOString().split('T')[0];
+    });
 </script>
 
 </body>
