@@ -76,6 +76,39 @@
         .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
         .value { font-size: 1.25rem; font-weight: 700; color: #fff; }
 
+        /* Stats Tabs */
+        .stats-tabs {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        .stat-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .stat-tab.active {
+            background: var(--accent);
+            color: var(--surface);
+            font-weight: bold;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+        .stat-row:last-child { border-bottom: none; font-weight: bold; color: var(--accent); padding-top: 15px; font-size: 1.1rem; }
+
         /* Referral Section */
         .ref-link-box {
             background: #1e293b;
@@ -114,7 +147,6 @@
             margin: 20px 0;
             position: relative;
         }
-        /* Line behind */
         .streak-track::before {
             content: '';
             position: absolute;
@@ -197,31 +229,35 @@
 
         <!-- Balance Card -->
         <div class="card">
-            <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
-                <div class="label" style="color: var(--accent);">PENDING BALANCE</div>
-                <div class="value" id="pending-balance" style="color: var(--accent); font-size: 1.5rem;">R 0.00</div>
-                <div style="font-size: 0.75rem; color: var(--muted); margin-top: 5px;">(Awaiting Approval)</div>
-            </div>
-
-            <div style="text-align: center; margin-bottom: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <div class="label">Withdrawable Balance</div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="label">Total Withdrawable Balance</div>
                 <h3 id="total-balance">R 0.00</h3>
-                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 5px;">(Earnings + Referrals)</div>
             </div>
 
             <div class="balance-grid">
                 <div class="balance-box">
-                    <div class="label">Ad Earnings</div>
-                    <div class="value" id="main-balance">R 0.00</div>
+                    <div class="label">Pending (Today)</div>
+                    <div class="value" id="pending-balance" style="color:var(--accent);">R 0.00</div>
                 </div>
                 <div class="balance-box">
-                    <div class="label">Ref Commission</div>
+                    <div class="label">Ref Earnings</div>
                     <div class="value" id="ref-balance">R 0.00</div>
                 </div>
             </div>
+        </div>
 
-            <div style="text-align: center; font-size: 0.9rem;">
-                Daily Ad Count: <span id="daily-count" style="color: var(--accent); font-weight: bold;">0</span>
+        <!-- Performance Stats -->
+        <div class="card">
+            <h2>Performance Reports</h2>
+            <div class="stats-tabs">
+                <div class="stat-tab active" onclick="showStat('yesterday')">Yesterday</div>
+                <div class="stat-tab" onclick="showStat('week')">Week</div>
+                <div class="stat-tab" onclick="showStat('month')">Month</div>
+                <div class="stat-tab" onclick="showStat('all_time')">All Time</div>
+            </div>
+
+            <div id="stats-content">
+                <!-- Populated by JS -->
             </div>
         </div>
 
@@ -229,7 +265,7 @@
         <div class="card">
             <h2>Referral Program</h2>
             <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.5;">
-                Invite friends and earn <strong>5%</strong> of their lifetime earnings! Commission is paid from the system budget, not their wallet.
+                Invite friends and earn <strong>5%</strong> of their lifetime earnings!
             </p>
             <div class="ref-link-box">
                 <span class="ref-link" id="ref-link">Loading...</span>
@@ -244,20 +280,9 @@
         <div class="card">
             <h2>Notification Streak</h2>
             <p style="font-size: 0.85rem; color: var(--muted);">
-                Keep notifications ENABLED for 7 days to verify you are an active user.
+                Keep notifications ENABLED for 7 days to verify activity.
             </p>
-
-            <div class="streak-track" id="streak-track">
-                <!-- JS will populate -->
-                <div class="day-node">1</div>
-                <div class="day-node">2</div>
-                <div class="day-node">3</div>
-                <div class="day-node">4</div>
-                <div class="day-node">5</div>
-                <div class="day-node">6</div>
-                <div class="day-node">7</div>
-            </div>
-
+            <div class="streak-track" id="streak-track"></div>
             <button class="check-btn" id="streak-btn" onclick="checkStreak()">VERIFY NOTIFICATIONS</button>
             <div id="streak-msg" style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--accent); height: 1.2em;"></div>
         </div>
@@ -265,15 +290,14 @@
         <!-- History Card -->
         <div class="card">
             <h2>Withdrawal History</h2>
-            <div id="history-list">
-                <div style="text-align: center; color: var(--muted); padding: 20px;">Loading history...</div>
-            </div>
+            <div id="history-list"></div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const API_URL = "https://student.dtech-services.co.za";
         let currentUser = null;
+        let statsData = {};
 
         function getBaseUrl() {
             return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -299,6 +323,7 @@
                 }
 
                 currentUser = data;
+                statsData = data.stats || {};
                 render();
 
             } catch (e) {
@@ -316,14 +341,15 @@
 
             document.getElementById('pending-balance').innerText = `R ${pending.toFixed(2)}`;
             document.getElementById('total-balance').innerText = `R ${total.toFixed(2)}`;
-            document.getElementById('main-balance').innerText = `R ${main.toFixed(2)}`;
             document.getElementById('ref-balance').innerText = `R ${ref.toFixed(2)}`;
-            document.getElementById('daily-count').innerText = currentUser.daily_count || 0;
 
             // Referrals
             const link = `${window.location.origin}/index.html?ref=${currentUser.username}`;
             document.getElementById('ref-link').innerText = link;
             document.getElementById('ref-count').innerText = currentUser.referral_count || 0;
+
+            // Stats - Default to Yesterday
+            showStat('yesterday');
 
             // Streak
             const days = currentUser.streak || 0;
@@ -346,10 +372,7 @@
                 currentUser.history.forEach(h => {
                     const el = document.createElement('div');
                     el.className = 'history-item';
-
-                    // Parse Date
                     const d = new Date(h.date).toLocaleDateString();
-
                     el.innerHTML = `
                         <div class="h-left">
                             <span class="h-id">${h.id}</span>
@@ -365,6 +388,31 @@
             }
         }
 
+        function showStat(range) {
+            // Tabs UI
+            document.querySelectorAll('.stat-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll(`.stat-tab[onclick="showStat('${range}')"]`).forEach(el => el.classList.add('active'));
+
+            const s = statsData[range] || { popunder:0, inpage:0, direct:0, push:0, total:0 };
+
+            const row = (label, val) => `
+                <div class="stat-row">
+                    <span>${label}</span>
+                    <span>R ${val.toFixed(2)}</span>
+                </div>
+            `;
+
+            const html = `
+                ${row('Popunder', s.popunder)}
+                ${row('In-Page Push', s.inpage)}
+                ${row('Direct Link', s.direct)}
+                ${row('Push Notifications', s.push)}
+                ${row('TOTAL', s.total)}
+            `;
+
+            document.getElementById('stats-content').innerHTML = html;
+        }
+
         async function checkStreak() {
             const btn = document.getElementById('streak-btn');
             const msg = document.getElementById('streak-msg');
@@ -373,11 +421,10 @@
             btn.disabled = true;
             btn.innerText = "CHECKING...";
 
-            // Check Permission first
             if (Notification.permission !== "granted") {
                 const perm = await Notification.requestPermission();
                 if (perm !== "granted") {
-                    msg.innerText = "Please allow notifications to continue.";
+                    msg.innerText = "Please allow notifications.";
                     msg.style.color = "var(--danger)";
                     btn.disabled = false;
                     btn.innerText = "VERIFY NOTIFICATIONS";
@@ -395,7 +442,16 @@
 
                 if (data.days) {
                     currentUser.streak = data.days;
-                    render(); // Re-render bubbles
+                    // refresh bubbles
+                    const track = document.getElementById('streak-track');
+                    track.innerHTML = '';
+                    for(let i=1; i<=7; i++) {
+                        const isActive = i <= data.days;
+                        const node = document.createElement('div');
+                        node.className = `day-node ${isActive ? 'active' : ''}`;
+                        node.innerText = i;
+                        track.appendChild(node);
+                    }
                     msg.innerText = data.message;
                     msg.style.color = "var(--success)";
                 } else {

@@ -1,5 +1,5 @@
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://student.dtech-services.co.za',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
 };
@@ -43,9 +43,9 @@ export default {
         return await handleRedeem(request, env);
       } else if (path === '/user' && request.method === 'GET') {
         return await handleGetUser(request, env);
-      } else if (path === '/profile' && request.method === 'GET') { // New Profile Endpoint
+      } else if (path === '/profile' && request.method === 'GET') {
         return await handleGetProfile(request, env);
-      } else if (path === '/update-notification-streak' && request.method === 'POST') { // New Streak Endpoint
+      } else if (path === '/update-notification-streak' && request.method === 'POST') {
         return await handleNotificationStreak(request, env);
       } else if (path === '/certificate' && request.method === 'GET') {
         return await handleGetCert(request, env);
@@ -157,7 +157,6 @@ function determineRound(user) {
     }
 
     // Check R2 Availability (Only if R1 is NOT available)
-    // Actually, R2 is available if R1 is cooling down AND R2 is not cooling down
     if (now - r2End > r2Cooldown) {
         return { round: 2, active: true, label: 'Round 2 (Yellow)' };
     }
@@ -192,9 +191,9 @@ async function handleRegister(request, env) {
   const userData = {
     passwordHash: passwordHash,
     balance: 0.00,
-    balance_pending: 0.00, // New pending balance
-    status: 'pending', // New status
-    ad_set_id: null,   // New ad set assignment
+    balance_pending: 0.00,
+    status: 'pending',
+    ad_set_id: null,
     email: email,
     whatsapp: whatsapp,
     referral_balance: 0.00,
@@ -209,7 +208,8 @@ async function handleRegister(request, env) {
         r2_last_completed: 0,
         mission_progress: { popunder: 0, inpage: 0, direct: 0 }
     },
-    notification_streak: { last_check: "", days: 0 }
+    notification_streak: { last_check: "", days: 0 },
+    daily_stats: {} // { "YYYY-MM-DD": { popunder: {pending, approved}, ... } }
   };
 
   await env.USERS.put(username, JSON.stringify(userData));
@@ -234,7 +234,7 @@ async function handleRegister(request, env) {
   });
   await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
 
-  // Update Referrer Count (async-ish optimization not needed for KV, just do it)
+  // Update Referrer Count
   if (validReferrer) {
       const refUserJson = await env.USERS.get(validReferrer);
       if (refUserJson) {
@@ -279,6 +279,7 @@ async function handleLogin(request, env) {
       user.notification_streak = { last_check: "", days: 0 };
   }
   if (user.referral_balance === undefined) user.referral_balance = 0;
+  if (!user.daily_stats) user.daily_stats = {};
 
   // Check Active Status
   const todayStr = new Date().toISOString().split('T')[0];
@@ -307,7 +308,6 @@ async function handleAddPoints(request, env) {
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
   if (!['popunder', 'inpage', 'direct', 'push'].includes(type)) {
-      // Default or legacy fallback? No, strict.
       return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: CORS_HEADERS });
   }
 
@@ -337,23 +337,10 @@ async function handleAddPoints(request, env) {
           user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
       }
 
-      // If push, it's optional, so no target check?
-      // User said "just say you can skip this", but maybe they can also do it for points?
-      // We will allow points for it.
-
       const currentCount = user.rounds.mission_progress[type] || 0;
-      const target = MISSION_TARGETS[type] || 999; // 999 for optional push
+      const target = MISSION_TARGETS[type] || 999;
 
       if (type !== 'push' && currentCount >= target) {
-          return new Response(JSON.stringify({
-              error: `Mission for ${type} complete for this round. Switch ad types.`
-          }), { status: 400, headers: CORS_HEADERS });
-      }
-
-      // Increment
-      user.rounds.mission_progress[type] = currentCount + 1;
-
-      if (currentCount >= target) {
           return new Response(JSON.stringify({
               error: `Mission for ${type} complete for this round. Switch ad types.`
           }), { status: 400, headers: CORS_HEADERS });
@@ -373,40 +360,26 @@ async function handleAddPoints(request, env) {
           if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
           if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
 
-          // Reset progress for next time (or just leave it until next round start logic resets it?
-          // Better to reset it when the round BECOMES active again. But simpler to reset now so it's clean.)
           user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
       }
   }
-  // R3 has no limits/missions
 
   // Calculate Reward
   let min = 0.01;
   let max = 0.05;
 
   if (currentRound === 1) {
-      // Green: 0.10 - 0.30
-      min = 0.10;
-      max = 0.30;
+      min = 0.10; max = 0.30;
   } else if (currentRound === 2) {
-      // Yellow: 0.10 - 0.30 but 80% chance of 0.1-0.2
       const roll = Math.random();
-      if (roll < 0.80) {
-          min = 0.10;
-          max = 0.20;
-      } else {
-          min = 0.20;
-          max = 0.30;
-      }
+      if (roll < 0.80) { min = 0.10; max = 0.20; }
+      else { min = 0.20; max = 0.30; }
   } else {
-      // Red (R3): 0.001 - 0.10
-      min = 0.001;
-      max = 0.10;
+      min = 0.001; max = 0.10;
   }
 
   if (user.is_shadow_banned) {
-      min = 0.0001;
-      max = 0.001;
+      min = 0.0001; max = 0.001;
   }
 
   let earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
@@ -420,7 +393,7 @@ async function handleAddPoints(request, env) {
       return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
   }
 
-  // Update Stats
+  // Update Global Stats
   stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
   stats.ads_today += 1;
   stats.rewards_today = parseFloat((stats.rewards_today + earnings).toFixed(2));
@@ -428,44 +401,60 @@ async function handleAddPoints(request, env) {
 
   // RED ZONE TRACKING
   if (currentRound === 3) {
-      // Add to Red Zone list for Admin
       let redList = [];
       try {
           const raw = await env.USERS.get('RED_ZONE_USERS');
           if (raw) redList = JSON.parse(raw);
       } catch (e) {}
 
-      // Add if not present, move to top
       redList = redList.filter(u => u.username !== username);
       redList.unshift({ username: username, time: new Date().toISOString(), earned: earnings });
-      if (redList.length > 50) redList = redList.slice(0, 50); // Keep last 50
+      if (redList.length > 50) redList = redList.slice(0, 50);
 
       await env.USERS.put('RED_ZONE_USERS', JSON.stringify(redList));
   }
 
-  // Update User Balance (Now goes to pending)
+  // Update User Pending Balance
   user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
-  user.daily_count = (user.daily_count || 0) + 1; // Just for stats
+  user.daily_count = (user.daily_count || 0) + 1;
+
+  // --- STATS LOGGING ---
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (!user.daily_stats) user.daily_stats = {};
+  if (!user.daily_stats[todayStr]) {
+      user.daily_stats[todayStr] = {
+          popunder: { pending: 0, approved: 0 },
+          inpage: { pending: 0, approved: 0 },
+          direct: { pending: 0, approved: 0 },
+          push: { pending: 0, approved: 0 },
+          total_pending: 0,
+          total_approved: 0,
+          status: 'pending'
+      };
+  }
+
+  // Increment pending for specific type
+  if (!user.daily_stats[todayStr][type]) {
+      // Safety init if schema drift
+      user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
+  }
+  user.daily_stats[todayStr][type].pending += earnings;
+  user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + earnings).toFixed(3));
 
   // Referral Commission
   let referralBonus = 0;
   if (user.referred_by) {
       referralBonus = parseFloat((earnings * 0.05).toFixed(3)); // 5%
 
-      // We need to fetch referrer
-      // NOTE: To avoid race conditions in a real production DB we'd need atomic ops.
-      // In KV eventually consistent, this is "okay" for small scale.
       const refUserJson = await env.USERS.get(user.referred_by);
       if (refUserJson) {
           const refUser = JSON.parse(refUserJson);
           if (refUser.referral_balance === undefined) refUser.referral_balance = 0;
 
           refUser.referral_balance = parseFloat((refUser.referral_balance + referralBonus).toFixed(3));
-          // NOTE: Referral bonus comes from SYSTEM BUDGET, so it adds to Liability too?
-          // The prompt says "Referral amounts which equals to the withdrawalable amount".
-          // If it comes from system budget, we need to add to global liability.
+
           stats.liability = parseFloat((stats.liability + referralBonus).toFixed(2));
-          await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats)); // Update stats again
+          await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
           await env.USERS.put(user.referred_by, JSON.stringify(refUser));
       }
@@ -487,73 +476,30 @@ async function handleAddPoints(request, env) {
 async function handleNotificationStreak(request, env) {
     const { username, token } = await request.json();
 
-    // Auth Check
     const userJson = await env.USERS.get(username);
     if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
     const user = JSON.parse(userJson);
     if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
 
     const todayStr = new Date().toISOString().split('T')[0];
-
     if (!user.notification_streak) user.notification_streak = { last_check: "", days: 0 };
 
     if (user.notification_streak.last_check === todayStr) {
         return new Response(JSON.stringify({ message: 'Already checked today', days: user.notification_streak.days }), { status: 200, headers: CORS_HEADERS });
     }
 
-    // Logic: Check if consecutive
-    const lastDate = new Date(user.notification_streak.last_check || 0);
-    const today = new Date();
-    const diffTime = Math.abs(today - lastDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // If diffDays is roughly 1 (yesterday), increment.
-    // If it's 0 (today), do nothing (caught above).
-    // If > 2 (missed a day), reset to 1.
-
-    // Actually simpler:
-    // If last_check was YESTERDAY, increment.
-    // If last_check was BEFORE yesterday, reset to 1.
-    // If last_check is empty, set to 1.
-
-    // Calculate "Yesterday" string
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    let bonusMsg = "";
-
     if (user.notification_streak.last_check === yesterdayStr) {
         user.notification_streak.days += 1;
     } else {
-        user.notification_streak.days = 1; // Reset or Start
+        user.notification_streak.days = 1;
     }
 
-    // 7 Day Bonus?
-    if (user.notification_streak.days >= 7) {
-        // Apply Bonus Multiplier?
-        // The prompt says: "randomly after that 7 days n you make it that it's seen that they is your bonus"
-        // Since we don't have a "bonus wallet", let's just give a flat reward or enable a flag?
-        // Prompt: "1.1x to 2.5x on some of their rewards randomly"
-        // Easier implementation: Give a one-time cash bonus for the streak?
-        // OR: Set a flag "streak_active" that `add-points` uses?
-        // Let's Set a flag "streak_bonus_active" = true.
-        // But `add-points` is already complex.
-        // Let's give a flat cash reward for hitting 7 days, then reset?
-        // "CONSECUTIVEKY FOR EACH 7 DAYS" -> implies every 7 days.
-        // Let's give R 1.00 - R 5.00 bonus?
-        // The user asked for "1.1x to 2.5x on some of their rewards".
-        // Let's skip the complex multiplier logic for now and just track the days.
-        // We will return the status so Frontend can show it.
-
-        // Resetting after 7 days to start cycle again? Or keep counting?
-        // "IF EVER THEY DEACTIVE ... DISREGARD ALL TGE OTHER DAYS"
-        // We will cap visual at 7?
-        if (user.notification_streak.days > 7) {
-            // Keep it high or reset? Let's cap at 7 for logic simplicity or loop?
-            // Let's loop.
-            user.notification_streak.days = 1;
-        }
+    if (user.notification_streak.days > 7) {
+        user.notification_streak.days = 1;
     }
 
     user.notification_streak.last_check = todayStr;
@@ -570,21 +516,44 @@ async function handleGetProfile(request, env) {
     const username = url.searchParams.get('username');
     if (!username) return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: CORS_HEADERS });
 
-    // Auth header check optional but good practice?
-    // For now public read of profile is risky if we show history.
-    // Let's rely on client having the username.
-
     const userJson = await env.USERS.get(username);
     if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
     const user = JSON.parse(userJson);
 
-    // Round Info
-    const rInfo = determineRound(user);
+    // --- AGGREGATE STATS ---
+    const stats = user.daily_stats || {};
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    // Calculate Cooldowns
-    const now = Date.now();
-    const r1Left = Math.max(0, (60 * 60 * 1000) - (now - (user.rounds?.r1_last_completed || 0)));
-    const r2Left = Math.max(0, (20 * 60 * 1000) - (now - (user.rounds?.r2_last_completed || 0)));
+    // Helper to get ranges
+    const getRangeStats = (filterFn) => {
+        let agg = { popunder: 0, inpage: 0, direct: 0, push: 0, total: 0 };
+        Object.keys(stats).forEach(date => {
+            if (filterFn(date)) {
+                const day = stats[date];
+                // If status is approved, use approved values. Else use pending.
+                // Prompt: "if it's not approved yet ... yesterday's pending amount ... if it's approved show as approved"
+                const useApproved = day.status === 'approved';
+
+                ['popunder', 'inpage', 'direct', 'push'].forEach(t => {
+                    const val = useApproved ? (day[t]?.approved || 0) : (day[t]?.pending || 0);
+                    agg[t] += val;
+                });
+                agg.total += useApproved ? (day.total_approved || 0) : (day.total_pending || 0);
+            }
+        });
+        return agg;
+    };
+
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthStart = new Date(); monthStart.setDate(1);
+
+    const yesterdayStats = getRangeStats(d => d === yesterdayStr);
+    const weekStats = getRangeStats(d => d >= weekAgo.toISOString().split('T')[0]);
+    const monthStats = getRangeStats(d => d.startsWith(todayStr.substring(0, 7))); // YYYY-MM
+    const allTimeStats = getRangeStats(() => true);
 
     // Fetch Ad Set
     let adSet = null;
@@ -605,13 +574,13 @@ async function handleGetProfile(request, env) {
         history: user.history || [],
         status: user.status || 'active',
         ad_set: adSet,
-        rounds: {
-            current: rInfo.round,
-            r1_cooldown_ms: r1Left,
-            r2_cooldown_ms: r2Left,
-            mission: user.rounds?.mission_progress || {popunder:0, inpage:0, direct:0}
-        },
-        streak: user.notification_streak?.days || 0
+        streak: user.notification_streak?.days || 0,
+        stats: {
+            yesterday: yesterdayStats,
+            week: weekStats,
+            month: monthStats,
+            all_time: allTimeStats
+        }
     }), { status: 200, headers: CORS_HEADERS });
 }
 
@@ -644,17 +613,12 @@ async function handleRedeem(request, env) {
       return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: CORS_HEADERS });
   }
 
-  // Combine Balances for Withdrawal?
-  // "referral amouts which equals to the withdrwalable amount"
-  // Implies they are fungible.
   const totalAvailable = (user.balance || 0) + (user.referral_balance || 0);
 
   if (totalAvailable < amountR) {
       return new Response(JSON.stringify({ error: 'Insufficient balance (Main + Referral)' }), { status: 400, headers: CORS_HEADERS });
   }
 
-  // Deduct logic: Deduct from Main first, then Referral? Or Referral first?
-  // Let's deduct from Main first.
   let remainingToDeduct = amountR;
 
   if (user.balance >= remainingToDeduct) {
@@ -663,16 +627,13 @@ async function handleRedeem(request, env) {
   } else {
       remainingToDeduct -= user.balance;
       user.balance = 0;
-      // Deduct rest from referral
       user.referral_balance = parseFloat((user.referral_balance - remainingToDeduct).toFixed(2));
   }
 
-  // Calculate Fee
   const feePct = FEES[method];
   const fee = parseFloat((amountR * feePct).toFixed(2));
   const payout = parseFloat((amountR - fee).toFixed(2));
 
-  // Create Certificate
   const uniqueId = crypto.randomUUID().split('-')[0].toUpperCase() + '-' + crypto.randomUUID().split('-')[1].toUpperCase();
   const certId = `CERT-${uniqueId}`;
 
@@ -795,16 +756,13 @@ async function handleGetStats(request, env) {
 
     const stats = await getGlobalStats(env);
 
-    // Include Red Zone List
     let redZone = [];
     try {
         const raw = await env.USERS.get('RED_ZONE_USERS');
         if (raw) redZone = JSON.parse(raw);
     } catch (e) {}
-
     stats.red_zone = redZone;
 
-    // Include Pending Users
     let pendingUsers = [];
     try {
         const raw = await env.USERS.get('PENDING_USERS');
@@ -812,7 +770,6 @@ async function handleGetStats(request, env) {
     } catch (e) {}
     stats.pending_users = pendingUsers;
 
-    // Include Unassigned Sets Count
     let unassignedSets = [];
     try {
         const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
@@ -837,7 +794,6 @@ async function handleAdminUserAction(request, env) {
     let message = 'Action completed';
 
     if (action === 'get_details') {
-        // Return Rounds info in details too
         const rInfo = determineRound(user);
         user.current_round_status = rInfo;
         message = 'User details retrieved';
@@ -864,8 +820,6 @@ async function handleAdminUserAction(request, env) {
              return new Response(JSON.stringify({ error: 'User is not pending' }), { status: 400, headers: CORS_HEADERS });
         }
 
-        // Find Unassigned Ad Set
-        // We need to fetch the index of unassigned sets
         let unassigned = [];
         try {
             const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
@@ -876,11 +830,10 @@ async function handleAdminUserAction(request, env) {
             return new Response(JSON.stringify({ error: 'No ad sets available. Create one first.' }), { status: 400, headers: CORS_HEADERS });
         }
 
-        const setId = unassigned.shift(); // Take first
+        const setId = unassigned.shift();
         user.ad_set_id = setId;
         user.status = 'active';
 
-        // Update Ad Set Assignment
         const setKey = `ADSET:${setId}`;
         const rawSet = await env.USERS.get(setKey);
         if (rawSet) {
@@ -889,10 +842,8 @@ async function handleAdminUserAction(request, env) {
             await env.USERS.put(setKey, JSON.stringify(adSet));
         }
 
-        // Save Unassigned List
         await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
 
-        // Remove from Pending List
         let pendingList = [];
         try {
             const raw = await env.USERS.get('PENDING_USERS');
@@ -917,15 +868,12 @@ async function handleAdSets(request, env) {
     if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
 
     if (request.method === 'GET') {
-        // List all sets
-        // We can fetch AD_SETS_INDEX
         let index = [];
         try {
             const raw = await env.USERS.get('AD_SETS_INDEX');
             if (raw) index = JSON.parse(raw);
         } catch(e) {}
 
-        // Fetch details for each (parallel)
         const sets = await Promise.all(index.map(async id => {
             const raw = await env.USERS.get(`ADSET:${id}`);
             return raw ? JSON.parse(raw) : null;
@@ -935,7 +883,6 @@ async function handleAdSets(request, env) {
     }
     else if (request.method === 'POST') {
         const data = await request.json();
-        // Expected: { popunder, inpage, direct, push } each with relevant fields
 
         const id = 'SET-' + crypto.randomUUID().split('-')[0].toUpperCase();
         const newSet = {
@@ -948,10 +895,8 @@ async function handleAdSets(request, env) {
             push: data.push
         };
 
-        // Save Set
         await env.USERS.put(`ADSET:${id}`, JSON.stringify(newSet));
 
-        // Update Indexes
         let index = [];
         try {
             const raw = await env.USERS.get('AD_SETS_INDEX');
@@ -976,25 +921,60 @@ async function handleReconcile(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
     if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
 
-    const { approvals } = await request.json(); // [{ username, amount }]
-    if (!approvals || !Array.isArray(approvals)) return new Response(JSON.stringify({ error: 'Invalid data' }), { status: 400, headers: CORS_HEADERS });
+    const { date, approvals } = await request.json();
+    // approvals: [{ username, breakdown: {popunder:..., inpage:...}, total: ... }]
+
+    if (!approvals || !Array.isArray(approvals) || !date) {
+        return new Response(JSON.stringify({ error: 'Invalid data (approvals array and date required)' }), { status: 400, headers: CORS_HEADERS });
+    }
 
     let count = 0;
     const stats = await getGlobalStats(env);
 
     for (const item of approvals) {
-        if (!item.username || item.amount === undefined) continue;
+        if (!item.username || item.total === undefined) continue;
 
         const raw = await env.USERS.get(item.username);
         if (raw) {
             const user = JSON.parse(raw);
-            const amt = parseFloat(item.amount);
+            const amt = parseFloat(item.total);
 
-            // Move to Main Balance
+            // Update Main Balance
             user.balance = parseFloat(((user.balance || 0) + amt).toFixed(2));
 
-            // Reset Pending (Assume full clearance of pending period)
-            user.balance_pending = 0;
+            // Logic: Deduct the *Pending* amount for that day from balance_pending.
+            // This prevents "double dipping" or orphaned pending amounts.
+            if (!user.daily_stats) user.daily_stats = {};
+            if (user.daily_stats[date]) {
+                const pendingForDay = user.daily_stats[date].total_pending || 0;
+                user.balance_pending = parseFloat(Math.max(0, (user.balance_pending || 0) - pendingForDay).toFixed(3));
+
+                // Update stats entry to Approved status
+                user.daily_stats[date].status = 'approved';
+                user.daily_stats[date].total_approved = amt;
+
+                // Update granular breakdown
+                if (item.breakdown) {
+                    ['popunder', 'inpage', 'direct', 'push'].forEach(t => {
+                        if (user.daily_stats[date][t]) {
+                            user.daily_stats[date][t].approved = item.breakdown[t] || 0;
+                        } else {
+                            user.daily_stats[date][t] = { pending: 0, approved: item.breakdown[t] || 0 };
+                        }
+                    });
+                }
+            } else {
+                // If no stats exist for that day (maybe manual/external), just create entry
+                user.daily_stats[date] = {
+                    status: 'approved',
+                    total_approved: amt,
+                    total_pending: 0,
+                    popunder: { pending: 0, approved: item.breakdown?.popunder || 0 },
+                    inpage: { pending: 0, approved: item.breakdown?.inpage || 0 },
+                    direct: { pending: 0, approved: item.breakdown?.direct || 0 },
+                    push: { pending: 0, approved: item.breakdown?.push || 0 }
+                };
+            }
 
             await env.USERS.put(item.username, JSON.stringify(user));
 
@@ -1005,7 +985,7 @@ async function handleReconcile(request, env) {
     }
 
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
-    return new Response(JSON.stringify({ message: `Processed ${count} users` }), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ message: `Reconciled ${count} users for ${date}` }), { status: 200, headers: CORS_HEADERS });
 }
 
 async function handleAdminSystemAction(request, env) {
