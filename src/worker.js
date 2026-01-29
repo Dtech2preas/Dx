@@ -61,6 +61,8 @@ export default {
         return await handleAdSets(request, env);
       } else if (path === '/admin/reconcile' && request.method === 'POST') {
         return await handleReconcile(request, env);
+      } else if (path === '/system-status' && request.method === 'GET') {
+        return await handleGetSystemStatus(request, env);
       } else {
         return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
       }
@@ -774,6 +776,11 @@ async function handleGetStats(request, env) {
 
     const stats = await getGlobalStats(env);
 
+    try {
+        const motd = await env.USERS.get('SYSTEM:MOTD');
+        stats.motd = motd;
+    } catch(e) {}
+
     let redZone = [];
     try {
         const raw = await env.USERS.get('RED_ZONE_USERS');
@@ -1019,8 +1026,23 @@ async function handleAdminSystemAction(request, env) {
     else if (action === 'toggle_emergency_cut') stats.system_status.emergency_cut = !!value;
     else if (action === 'toggle_withdrawals') stats.system_status.withdrawals_enabled = !!value;
     else if (action === 'toggle_ads') stats.system_status.ads_enabled = !!value;
+    else if (action === 'set_motd') {
+        await env.USERS.put('SYSTEM:MOTD', String(value));
+        return new Response(JSON.stringify({ message: 'MOTD updated' }), { status: 200, headers: CORS_HEADERS });
+    }
     else return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
 
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
     return new Response(JSON.stringify({ message: 'System updated', status: stats.system_status }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleGetSystemStatus(request, env) {
+    const stats = await getGlobalStats(env);
+    let motd = null;
+    try { motd = await env.USERS.get('SYSTEM:MOTD'); } catch(e){}
+
+    return new Response(JSON.stringify({
+        system_status: stats.system_status,
+        motd: motd
+    }), { status: 200, headers: CORS_HEADERS });
 }
