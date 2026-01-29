@@ -564,6 +564,18 @@ async function handleGetProfile(request, env) {
         } catch (e) {}
     }
 
+    // Determine Round Data for UI
+    const now = Date.now();
+    const r1End = user.rounds?.r1_last_completed || 0;
+    const r2End = user.rounds?.r2_last_completed || 0;
+    const r1Cooldown = 60 * 60 * 1000;
+    const r2Cooldown = 20 * 60 * 1000;
+
+    const r1Remaining = Math.max(0, (r1End + r1Cooldown) - now);
+    const r2Remaining = Math.max(0, (r2End + r2Cooldown) - now);
+
+    const roundInfo = determineRound(user);
+
     return new Response(JSON.stringify({
         username: user.username,
         balance: user.balance || 0,
@@ -580,6 +592,12 @@ async function handleGetProfile(request, env) {
             week: weekStats,
             month: monthStats,
             all_time: allTimeStats
+        },
+        rounds: {
+            current: roundInfo.round,
+            r1_cooldown_ms: r1Remaining,
+            r2_cooldown_ms: r2Remaining,
+            mission: user.rounds?.mission_progress || { popunder: 0, inpage: 0, direct: 0 }
         }
     }), { status: 200, headers: CORS_HEADERS });
 }
