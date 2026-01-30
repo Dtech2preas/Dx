@@ -4,24 +4,33 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
 };
 
-// Config
-const MONTHLY_BUDGET = 500.00;
-const MIN_WITHDRAWAL = 10.00;
-const MAX_WITHDRAWAL = 250.00;
-
-const FEES = {
-  'Airtime': 0.25,
-  'Voucher': 0.30,
-  'Cash Send': 0.40
+// Config Defaults
+const DEFAULT_CONFIG = {
+    monthly_budget: 500.00,
+    min_withdrawal: 10.00,
+    max_withdrawal: 250.00,
+    fees: {
+        'Airtime': 0.25,
+        'Voucher': 0.30,
+        'Cash Send': 0.40
+    },
+    mission_targets: {
+        'popunder': 4,
+        'inpage': 6,
+        'direct': 8
+    },
+    rewards: {
+        r1_min: 0.10, r1_max: 0.30,
+        r2_min_low: 0.10, r2_max_low: 0.20,
+        r2_min_high: 0.20, r2_max_high: 0.30,
+        r3_min: 0.001, r3_max: 0.10,
+        shadow_min: 0.0001, shadow_max: 0.001
+    },
+    cooldowns: {
+        r1: 3600000, // 60 mins
+        r2: 1200000  // 20 mins
+    }
 };
-
-// Mission Config
-const MISSION_TARGETS = {
-    'popunder': 4,
-    'inpage': 6,
-    'direct': 8
-};
-const TOTAL_MISSION_CLICKS = 18; // 4+6+8
 
 export default {
   async fetch(request, env, ctx) {
@@ -61,6 +70,10 @@ export default {
         return await handleAdSets(request, env);
       } else if (path === '/admin/reconcile' && request.method === 'POST') {
         return await handleReconcile(request, env);
+      } else if (path === '/admin/system-config' && (request.method === 'GET' || request.method === 'POST')) {
+        return await handleSystemConfig(request, env);
+      } else if (path === '/dismiss-message' && request.method === 'POST') {
+        return await handleDismissMessage(request, env);
       } else if (path === '/system-status' && request.method === 'GET') {
         return await handleGetSystemStatus(request, env);
       } else {
@@ -127,6 +140,24 @@ async function getGlobalStats(env) {
 
   // Auto-reset daily stats
   if (stats.last_active_date !== todayStr) {
+      // Archive History
+      try {
+          let history = [];
+          const rawHist = await env.USERS.get('SYSTEM:HISTORY_30_DAYS');
+          if(rawHist) history = JSON.parse(rawHist);
+
+          history.unshift({
+              date: stats.last_active_date,
+              active: stats.active_today || 0,
+              ads: stats.ads_today || 0,
+              rewards: stats.rewards_today || 0,
+              liability: stats.liability || 0
+          });
+
+          if(history.length > 30) history = history.slice(0, 30);
+          await env.USERS.put('SYSTEM:HISTORY_30_DAYS', JSON.stringify(history));
+      } catch(e) {}
+
       stats.last_active_date = todayStr;
       stats.active_today = 0;
       stats.ads_today = 0;
@@ -141,17 +172,36 @@ async function getGlobalStats(env) {
   return stats;
 }
 
+async function getConfig(env) {
+    try {
+        const raw = await env.USERS.get('SYSTEM:CONFIG');
+        if(raw) return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+    } catch(e) {}
+    return DEFAULT_CONFIG;
+}
+
+async function logSystemAction(env, action, details) {
+    const entry = { time: new Date().toISOString(), action, details };
+    try {
+        let logs = [];
+        const raw = await env.USERS.get('SYSTEM:LOGS');
+        if(raw) logs = JSON.parse(raw);
+        logs.unshift(entry);
+        if(logs.length > 100) logs = logs.slice(0, 100);
+        await env.USERS.put('SYSTEM:LOGS', JSON.stringify(logs));
+    } catch(e) {}
+}
+
 // --- Logic Helpers ---
 
-function determineRound(user) {
+async function determineRound(user, env) {
+    const config = await getConfig(env);
     const now = Date.now();
     const r1End = user.rounds?.r1_last_completed || 0;
     const r2End = user.rounds?.r2_last_completed || 0;
 
-    // Round 1 Cooldown: 60 mins
-    const r1Cooldown = 60 * 60 * 1000;
-    // Round 2 Cooldown: 20 mins
-    const r2Cooldown = 20 * 60 * 1000;
+    const r1Cooldown = config.cooldowns.r1;
+    const r2Cooldown = config.cooldowns.r2;
 
     // Check R1 Availability
     if (now - r1End > r1Cooldown) {
@@ -295,13 +345,15 @@ async function handleLogin(request, env) {
   const token = crypto.randomUUID();
   user.token = token;
   await env.USERS.put(username, JSON.stringify(user));
+  await logSystemAction(env, 'LOGIN', `User ${username} logged in`);
 
   return new Response(JSON.stringify({
       message: 'Login successful',
       balance: user.balance,
       token: token,
       username: username,
-      status: user.status || 'active'
+      status: user.status || 'active',
+      personal_message: user.personal_message || null
   }), { status: 200, headers: CORS_HEADERS });
 }
 
@@ -328,8 +380,10 @@ async function handleAddPoints(request, env) {
        return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
   }
 
+  const config = await getConfig(env);
+
   // Determine Round
-  const roundInfo = determineRound(user);
+  const roundInfo = await determineRound(user, env);
   const currentRound = roundInfo.round;
 
   // Check Mission Status for R1/R2
@@ -340,7 +394,7 @@ async function handleAddPoints(request, env) {
       }
 
       const currentCount = user.rounds.mission_progress[type] || 0;
-      const target = MISSION_TARGETS[type] || 999;
+      const target = config.mission_targets[type] || 999;
 
       if (type !== 'push' && currentCount >= target) {
           return new Response(JSON.stringify({
@@ -353,9 +407,9 @@ async function handleAddPoints(request, env) {
 
       // Check if FULL Round Mission is complete
       const p = user.rounds.mission_progress;
-      if (p.popunder >= MISSION_TARGETS.popunder &&
-          p.inpage >= MISSION_TARGETS.inpage &&
-          p.direct >= MISSION_TARGETS.direct) {
+      if (p.popunder >= config.mission_targets.popunder &&
+          p.inpage >= config.mission_targets.inpage &&
+          p.direct >= config.mission_targets.direct) {
 
           missionComplete = true;
           // Mark completed
@@ -371,17 +425,17 @@ async function handleAddPoints(request, env) {
   let max = 0.05;
 
   if (currentRound === 1) {
-      min = 0.10; max = 0.30;
+      min = config.rewards.r1_min; max = config.rewards.r1_max;
   } else if (currentRound === 2) {
       const roll = Math.random();
-      if (roll < 0.80) { min = 0.10; max = 0.20; }
-      else { min = 0.20; max = 0.30; }
+      if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
+      else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
   } else {
-      min = 0.001; max = 0.10;
+      min = config.rewards.r3_min; max = config.rewards.r3_max;
   }
 
   if (user.is_shadow_banned) {
-      min = 0.0001; max = 0.001;
+      min = config.rewards.shadow_min; max = config.rewards.shadow_max;
   }
 
   let earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
@@ -391,7 +445,7 @@ async function handleAddPoints(request, env) {
 
   // Budget Check
   const totalCommitment = stats.paid + stats.liability;
-  if (totalCommitment + earnings > MONTHLY_BUDGET) {
+  if (totalCommitment + earnings > config.monthly_budget) {
       return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
   }
 
@@ -567,16 +621,18 @@ async function handleGetProfile(request, env) {
     }
 
     // Determine Round Data for UI
+    const config = await getConfig(env);
     const now = Date.now();
     const r1End = user.rounds?.r1_last_completed || 0;
     const r2End = user.rounds?.r2_last_completed || 0;
-    const r1Cooldown = 60 * 60 * 1000;
-    const r2Cooldown = 20 * 60 * 1000;
+
+    const r1Cooldown = config.cooldowns.r1;
+    const r2Cooldown = config.cooldowns.r2;
 
     const r1Remaining = Math.max(0, (r1End + r1Cooldown) - now);
     const r2Remaining = Math.max(0, (r2End + r2Cooldown) - now);
 
-    const roundInfo = determineRound(user);
+    const roundInfo = await determineRound(user, env);
 
     return new Response(JSON.stringify({
         username: user.username,
@@ -606,16 +662,17 @@ async function handleGetProfile(request, env) {
 
 async function handleRedeem(request, env) {
   const { username, token, amount, method } = await request.json();
+  const config = await getConfig(env);
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
 
-  if (FEES[method] === undefined) {
+  if (config.fees[method] === undefined) {
       return new Response(JSON.stringify({ error: 'Invalid or missing withdrawal method' }), { status: 400, headers: CORS_HEADERS });
   }
 
   const amountR = parseFloat(amount);
-  if (isNaN(amountR) || amountR < MIN_WITHDRAWAL || amountR > MAX_WITHDRAWAL) {
-      return new Response(JSON.stringify({ error: `Amount must be between R${MIN_WITHDRAWAL} and R${MAX_WITHDRAWAL}` }), { status: 400, headers: CORS_HEADERS });
+  if (isNaN(amountR) || amountR < config.min_withdrawal || amountR > config.max_withdrawal) {
+      return new Response(JSON.stringify({ error: `Amount must be between R${config.min_withdrawal} and R${config.max_withdrawal}` }), { status: 400, headers: CORS_HEADERS });
   }
 
   const userJson = await env.USERS.get(username);
@@ -650,7 +707,7 @@ async function handleRedeem(request, env) {
       user.referral_balance = parseFloat((user.referral_balance - remainingToDeduct).toFixed(2));
   }
 
-  const feePct = FEES[method];
+  const feePct = config.fees[method];
   const fee = parseFloat((amountR * feePct).toFixed(2));
   const payout = parseFloat((amountR - fee).toFixed(2));
 
@@ -678,6 +735,7 @@ async function handleRedeem(request, env) {
 
   await env.USERS.put(username, JSON.stringify(user));
   await env.USERS.put(`CERT:${certId}`, JSON.stringify(certData));
+  await logSystemAction(env, 'WITHDRAWAL', `User ${username} requested R${amountR} via ${method} (Cert: ${certId})`);
 
   return new Response(JSON.stringify({
       message: 'Certificate generated',
@@ -758,7 +816,8 @@ async function handleGetUser(request, env) {
       balance: user.balance || 0,
       balance_pending: user.balance_pending || 0,
       status: user.status || 'active',
-      history: user.history || []
+      history: user.history || [],
+      personal_message: user.personal_message || null
   }), { status: 200, headers: CORS_HEADERS });
 }
 
@@ -819,7 +878,7 @@ async function handleAdminUserAction(request, env) {
     let message = 'Action completed';
 
     if (action === 'get_details') {
-        const rInfo = determineRound(user);
+        const rInfo = await determineRound(user, env);
         user.current_round_status = rInfo;
         message = 'User details retrieved';
     }
@@ -839,6 +898,17 @@ async function handleAdminUserAction(request, env) {
             stats.liability = parseFloat((stats.liability + delta).toFixed(2));
             await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
         }
+    }
+    else if (action === 'update_profile') {
+        if(value.email) user.email = value.email;
+        if(value.whatsapp) user.whatsapp = value.whatsapp;
+        if(value.password) user.passwordHash = await hashPassword(value.password);
+        message = 'Profile updated';
+        await logSystemAction(env, 'ADMIN_UPDATE_PROFILE', `Updated profile for ${username}`);
+    }
+    else if (action === 'send_message') {
+        user.personal_message = value;
+        message = 'Personal message sent';
     }
     else if (action === 'approve') {
         if (user.status !== 'pending') {
@@ -1030,10 +1100,114 @@ async function handleAdminSystemAction(request, env) {
         await env.USERS.put('SYSTEM:MOTD', String(value));
         return new Response(JSON.stringify({ message: 'MOTD updated' }), { status: 200, headers: CORS_HEADERS });
     }
+    else if (action === 'get_logs') {
+        let logs = [];
+        try { const r = await env.USERS.get('SYSTEM:LOGS'); if(r) logs = JSON.parse(r); } catch(e){}
+        return new Response(JSON.stringify({ logs }), { status: 200, headers: CORS_HEADERS });
+    }
+    else if (action === 'get_history') {
+        let history = [];
+        try { const r = await env.USERS.get('SYSTEM:HISTORY_30_DAYS'); if(r) history = JSON.parse(r); } catch(e){}
+        return new Response(JSON.stringify({ history }), { status: 200, headers: CORS_HEADERS });
+    }
+    else if (action === 'approve_all_pending') {
+        let pending = [];
+        try { const r = await env.USERS.get('PENDING_USERS'); if(r) pending = JSON.parse(r); } catch(e){}
+
+        let unassigned = [];
+        try { const r = await env.USERS.get('AD_SETS_UNASSIGNED'); if(r) unassigned = JSON.parse(r); } catch(e){}
+
+        let approvedCount = 0;
+        const LIMIT = 20; // Safety limit per request
+
+        // Process batch
+        const toProcess = pending.slice(0, LIMIT);
+
+        for (const pUser of toProcess) {
+            if (unassigned.length === 0) break;
+
+            const username = pUser.username;
+            const userJson = await env.USERS.get(username);
+            if (userJson) {
+                const user = JSON.parse(userJson);
+                if (user.status === 'pending') {
+                    const setId = unassigned.shift();
+                    user.ad_set_id = setId;
+                    user.status = 'active';
+
+                    // Update Ad Set
+                    const setKey = `ADSET:${setId}`;
+                    const rawSet = await env.USERS.get(setKey);
+                    if (rawSet) {
+                        const adSet = JSON.parse(rawSet);
+                        adSet.assigned_to = username;
+                        await env.USERS.put(setKey, JSON.stringify(adSet));
+                    }
+
+                    await env.USERS.put(username, JSON.stringify(user));
+                    approvedCount++;
+                }
+            }
+        }
+
+        const newPending = pending.slice(approvedCount);
+        await env.USERS.put('PENDING_USERS', JSON.stringify(newPending));
+        await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
+
+        await logSystemAction(env, 'BULK_APPROVE', `Approved ${approvedCount} users`);
+        return new Response(JSON.stringify({ message: `Approved ${approvedCount} users`, remaining: newPending.length }), { status: 200, headers: CORS_HEADERS });
+    }
+    else if (action === 'freeze_red_zone') {
+        let redZone = [];
+        try { const r = await env.USERS.get('RED_ZONE_USERS'); if(r) redZone = JSON.parse(r); } catch(e){}
+
+        let count = 0;
+        for (const item of redZone) {
+            const userJson = await env.USERS.get(item.username);
+            if (userJson) {
+                const user = JSON.parse(userJson);
+                if (!user.is_frozen) {
+                    user.is_frozen = true;
+                    await env.USERS.put(item.username, JSON.stringify(user));
+                    count++;
+                }
+            }
+        }
+        await logSystemAction(env, 'BULK_FREEZE', `Frozen ${count} red zone users`);
+        return new Response(JSON.stringify({ message: `Frozen ${count} users` }), { status: 200, headers: CORS_HEADERS });
+    }
     else return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
 
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
     return new Response(JSON.stringify({ message: 'System updated', status: stats.system_status }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleDismissMessage(request, env) {
+    const { username, token } = await request.json();
+    const userJson = await env.USERS.get(username);
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    const user = JSON.parse(userJson);
+    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+
+    user.personal_message = null;
+    await env.USERS.put(username, JSON.stringify(user));
+    return new Response(JSON.stringify({ message: 'Message dismissed' }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleSystemConfig(request, env) {
+    const secret = request.headers.get('X-Admin-Secret');
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+
+    if (request.method === 'GET') {
+        const config = await getConfig(env);
+        return new Response(JSON.stringify(config), { status: 200, headers: CORS_HEADERS });
+    } else if (request.method === 'POST') {
+        const newConfig = await request.json();
+        const merged = { ...DEFAULT_CONFIG, ...newConfig };
+        await env.USERS.put('SYSTEM:CONFIG', JSON.stringify(merged));
+        await logSystemAction(env, 'CONFIG_UPDATE', 'System configuration updated');
+        return new Response(JSON.stringify({ message: 'Configuration saved', config: merged }), { status: 200, headers: CORS_HEADERS });
+    }
 }
 
 async function handleGetSystemStatus(request, env) {

@@ -197,6 +197,14 @@
             background: linear-gradient(180deg,#fff,#fcfdff);
         }
 
+        /* Sub-tabs */
+        .sub-tab {
+            background: #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 13px; border:none; white-space:nowrap;
+        }
+        .sub-tab.active {
+            background: var(--primary); color: white;
+        }
+
         /* Responsive tuning */
         @media (min-width: 720px) {
             .grid-4 { grid-template-columns: repeat(4, 1fr); }
@@ -252,12 +260,18 @@
         </div>
 
         <div class="card">
-            <h3>Pending Approvals <span id="pending-badge" class="badge bg-yellow" style="margin-left:8px;">0</span></h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Pending Approvals <span id="pending-badge" class="badge bg-yellow" style="margin-left:8px;">0</span></h3>
+                <button class="success" style="padding:6px 12px; font-size:12px;" onclick="approveAllPending()">Approve All</button>
+            </div>
             <div id="pending-list" style="max-height:260px; overflow:auto; margin-top:10px;"></div>
         </div>
 
         <div class="card" style="margin-top:12px;">
-            <h3>Red Zone (Suspicious / R3)</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Red Zone (Suspicious / R3)</h3>
+                <button class="danger" style="padding:6px 12px; font-size:12px;" onclick="freezeRedZone()">Freeze All</button>
+            </div>
             <div id="red-zone-list" style="max-height:220px; overflow:auto; margin-top:8px; font-size:14px;"></div>
         </div>
     </div>
@@ -282,10 +296,12 @@
                         <strong>Balance:</strong> <div id="u-bal" style="font-size:16px; color:var(--accent); font-weight:700;">R 0.00</div>
                         <div style="margin-top:8px;"><strong>Pending:</strong> <span id="u-pend">R 0.00</span></div>
                         <div style="margin-top:6px;"><strong>Referral:</strong> <span id="u-ref">R 0.00</span></div>
+                        <div style="font-size:12px; color:#64748b; margin-top:4px;">Ref by: <span id="u-ref-by">None</span> | Count: <span id="u-ref-cnt">0</span></div>
                     </div>
                     <div style="text-align:right;">
-                        <button class="danger" onclick="actUser('freeze')" id="btn-freeze" style="margin-bottom:8px;">Freeze</button>
-                        <button onclick="actUser('shadowban')" id="btn-shadow">Shadowban</button>
+                        <button class="danger" onclick="actUser('freeze')" id="btn-freeze" style="margin-bottom:8px; width:100%;">Freeze</button>
+                        <button onclick="actUser('shadowban')" id="btn-shadow" style="margin-bottom:8px; width:100%;">Shadowban</button>
+                        <button onclick="openEditUser()" style="width:100%; background:#e2e8f0; color:#334155;">Edit Profile</button>
                     </div>
                 </div>
 
@@ -295,7 +311,12 @@
                 </div>
 
                 <div style="margin-top:12px;">
-                    <button onclick="adjustBal()" style="background:#e6eef6; color:#0f172a; font-weight:700;">Adjust Balance Manually</button>
+                    <button onclick="adjustBal()" style="background:#e6eef6; color:#0f172a; font-weight:700; width:100%; margin-bottom:8px;">Adjust Balance Manually</button>
+
+                    <div style="display:flex; gap:8px;">
+                        <input id="u-msg-input" placeholder="Personal Message" style="margin-bottom:0;">
+                        <button onclick="sendUserMsg()">Send</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -410,36 +431,134 @@
 
     <!-- SYSTEM -->
     <div id="view-system" class="view-section">
-        <h2>System Controls</h2>
-        <div class="grid-4">
-            <div class="card">
-                <h3>Rewards</h3>
-                <button id="btn-sys-rewards" onclick="toggleSys('toggle_freeze_rewards')">ACTIVE</button>
+        <h2>System Administration</h2>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px;">
+            <button class="sub-tab active" onclick="switchSysTab('status', this)">Status</button>
+            <button class="sub-tab" onclick="switchSysTab('config', this)">Config</button>
+            <button class="sub-tab" onclick="switchSysTab('analytics', this)">Analytics</button>
+            <button class="sub-tab" onclick="switchSysTab('logs', this)">Logs</button>
+        </div>
+
+        <!-- STATUS -->
+        <div id="sys-tab-status" class="sys-section">
+            <div class="grid-4">
+                <div class="card">
+                    <h3>Rewards</h3>
+                    <button id="btn-sys-rewards" onclick="toggleSys('toggle_freeze_rewards')">ACTIVE</button>
+                </div>
+                <div class="card">
+                    <h3>Emergency Cut</h3>
+                    <button id="btn-sys-cut" onclick="toggleSys('toggle_emergency_cut')">OFF</button>
+                </div>
+                <div class="card">
+                    <h3>Withdrawals</h3>
+                    <button id="btn-sys-withdraw" onclick="toggleSys('toggle_withdrawals')">ENABLED</button>
+                </div>
+                <div class="card">
+                    <h3>Ad System</h3>
+                    <button id="btn-sys-ads" onclick="toggleSys('toggle_ads')">RUNNING</button>
+                </div>
             </div>
-            <div class="card">
-                <h3>Emergency Cut</h3>
-                <button id="btn-sys-cut" onclick="toggleSys('toggle_emergency_cut')">OFF</button>
-            </div>
-            <div class="card">
-                <h3>Withdrawals</h3>
-                <button id="btn-sys-withdraw" onclick="toggleSys('toggle_withdrawals')">ENABLED</button>
-            </div>
-            <div class="card">
-                <h3>Ad System</h3>
-                <button id="btn-sys-ads" onclick="toggleSys('toggle_ads')">RUNNING</button>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>Message of the Day</h3>
+                <textarea id="sys-motd" rows="3" placeholder="Enter announcement text to display on dashboard..." style="width:100%; border:1px solid #e6eef6; border-radius:10px; padding:12px; margin-bottom:10px; font-family:inherit;"></textarea>
+                <div style="display:flex; gap:8px;">
+                     <button class="accent" onclick="saveMotd()">Update Banner</button>
+                     <button onclick="clearMotd()" style="background:#f3f4f6; color:#0f172a;">Clear / Remove</button>
+                </div>
             </div>
         </div>
 
-        <div class="card" style="margin-top:12px;">
-            <h3>Message of the Day</h3>
-            <textarea id="sys-motd" rows="3" placeholder="Enter announcement text to display on dashboard..." style="width:100%; border:1px solid #e6eef6; border-radius:10px; padding:12px; margin-bottom:10px; font-family:inherit;"></textarea>
-            <div style="display:flex; gap:8px;">
-                 <button class="accent" onclick="saveMotd()">Update Banner</button>
-                 <button onclick="clearMotd()" style="background:#f3f4f6; color:#0f172a;">Clear / Remove</button>
+        <!-- CONFIG -->
+        <div id="sys-tab-config" class="sys-section" style="display:none;">
+            <div class="card">
+                <h3>Global Limits</h3>
+                <label>Monthly Budget (R)</label>
+                <input id="cfg-budget" type="number" step="10">
+                <div class="grid-2">
+                    <div><label>Min Withdraw</label><input id="cfg-min-w" type="number"></div>
+                    <div><label>Max Withdraw</label><input id="cfg-max-w" type="number"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Reward Ranges</h3>
+                <div class="grid-2">
+                    <div><label>R1 Min</label><input id="cfg-r1-min" type="number" step="0.01"></div>
+                    <div><label>R1 Max</label><input id="cfg-r1-max" type="number" step="0.01"></div>
+                </div>
+                <div class="grid-2">
+                    <div><label>R2 Low Min</label><input id="cfg-r2-l-min" type="number" step="0.01"></div>
+                    <div><label>R2 Low Max</label><input id="cfg-r2-l-max" type="number" step="0.01"></div>
+                </div>
+                 <div class="grid-2">
+                    <div><label>R2 High Min</label><input id="cfg-r2-h-min" type="number" step="0.01"></div>
+                    <div><label>R2 High Max</label><input id="cfg-r2-h-max" type="number" step="0.01"></div>
+                </div>
+                <div class="grid-2">
+                    <div><label>R3 Min</label><input id="cfg-r3-min" type="number" step="0.001"></div>
+                    <div><label>R3 Max</label><input id="cfg-r3-max" type="number" step="0.001"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Mission Targets</h3>
+                <div class="grid-4">
+                    <div><label>Popunder</label><input id="cfg-mis-pop" type="number"></div>
+                    <div><label>In-Page</label><input id="cfg-mis-inp" type="number"></div>
+                    <div><label>Direct</label><input id="cfg-mis-dir" type="number"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Cooldowns (ms)</h3>
+                <div class="grid-2">
+                    <div><label>Round 1 (3600000 = 60m)</label><input id="cfg-cool-r1" type="number"></div>
+                    <div><label>Round 2 (1200000 = 20m)</label><input id="cfg-cool-r2" type="number"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <button class="success" onclick="saveSystemConfig()" style="width:100%;">SAVE CONFIGURATION</button>
             </div>
         </div>
+
+        <!-- ANALYTICS -->
+        <div id="sys-tab-analytics" class="sys-section" style="display:none;">
+            <div class="card">
+                <h3>30-Day Activity</h3>
+                <div id="analytics-chart" style="height:200px; display:flex; align-items:flex-end; gap:4px; padding-top:20px; overflow-x:auto;">
+                    <!-- Bars injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGS -->
+        <div id="sys-tab-logs" class="sys-section" style="display:none;">
+            <div class="card">
+                <h3>System Logs</h3>
+                <div id="sys-logs-list" style="font-family:monospace; font-size:12px; max-height:400px; overflow:auto;"></div>
+            </div>
+        </div>
+
     </div>
 
+</div>
+
+<!-- EDIT USER MODAL -->
+<div id="edit-user-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:400px;">
+        <h3>Edit User Profile</h3>
+        <label>New Email</label><input id="edit-email">
+        <label>New WhatsApp</label><input id="edit-whatsapp">
+        <label>New Password (Leave blank to keep)</label><input id="edit-password">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="success" onclick="saveUserEdit()">Save Changes</button>
+            <button onclick="document.getElementById('edit-user-overlay').style.display='none'" style="background:#f1f5f9; color:#334155;">Cancel</button>
+        </div>
+    </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -641,6 +760,8 @@
             document.getElementById('u-bal').innerText = 'R ' + ((user.balance||0)).toFixed(2);
             document.getElementById('u-pend').innerText = 'R ' + ((user.balance_pending||0)).toFixed(2);
             document.getElementById('u-ref').innerText = 'R ' + ((user.referral_balance||0)).toFixed(2);
+            document.getElementById('u-ref-by').innerText = user.referred_by || 'None';
+            document.getElementById('u-ref-cnt').innerText = user.referral_count || 0;
 
             document.getElementById('btn-freeze').innerText = user.is_frozen ? "UNFREEZE" : "FREEZE";
 
@@ -677,6 +798,54 @@
         if(!u) return alert('Enter username first');
         await api('/admin/user-action', 'POST', { username: u, action: 'adjust_balance', value: Number(amt) });
         lookupUser();
+    }
+
+    // --- ADVANCED USER ACTIONS ---
+    function openEditUser() {
+        document.getElementById('edit-user-overlay').style.display = 'flex';
+        // Can't pre-fill easily without exposing PII in lookup response,
+        // but lookupUser response might have it.
+        // Current get_details response: user object.
+        // Let's assume user object is available in scope or we re-fetch.
+        // For now, start blank or simple.
+    }
+
+    async function saveUserEdit() {
+        const u = document.getElementById('u-search').value.trim();
+        if(!u) return;
+
+        const payload = {
+            username: u,
+            action: 'update_profile',
+            value: {
+                email: document.getElementById('edit-email').value,
+                whatsapp: document.getElementById('edit-whatsapp').value,
+                password: document.getElementById('edit-password').value
+            }
+        };
+        const { ok, data } = await api('/admin/user-action', 'POST', payload);
+        if(ok) { alert(data.message); document.getElementById('edit-user-overlay').style.display='none'; }
+        else alert(data.error);
+    }
+
+    async function sendUserMsg() {
+        const u = document.getElementById('u-search').value.trim();
+        const msg = document.getElementById('u-msg-input').value;
+        if(!u || !msg) return;
+        const { ok } = await api('/admin/user-action', 'POST', { username: u, action: 'send_message', value: msg });
+        if(ok) alert('Message Sent');
+    }
+
+    async function approveAllPending() {
+        if(!confirm('Approve all pending users? This consumes ad sets.')) return;
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'approve_all_pending' });
+        if(ok) { alert(data.message); loadStats(); }
+    }
+
+    async function freezeRedZone() {
+        if(!confirm('Freeze ALL users in Red Zone?')) return;
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'freeze_red_zone' });
+        if(ok) { alert(data.message); loadStats(); }
     }
 
     // --- AD SETS ---
@@ -894,6 +1063,103 @@
     function verifyCertManual() {
         const id = document.getElementById('cert-manual-id').value.trim();
         if(id) verifyCertId(id);
+    }
+
+    // --- SYSTEM TABS ---
+    function switchSysTab(tab, btn) {
+        document.querySelectorAll('.sys-section').forEach(el => el.style.display = 'none');
+        document.getElementById('sys-tab-' + tab).style.display = 'block';
+
+        document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+
+        if(tab === 'config') loadSystemConfig();
+        if(tab === 'analytics') loadSystemHistory();
+        if(tab === 'logs') loadSystemLogs();
+    }
+
+    async function loadSystemConfig() {
+        const { ok, data } = await api('/admin/system-config');
+        if(ok) {
+            const c = data;
+            document.getElementById('cfg-budget').value = c.monthly_budget;
+            document.getElementById('cfg-min-w').value = c.min_withdrawal;
+            document.getElementById('cfg-max-w').value = c.max_withdrawal;
+
+            document.getElementById('cfg-r1-min').value = c.rewards.r1_min;
+            document.getElementById('cfg-r1-max').value = c.rewards.r1_max;
+            document.getElementById('cfg-r2-l-min').value = c.rewards.r2_min_low;
+            document.getElementById('cfg-r2-l-max').value = c.rewards.r2_max_low;
+            document.getElementById('cfg-r2-h-min').value = c.rewards.r2_min_high;
+            document.getElementById('cfg-r2-h-max').value = c.rewards.r2_max_high;
+            document.getElementById('cfg-r3-min').value = c.rewards.r3_min;
+            document.getElementById('cfg-r3-max').value = c.rewards.r3_max;
+
+            document.getElementById('cfg-mis-pop').value = c.mission_targets.popunder;
+            document.getElementById('cfg-mis-inp').value = c.mission_targets.inpage;
+            document.getElementById('cfg-mis-dir').value = c.mission_targets.direct;
+
+            document.getElementById('cfg-cool-r1').value = c.cooldowns.r1;
+            document.getElementById('cfg-cool-r2').value = c.cooldowns.r2;
+        }
+    }
+
+    async function saveSystemConfig() {
+        const getVal = (id) => parseFloat(document.getElementById(id).value);
+        const payload = {
+            monthly_budget: getVal('cfg-budget'),
+            min_withdrawal: getVal('cfg-min-w'),
+            max_withdrawal: getVal('cfg-max-w'),
+            mission_targets: {
+                popunder: getVal('cfg-mis-pop'),
+                inpage: getVal('cfg-mis-inp'),
+                direct: getVal('cfg-mis-dir')
+            },
+            rewards: {
+                r1_min: getVal('cfg-r1-min'), r1_max: getVal('cfg-r1-max'),
+                r2_min_low: getVal('cfg-r2-l-min'), r2_max_low: getVal('cfg-r2-l-max'),
+                r2_min_high: getVal('cfg-r2-h-min'), r2_max_high: getVal('cfg-r2-h-max'),
+                r3_min: getVal('cfg-r3-min'), r3_max: getVal('cfg-r3-max'),
+                shadow_min: 0.0001, shadow_max: 0.001
+            },
+            cooldowns: {
+                r1: getVal('cfg-cool-r1'),
+                r2: getVal('cfg-cool-r2')
+            }
+        };
+        const { ok } = await api('/admin/system-config', 'POST', payload);
+        if(ok) alert('Configuration Saved');
+        else alert('Error saving config');
+    }
+
+    async function loadSystemLogs() {
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'get_logs' });
+        if(ok && data.logs) {
+            const div = document.getElementById('sys-logs-list');
+            div.innerHTML = data.logs.map(l =>
+                `<div style="border-bottom:1px solid #eee; padding:4px;">
+                    <span style="color:#94a3b8;">${new Date(l.time).toLocaleString()}</span>
+                    <strong>${l.action}</strong>: ${l.details}
+                </div>`
+            ).join('');
+        }
+    }
+
+    async function loadSystemHistory() {
+        const { ok, data } = await api('/admin/system-action', 'POST', { action: 'get_history' });
+        if(ok && data.history) {
+            const chart = document.getElementById('analytics-chart');
+            // Find max for scaling
+            const maxVal = Math.max(...data.history.map(h => h.active + (h.ads/10))); // Rough scaling
+
+            chart.innerHTML = data.history.map(h => {
+                const height = Math.max(10, (h.active / (maxVal || 1)) * 100);
+                return `
+                <div style="width:20px; background:var(--primary); height:${height}%; position:relative; border-radius:4px 4px 0 0;" title="${h.date}: ${h.active} Users, ${h.ads} Ads">
+                    <div style="position:absolute; bottom:-20px; font-size:10px; transform:rotate(-45deg); left:-5px;">${h.date.slice(5)}</div>
+                </div>`;
+            }).join('');
+        }
     }
 
     async function verifyCertId(idStr) {
