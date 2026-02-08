@@ -364,6 +364,25 @@
                 <button onclick="toggleAdForm()" style="background:#f3f4f6; color:#0f172a;">Cancel</button>
             </div>
         </div>
+
+        <div class="card" style="margin-top:12px;">
+            <h3>Ad Set Inventory</h3>
+            <div style="max-height:400px; overflow:auto;">
+                <table style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Set ID</th>
+                            <th>Pop / InPage IDs</th>
+                            <th>Assigned To</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adset-list">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- RECONCILIATION -->
@@ -867,8 +886,50 @@
         };
 
         const { ok, data } = await api('/admin/ad-sets', 'POST', payload);
-        if(ok) { alert('Created Set: ' + (data.id || 'OK')); toggleAdForm(); loadStats(); }
+        if(ok) { alert('Created Set: ' + (data.id || 'OK')); toggleAdForm(); loadStats(); loadAdSetsInventory(); }
         else alert(data.error || 'Error creating set');
+    }
+
+    async function loadAdSetsInventory() {
+        const { ok, data } = await api('/admin/ad-sets');
+        const tbody = document.getElementById('adset-list');
+        tbody.innerHTML = '';
+
+        if(ok && Array.isArray(data)) {
+            data.forEach(set => {
+                const isAssigned = !!set.assigned_to;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-size:12px;">${set.id}</td>
+                    <td style="font-size:11px; color:#64748b;">
+                        P: ${set.popunder?.id || '-'}<br>I: ${set.inpage?.id || '-'}
+                    </td>
+                    <td>
+                        ${isAssigned
+                            ? `<span style="color:#2563eb; font-weight:700;">${set.assigned_to}</span>`
+                            : `<span style="color:#10b981;">Available</span>`}
+                    </td>
+                    <td>
+                        ${isAssigned
+                            ? `<button class="danger" style="padding:6px 10px; font-size:11px;" onclick="unlinkUserFromSet('${set.assigned_to}')">CLEAR</button>`
+                            : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    async function unlinkUserFromSet(username) {
+        if(!confirm(`Clear Ad Set from user ${username} and return them to Pending?`)) return;
+        const { ok, data } = await api('/admin/user-action', 'POST', { username, action: 'unlink_ad_set' });
+        if(ok) {
+            alert(data.message);
+            loadAdSetsInventory();
+            loadStats(); // Update stats counters
+        } else {
+            alert(data.error || 'Error unlinking set');
+        }
     }
 
     // --- RECONCILIATION ---

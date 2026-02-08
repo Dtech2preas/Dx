@@ -950,6 +950,58 @@ async function handleAdminUserAction(request, env) {
 
         message = 'User approved and assigned Ad Set ' + setId;
     }
+    else if (action === 'unlink_ad_set') {
+        const setId = user.ad_set_id;
+        if (setId) {
+            // 1. Update Ad Set
+            const setKey = `ADSET:${setId}`;
+            const rawSet = await env.USERS.get(setKey);
+            if (rawSet) {
+                const adSet = JSON.parse(rawSet);
+                adSet.assigned_to = null;
+                await env.USERS.put(setKey, JSON.stringify(adSet));
+            }
+
+            // 2. Update Unassigned List
+            let unassigned = [];
+            try {
+                const raw = await env.USERS.get('AD_SETS_UNASSIGNED');
+                if (raw) unassigned = JSON.parse(raw);
+            } catch(e) {}
+            // Avoid duplicates
+            if (!unassigned.includes(setId)) {
+                unassigned.push(setId);
+                await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
+            }
+
+            // 3. Update User
+            user.ad_set_id = null;
+            user.status = 'pending'; // Move back to pending
+
+            // 4. Update Pending List
+            let pendingList = [];
+            try {
+                const raw = await env.USERS.get('PENDING_USERS');
+                if (raw) pendingList = JSON.parse(raw);
+            } catch(e) {}
+
+            // Avoid duplicates
+            if (!pendingList.find(u => u.username === username)) {
+                pendingList.push({
+                    username: username,
+                    email: user.email,
+                    whatsapp: user.whatsapp,
+                    date: new Date().toISOString()
+                });
+                await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
+            }
+
+            message = 'User unlinked from Ad Set and moved to Pending';
+            await logSystemAction(env, 'UNLINK_AD_SET', `Unlinked ${username} from ${setId}`);
+        } else {
+            return new Response(JSON.stringify({ error: 'User has no ad set assigned' }), { status: 400, headers: CORS_HEADERS });
+        }
+    }
     else {
         return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
     }
