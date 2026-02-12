@@ -267,6 +267,15 @@
             <div id="pending-list" style="max-height:260px; overflow:auto; margin-top:10px;"></div>
         </div>
 
+        <!-- NEW: PENDING REWARDS -->
+        <div class="card" style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Pending Postback Rewards</h3>
+                <span id="pending-rewards-badge" class="badge bg-green">0</span>
+            </div>
+            <div id="pending-rewards-list" style="max-height:260px; overflow:auto; margin-top:10px;"></div>
+        </div>
+
         <div class="card" style="margin-top:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3>Red Zone (Suspicious / R3)</h3>
@@ -308,6 +317,12 @@
                 <div style="margin-top:14px;">
                     <h4 style="margin-bottom:8px;">Recent Daily Stats (Pending / Approved)</h4>
                     <div id="u-daily-stats" style="font-size:13px; background:#fbfcff; padding:10px; border-radius:8px;"></div>
+                </div>
+
+                <!-- PENDING REWARDS FOR USER -->
+                <div id="u-pending-rewards-container" style="display:none; margin-top:14px;">
+                    <h4 style="margin-bottom:8px;">Pending Postback Rewards</h4>
+                    <div id="u-pending-rewards-list" style="font-size:13px; background:#fbfcff; padding:10px; border-radius:8px;"></div>
                 </div>
 
                 <div style="margin-top:12px;">
@@ -670,7 +685,7 @@
             document.getElementById('s-liability').innerText = 'R ' + ((data.liability || 0)).toFixed(2);
             document.getElementById('sets-avail').innerText = data.unassigned_sets_count ?? 0;
 
-            // Pending
+            // Pending Users
             const pList = document.getElementById('pending-list');
             pList.innerHTML = '';
             document.getElementById('pending-badge').innerText = (data.pending_users?.length) ?? 0;
@@ -696,9 +711,37 @@
                 });
             }
 
-            // Red Zone
-            const rList = document.getElementById('red-zone-list');
+            // Pending Rewards (NEW)
+            const rList = document.getElementById('pending-rewards-list');
             rList.innerHTML = '';
+            document.getElementById('pending-rewards-badge').innerText = (data.pending_rewards?.length) ?? 0;
+
+            if(data.pending_rewards) {
+                data.pending_rewards.forEach(r => {
+                    const div = document.createElement('div');
+                    div.style.padding = '10px';
+                    div.style.borderBottom = '1px solid #f3f6fb';
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    const dateStr = new Date(r.created_at).toLocaleString();
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight:700;">${r.username}</div>
+                            <div style="font-size:12px; color:#64748b;">${dateStr}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:bold; color:var(--accent);">R${r.amount}</div>
+                            <button class="icon-btn" style="padding:4px 8px; font-size:11px; background:#e2e8f0; color:#334155; margin-top:4px;" onclick="editPendingReward('${r.username}', '${r.id}', ${r.amount})">Edit</button>
+                        </div>
+                    `;
+                    rList.appendChild(div);
+                });
+            }
+
+            // Red Zone
+            const redList = document.getElementById('red-zone-list');
+            redList.innerHTML = '';
             if(data.red_zone) {
                 data.red_zone.forEach(r => {
                     const div = document.createElement('div');
@@ -706,7 +749,7 @@
                     div.style.borderBottom = '1px solid #f7f9fc';
                     div.innerHTML = `<div style="font-weight:700;">${r.username}</div>
                         <div style="font-size:13px; color:#64748b;">R${r.earned} · ${new Date(r.time).toLocaleString()}</div>`;
-                    rList.appendChild(div);
+                    redList.appendChild(div);
                 });
             }
 
@@ -737,6 +780,30 @@
         const { ok, data } = await api('/admin/user-action', 'POST', { username, action: 'approve' });
         if(ok) { alert(data.message || 'Approved'); loadStats(); }
         else alert(data.error || 'Error');
+    }
+
+    async function editPendingReward(username, id, currentAmount) {
+        const newAmt = prompt(`Edit amount for ${username}:`, currentAmount);
+        if (newAmt === null) return;
+        const amount = parseFloat(newAmt);
+        if (isNaN(amount)) return alert("Invalid number");
+
+        const { ok, data } = await api('/admin/user-action', 'POST', {
+            username: username,
+            action: 'update_pending_reward',
+            value: { id: id, amount: amount }
+        });
+
+        if (ok) {
+            alert("Reward Updated");
+            loadStats();
+            // If user details view is open, refresh it
+            if(document.getElementById('u-details').style.display === 'block') {
+                lookupUser(); // This refreshes the details view
+            }
+        } else {
+            alert(data.error || "Failed to update");
+        }
     }
 
     async function toggleSys(action) {
@@ -792,6 +859,35 @@
                     ds.innerHTML += `<div style="margin-bottom:6px;"><strong>${date}</strong>: Pending R${(d.total_pending||0).toFixed(2)} | Approved R${(d.total_approved||0).toFixed(2)} <span style="color:#94a3b8">(${d.status||'—'})</span></div>`;
                 });
             } else ds.innerHTML = '<div style="color:#94a3b8">No recent stats</div>';
+
+            // PENDING REWARDS LIST
+            const prContainer = document.getElementById('u-pending-rewards-container');
+            const prList = document.getElementById('u-pending-rewards-list');
+            prList.innerHTML = '';
+
+            if (user.pending_rewards && user.pending_rewards.length > 0) {
+                prContainer.style.display = 'block';
+                user.pending_rewards.forEach(r => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '6px';
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    div.innerHTML = `
+                        <div style="font-size:12px; color:#64748b;">
+                            ${new Date(r.created_at).toLocaleString()}
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-weight:bold; color:var(--accent);">R${r.amount}</span>
+                            <button style="padding:2px 6px; font-size:10px; background:#cbd5e1; color:#0f172a; border-radius:4px; border:none; margin-left:6px;" onclick="editPendingReward('${user.username}', '${r.id}', ${r.amount})">Edit</button>
+                        </div>
+                    `;
+                    prList.appendChild(div);
+                });
+            } else {
+                prContainer.style.display = 'none';
+            }
+
         } else {
             alert('User not found');
         }
@@ -818,6 +914,9 @@
         await api('/admin/user-action', 'POST', { username: u, action: 'adjust_balance', value: Number(amt) });
         lookupUser();
     }
+
+    // ... (rest of the file remains unchanged)
+    // I'll copy the rest to ensure file integrity.
 
     // --- ADVANCED USER ACTIONS ---
     function openEditUser() {
