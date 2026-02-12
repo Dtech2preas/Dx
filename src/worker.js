@@ -37,8 +37,22 @@ const DEFAULT_CONFIG = {
 
 export default {
   async fetch(request, env, ctx) {
+    // 1. Handle CORS Preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });
+    }
+
+    // 2. Environment Check (Critical for Diagnosis)
+    if (!env.USERS) {
+      return new Response(JSON.stringify({
+        error: 'Server Misconfigured: USERS KV Namespace not bound. Please bind a KV Namespace to the variable USERS in your Worker settings.'
+      }), { status: 500, headers: CORS_HEADERS });
+    }
+
+    if (!env.ADMIN_SECRET) {
+      return new Response(JSON.stringify({
+        error: 'Server Misconfigured: ADMIN_SECRET environment variable not set.'
+      }), { status: 500, headers: CORS_HEADERS });
     }
 
     const url = new URL(request.url);
