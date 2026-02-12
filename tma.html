@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>D-TECH | Mini App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!--
+      === MONETAG SDK ===
+      Paste the script tag from Monetag here.
+      It should look like: <script src="//offerwall.monetag.com/wrapper.js?zone=10600930"></script>
+      (Ensure the zone ID matches the function call below: show_10600930)
+    -->
+    <!-- <script src="//offerwall.monetag.com/wrapper.js?zone=10600930"></script> -->
+
+    <style>
+        :root {
+            --bg: #050617;
+            --surface: #0f172a;
+            --text: #e6eef8;
+            --muted: #94a3b8;
+            --accent: #d4af37;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --radius: 16px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-info { font-size: 0.9rem; font-weight: 600; }
+        .balance-badge {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        h2 { margin: 0 0 20px 0; font-size: 1.2rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        .action-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .action-card:active { transform: scale(0.98); }
+
+        .btn-large {
+            background: linear-gradient(135deg, var(--accent), #b8860b);
+            color: #000;
+            border: none;
+            padding: 16px 0;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            text-transform: uppercase;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: none;
+        }
+
+        .desc { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(34, 197, 94, 0.9); color: #fff;
+            padding: 12px 24px; border-radius: 30px;
+            font-weight: 600; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s; z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #toast.error { background: rgba(239, 68, 68, 0.9); }
+
+        .nav-link {
+            margin-top: 30px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-bottom: 1px dashed var(--muted);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="user-info">
+            <div style="font-size: 0.75rem; color: var(--muted);">Welcome</div>
+            <div id="username-display">...</div>
+        </div>
+        <div class="balance-badge">R <span id="balance-display">0.00</span></div>
+    </header>
+
+    <h2>Earning Tasks</h2>
+
+    <!-- Format 1: Rewarded Interstitial -->
+    <div class="action-card">
+        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">High Yield Video</div>
+        <div class="desc">Watch a short video ad to earn maximum rewards.</div>
+        <button class="btn-large" onclick="triggerAd('monetag_interstitial')">Watch Video</button>
+    </div>
+
+    <!-- Format 2: Rewarded Popup -->
+    <div class="action-card">
+        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">Quick Popup</div>
+        <div class="desc">View a quick offer. Instant reward.</div>
+        <button class="btn-large btn-secondary" onclick="triggerAd('monetag_popup')">View Popup</button>
+    </div>
+
+    <!-- Format 3: In-App Interstitial -->
+    <div class="action-card">
+        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">In-App Task</div>
+        <div class="desc">Interact with sponsored content.</div>
+        <button class="btn-large btn-secondary" onclick="triggerAd('monetag_inapp')">Start Task</button>
+    </div>
+
+    <a href="index.html" class="nav-link">Log Out / Switch Mode</a>
+
+    <div id="toast">Reward Credited!</div>
+
+    <script>
+        // NEW WORKER URL
+        const API_URL = "https://silent-brook-9ad3.dtech2j.workers.dev";
+        let currentUser = null;
+        let isProcessing = false;
+
+        async function init() {
+            const saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(saved);
+            document.getElementById('username-display').innerText = currentUser.username;
+
+            // Refresh balance
+            fetchProfile();
+        }
+
+        async function fetchProfile() {
+            try {
+                const res = await fetch(`${API_URL}/profile?username=${currentUser.username}`);
+                const data = await res.json();
+                if (data.balance !== undefined) {
+                    updateBalance(data.balance_pending || 0); // Show pending as primary or main? Usually main balance is "banked".
+                    // The Berserker UI shows pending at top right. We'll show Pending here too as it's the "Session Earnings".
+                    document.getElementById('balance-display').innerText = (data.balance_pending || 0).toFixed(2);
+                    currentUser.token = sessionStorage.getItem('token') || currentUser.token; // Ensure we have latest token if stored separately
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateBalance(amt) {
+            document.getElementById('balance-display').innerText = amt.toFixed(2);
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = isError ? 'error' : '';
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        }
+
+        // Ad Trigger Logic
+        function triggerAd(type) {
+            if (isProcessing) return;
+
+            // Check if SDK is loaded
+            if (typeof show_10600930 !== 'function') {
+                showToast("Ad SDK not loaded. Please wait or refresh.", true);
+                console.warn("Monetag SDK missing. Ensure script tag is added.");
+                // For development testing, we might want to simulate success:
+                // simulateReward(type);
+                return;
+            }
+
+            isProcessing = true;
+
+            // Map internal type to Monetag call
+            let adPromise;
+
+            if (type === 'monetag_interstitial') {
+                // Rewarded Interstitial
+                adPromise = show_10600930();
+            } else if (type === 'monetag_popup') {
+                // Rewarded Popup
+                adPromise = show_10600930('pop');
+            } else if (type === 'monetag_inapp') {
+                // In-App Interstitial
+                adPromise = show_10600930({
+                    type: 'inApp',
+                    inAppSettings: {
+                        frequency: 2,
+                        capping: 0.1,
+                        interval: 30,
+                        timeout: 5,
+                        everyPage: false
+                    }
+                });
+            }
+
+            if (adPromise) {
+                adPromise.then(() => {
+                    // Ad watched successfully
+                    claimReward(type);
+                }).catch(e => {
+                    console.error("Ad Error:", e);
+                    showToast("Ad closed or failed to load.", true);
+                    isProcessing = false;
+                });
+            }
+        }
+
+        async function claimReward(type) {
+            showToast("Verifying reward...");
+            try {
+                const res = await fetch(`${API_URL}/add-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: currentUser.token,
+                        type: type
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    updateBalance(data.balance_pending);
+                    showToast(`+R ${data.earned} Earned!`);
+                } else {
+                    showToast(data.error || "Reward failed", true);
+                }
+            } catch (e) {
+                showToast("Network Error", true);
+            }
+            isProcessing = false;
+        }
+
+        // Debug helper
+        function simulateReward(type) {
+            console.log("Simulating reward for " + type);
+            claimReward(type);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

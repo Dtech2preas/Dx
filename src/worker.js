@@ -24,7 +24,10 @@ const DEFAULT_CONFIG = {
         r2_min_low: 0.10, r2_max_low: 0.20,
         r2_min_high: 0.20, r2_max_high: 0.30,
         r3_min: 0.001, r3_max: 0.10,
-        shadow_min: 0.0001, shadow_max: 0.001
+        shadow_min: 0.0001, shadow_max: 0.001,
+        monetag_interstitial_min: 0.15, monetag_interstitial_max: 0.35,
+        monetag_popup_min: 0.05, monetag_popup_max: 0.15,
+        monetag_inapp_min: 0.01, monetag_inapp_max: 0.05
     },
     cooldowns: {
         r1: 3600000, // 60 mins
@@ -76,6 +79,8 @@ export default {
         return await handleDismissMessage(request, env);
       } else if (path === '/system-status' && request.method === 'GET') {
         return await handleGetSystemStatus(request, env);
+      } else if ((path === '/monetag-webhook' || path === '/monetag-postback') && request.method === 'GET') {
+        return await handleMonetagWebhook(request, env);
       } else {
         return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
       }
@@ -358,10 +363,12 @@ async function handleLogin(request, env) {
 }
 
 async function handleAddPoints(request, env) {
-  const { username, token, type } = await request.json(); // Type: popunder, inpage, direct, push
+  const { username, token, type } = await request.json(); // Type: popunder, inpage, direct, push, monetag_*
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
-  if (!['popunder', 'inpage', 'direct', 'push'].includes(type)) {
+
+  const VALID_TYPES = ['popunder', 'inpage', 'direct', 'push', 'monetag_interstitial', 'monetag_popup', 'monetag_inapp'];
+  if (!VALID_TYPES.includes(type)) {
       return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: CORS_HEADERS });
   }
 
@@ -386,52 +393,68 @@ async function handleAddPoints(request, env) {
   const roundInfo = await determineRound(user, env);
   const currentRound = roundInfo.round;
 
-  // Check Mission Status for R1/R2
   let missionComplete = false;
-  if (currentRound === 1 || currentRound === 2) {
-      if (!user.rounds.mission_progress) {
-          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
-      }
-
-      const currentCount = user.rounds.mission_progress[type] || 0;
-      const target = config.mission_targets[type] || 999;
-
-      if (type !== 'push' && currentCount >= target) {
-          return new Response(JSON.stringify({
-              error: `Mission for ${type} complete for this round. Switch ad types.`
-          }), { status: 400, headers: CORS_HEADERS });
-      }
-
-      // Increment
-      user.rounds.mission_progress[type] = currentCount + 1;
-
-      // Check if FULL Round Mission is complete
-      const p = user.rounds.mission_progress;
-      if (p.popunder >= config.mission_targets.popunder &&
-          p.inpage >= config.mission_targets.inpage &&
-          p.direct >= config.mission_targets.direct) {
-
-          missionComplete = true;
-          // Mark completed
-          if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
-          if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
-
-          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
-      }
-  }
-
-  // Calculate Reward
   let min = 0.01;
   let max = 0.05;
 
-  if (currentRound === 1) {
-      min = config.rewards.r1_min; max = config.rewards.r1_max;
-  } else if (currentRound === 2) {
-      const roll = Math.random();
-      if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
-      else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
+  // Handle Monetag Types (Separate from Standard Missions)
+  if (type.startsWith('monetag_')) {
+      if (type === 'monetag_interstitial') {
+          min = config.rewards.monetag_interstitial_min || 0.15;
+          max = config.rewards.monetag_interstitial_max || 0.35;
+      } else if (type === 'monetag_popup') {
+          min = config.rewards.monetag_popup_min || 0.05;
+          max = config.rewards.monetag_popup_max || 0.15;
+      } else {
+          min = config.rewards.monetag_inapp_min || 0.01;
+          max = config.rewards.monetag_inapp_max || 0.05;
+      }
+      // Simple cooldown logic for Monetag to prevent rapid-fire abuse could be added here
   } else {
-      min = config.rewards.r3_min; max = config.rewards.r3_max;
+      // Standard Mission Logic
+      // Check Mission Status for R1/R2
+      if (currentRound === 1 || currentRound === 2) {
+          if (!user.rounds.mission_progress) {
+              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
+          }
+
+          const currentCount = user.rounds.mission_progress[type] || 0;
+          const target = config.mission_targets[type] || 999;
+
+          if (type !== 'push' && currentCount >= target) {
+              return new Response(JSON.stringify({
+                  error: `Mission for ${type} complete for this round. Switch ad types.`
+              }), { status: 400, headers: CORS_HEADERS });
+          }
+
+          // Increment
+          user.rounds.mission_progress[type] = currentCount + 1;
+
+          // Check if FULL Round Mission is complete
+          const p = user.rounds.mission_progress;
+          if (p.popunder >= config.mission_targets.popunder &&
+              p.inpage >= config.mission_targets.inpage &&
+              p.direct >= config.mission_targets.direct) {
+
+              missionComplete = true;
+              // Mark completed
+              if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
+              if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
+
+              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+          }
+      }
+
+      // Standard Reward Logic
+      if (currentRound === 1) {
+          min = config.rewards.r1_min; max = config.rewards.r1_max;
+      } else if (currentRound === 2) {
+          const roll = Math.random();
+          if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
+          else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
+      } else {
+          min = config.rewards.r3_min; max = config.rewards.r3_max;
+      }
   }
 
   if (user.is_shadow_banned) {
@@ -1271,4 +1294,53 @@ async function handleGetSystemStatus(request, env) {
         system_status: stats.system_status,
         motd: motd
     }), { status: 200, headers: CORS_HEADERS });
+}
+
+async function handleMonetagWebhook(request, env) {
+    const url = new URL(request.url);
+    // Monetag might pass user ID as 'uid', 'username', 'subid', etc.
+    // We check common params.
+    const username = url.searchParams.get('username') || url.searchParams.get('uid') || url.searchParams.get('subid');
+
+    if (!username) {
+        return new Response('Missing username/uid param', { status: 400 });
+    }
+
+    const userJson = await env.USERS.get(username);
+    if (!userJson) {
+        return new Response('User not found', { status: 404 });
+    }
+
+    const user = JSON.parse(userJson);
+
+    // Credit a small amount for postback verification or just log it?
+    // User requested "realistic estimate".
+    // We'll credit a fixed amount or rely on params if provided (e.g. payout).
+    // For now, we'll credit a "Postback Bonus" of R0.05
+    const bonus = 0.05;
+
+    user.balance = parseFloat(((user.balance || 0) + bonus).toFixed(2));
+    user.balance_pending = parseFloat(((user.balance_pending || 0) + bonus).toFixed(3));
+
+    // Update Stats
+    if (!user.daily_stats) user.daily_stats = {};
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    if (!user.daily_stats[todayStr]) {
+         user.daily_stats[todayStr] = {
+             popunder: { pending: 0, approved: 0 },
+             inpage: { pending: 0, approved: 0 },
+             direct: { pending: 0, approved: 0 },
+             push: { pending: 0, approved: 0 },
+             total_pending: 0,
+             total_approved: 0,
+             status: 'pending'
+         };
+    }
+    user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + bonus).toFixed(3));
+
+    await env.USERS.put(username, JSON.stringify(user));
+    await logSystemAction(env, 'MONETAG_POSTBACK', `Received postback for ${username}. Added R${bonus}.`);
+
+    return new Response('OK', { status: 200 });
 }

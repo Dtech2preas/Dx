@@ -426,6 +426,20 @@
             <label for="password">Password</label>
             <input id="password" type="password" placeholder="Enter secure key" />
 
+            <div style="margin-bottom: 20px; text-align: left; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                <label style="margin-bottom: 10px; color: var(--accent);">Select Dashboard Version:</label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; font-size: 0.9rem;">
+                        <input type="radio" name="dashboard_mode" value="web" checked style="width: auto; margin: 0 8px 0 0;">
+                        Web Dashboard
+                    </label>
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; font-size: 0.9rem;">
+                        <input type="radio" name="dashboard_mode" value="tma" style="width: auto; margin: 0 8px 0 0;">
+                        Telegram Mini App
+                    </label>
+                </div>
+            </div>
+
             <div id="reg-fields" style="display:none; animation: fadeIn 0.4s ease;">
                 <label for="email">Email Address</label>
                 <input id="email" type="text" placeholder="name@example.com" />
@@ -559,7 +573,7 @@
 
     <script>
         // ---------- CONFIG ----------
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const API_URL = "https://silent-brook-9ad3.dtech2j.workers.dev";
         const AD_LINK = "https://otieu.com/4/10205357";
 
         // ---------- STATE ----------
@@ -700,6 +714,13 @@
             }
 
             showMessage('Authentication Successful.', 'success');
+
+            // Redirect if TMA mode selected
+            const mode = document.querySelector('input[name="dashboard_mode"]:checked').value;
+            if (mode === 'tma') {
+                setTimeout(() => window.location.href = 'tma.html', 500);
+            }
+
           } else {
             showMessage(res.data?.error || 'Invalid credentials.', 'error');
           }
