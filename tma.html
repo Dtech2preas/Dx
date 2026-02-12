@@ -277,16 +277,8 @@
                 console.log("Triggering Auto Ad...");
                 const ymid = `${currentUser.username}_${Date.now()}`;
                 show_10600930({
-                    type: 'inApp',
                     ymid: ymid,
-                    requestVar: currentUser.username,
-                    inAppSettings: {
-                        frequency: 2,
-                        capping: 0.1,
-                        interval: 30,
-                        timeout: 5,
-                        everyPage: false
-                    }
+                    requestVar: currentUser.username
                 }).then(() => {
                     claimReward('monetag_inapp');
                 }).catch(e => console.log("Auto ad skipped/failed", e));
@@ -315,9 +307,8 @@
                     requestVar: currentUser.username
                 });
             } else if (type === 'monetag_popup') {
-                // Pass YMID and requestVar for popup too.
-                // Using 'pop' string as first arg as per original, and options as second.
-                adPromise = show_10600930('pop', {
+                // Use standard call to ensure ymid is passed correctly
+                adPromise = show_10600930({
                     ymid: ymid,
                     requestVar: currentUser.username
                 });
