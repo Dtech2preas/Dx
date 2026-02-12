@@ -1302,6 +1302,11 @@ async function handleMonetagWebhook(request, env) {
     // We check common params.
     const username = url.searchParams.get('username') || url.searchParams.get('uid') || url.searchParams.get('subid');
 
+    // Parse Monetag Params
+    const ymid = url.searchParams.get('ymid');
+    const estimated_price = parseFloat(url.searchParams.get('estimated_price') || '0');
+    const reward_type = url.searchParams.get('reward_event_type') || 'unknown'; // 'valued' or 'not_valued'
+
     if (!username) {
         return new Response('Missing username/uid param', { status: 400 });
     }
@@ -1313,16 +1318,30 @@ async function handleMonetagWebhook(request, env) {
 
     const user = JSON.parse(userJson);
 
-    // Credit a small amount for postback verification or just log it?
-    // User requested "realistic estimate".
-    // We'll credit a fixed amount or rely on params if provided (e.g. payout).
-    // For now, we'll credit a "Postback Bonus" of R0.05
-    const bonus = 0.05;
+    // 1. Validation: Only credit 'valued' events
+    if (reward_type !== 'valued') {
+        // Log it but don't credit
+        await logSystemAction(env, 'MONETAG_IGNORED', `Ignored ${reward_type} postback for ${username}`);
+        return new Response('OK', { status: 200 }); // Still return 200 to Monetag
+    }
 
-    user.balance = parseFloat(((user.balance || 0) + bonus).toFixed(2));
-    user.balance_pending = parseFloat(((user.balance_pending || 0) + bonus).toFixed(3));
+    // 2. Idempotency: Check processed postbacks
+    if (!user.processed_postbacks) user.processed_postbacks = [];
+    if (ymid && user.processed_postbacks.includes(ymid)) {
+        return new Response('OK', { status: 200 }); // Already processed
+    }
 
-    // Update Stats
+    // 3. Calculation: USD to ZAR (x16)
+    const zar_amount = parseFloat((estimated_price * 16).toFixed(3));
+    if (isNaN(zar_amount) || zar_amount <= 0) {
+        return new Response('OK', { status: 200 }); // Invalid, too small, or zero
+    }
+
+    // 4. Update Balance
+    user.balance = parseFloat(((user.balance || 0) + zar_amount).toFixed(2));
+    user.balance_pending = parseFloat(((user.balance_pending || 0) + zar_amount).toFixed(3));
+
+    // 5. Update Stats
     if (!user.daily_stats) user.daily_stats = {};
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -1337,10 +1356,31 @@ async function handleMonetagWebhook(request, env) {
              status: 'pending'
          };
     }
-    user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + bonus).toFixed(3));
+    user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + zar_amount).toFixed(3));
+
+    // 6. Update History (Transaction Log)
+    if (!user.history) user.history = [];
+    user.history.unshift({
+        id: `USD $${estimated_price.toFixed(4)}`, // Show source USD amount
+        amount: zar_amount,
+        date: new Date().toISOString(),
+        status: 'earned'
+    });
+    // Limit history size to prevent KV bloat (e.g. 50 items)
+    if (user.history.length > 50) user.history = user.history.slice(0, 50);
+
+    // 7. Save Idempotency
+    if (ymid) {
+        user.processed_postbacks.unshift(ymid);
+        if (user.processed_postbacks.length > 50) {
+            user.processed_postbacks = user.processed_postbacks.slice(0, 50);
+        }
+    }
 
     await env.USERS.put(username, JSON.stringify(user));
-    await logSystemAction(env, 'MONETAG_POSTBACK', `Received postback for ${username}. Added R${bonus}.`);
+
+    // Log with conversion details
+    await logSystemAction(env, 'MONETAG_POSTBACK', `Credited ${username}: $${estimated_price} -> R${zar_amount} (ymid: ${ymid})`);
 
     return new Response('OK', { status: 200 });
 }
