@@ -1467,51 +1467,39 @@ async function handleMonetagWebhook(request, env) {
         return new Response('OK', { status: 200 }); // Already processed
     }
 
-    // 3. Calculation: USD to ZAR (x16)
-    const zar_amount = parseFloat((estimated_price * 16).toFixed(3));
+    // 3. Calculation: USD to ZAR (x17)
+    const zar_amount = parseFloat((estimated_price * 17).toFixed(3));
     if (isNaN(zar_amount) || zar_amount <= 0) {
         return new Response('OK', { status: 200 }); // Invalid, too small, or zero
     }
 
     // --- NEW SPLIT LOGIC ---
-    // User: 60%, Platform: 30%
-    const user_share = parseFloat((zar_amount * 0.60).toFixed(3));
-    const platform_share = parseFloat((zar_amount * 0.30).toFixed(3));
+    // User: 90%, Platform: 10%
+    const user_share = parseFloat((zar_amount * 0.90).toFixed(3));
+    const platform_share = parseFloat((zar_amount * 0.10).toFixed(3));
 
     // Update Platform Treasury
     const stats = await getGlobalStats(env);
     stats.treasury_balance = parseFloat(((stats.treasury_balance || 0) + platform_share).toFixed(2));
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
-    // Update User Pending Queue (Wait 24h)
-    if (!user.pending_rewards) user.pending_rewards = [];
+    // Direct Credit to Balance (Immediate Availability)
+    user.balance = parseFloat(((user.balance || 0) + user_share).toFixed(2));
+
+    // Record History (Approved)
+    if (!user.history) user.history = [];
     const rewardId = `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`;
 
-    user.pending_rewards.push({
+    user.history.unshift({
         id: rewardId,
         amount: user_share,
-        created_at: new Date().toISOString(),
-        source: 'monetag'
+        date: new Date().toISOString(),
+        status: 'approved',
+        source: 'monetag_instant'
     });
+    if(user.history.length > 50) user.history = user.history.slice(0, 50);
 
-    // Update Global Pending List (For Admin Visibility)
-    let globalPending = [];
-    try {
-        const rawP = await env.USERS.get('PENDING_REWARDS');
-        if (rawP) globalPending = JSON.parse(rawP);
-    } catch(e) {}
-
-    globalPending.unshift({
-        id: rewardId,
-        username: username,
-        amount: user_share,
-        created_at: new Date().toISOString()
-    });
-    // Keep list reasonable size (e.g. 200)
-    if (globalPending.length > 200) globalPending = globalPending.slice(0, 200);
-    await env.USERS.put('PENDING_REWARDS', JSON.stringify(globalPending));
-
-    // 5. Update Stats (Only pending, not balance)
+    // Update Daily Stats (Approved)
     if (!user.daily_stats) user.daily_stats = {};
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -1523,15 +1511,12 @@ async function handleMonetagWebhook(request, env) {
              push: { pending: 0, approved: 0 },
              total_pending: 0,
              total_approved: 0,
-             status: 'pending'
+             status: 'active' // Mark day as active
          };
     }
-    // We can track this as "pending" in daily stats for visibility?
-    // But since it's not in balance_pending, it might be confusing.
-    // I'll leave daily_stats out of sync with "balance_pending" field, but consistent with "pending verification".
-    // Or better: don't add to daily_stats pending until verified?
-    // The user asked to see "pending amounts". Daily stats usually show "Game" earnings.
-    // I'll stick to not adding to daily_stats yet. I'll add it when it matures in `processPendingRewards`.
+
+    // Accumulate total approved for the day
+    user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + user_share).toFixed(3));
 
     // 7. Save Idempotency
     if (ymid) {
@@ -1544,7 +1529,7 @@ async function handleMonetagWebhook(request, env) {
     await env.USERS.put(username, JSON.stringify(user));
 
     // Log with conversion details
-    await logSystemAction(env, 'MONETAG_POSTBACK', `Pending Credited ${username}: $${estimated_price} -> User R${user_share} (Pending)`);
+    await logSystemAction(env, 'MONETAG_POSTBACK', `Instant Credited ${username}: $${estimated_price} -> User R${user_share} (Approved)`);
 
     return new Response('OK', { status: 200 });
 }
