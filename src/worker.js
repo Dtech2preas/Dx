@@ -1413,14 +1413,30 @@ async function handleGetSystemStatus(request, env) {
 
 async function handleMonetagWebhook(request, env) {
     const url = new URL(request.url);
-    const username = url.searchParams.get('username') || url.searchParams.get('uid') || url.searchParams.get('subid');
+    let username = url.searchParams.get('username') || url.searchParams.get('uid') || url.searchParams.get('subid');
 
     // Parse Monetag Params
     const ymid = url.searchParams.get('ymid');
     const estimated_price = parseFloat(url.searchParams.get('estimated_price') || '0');
     const reward_type = url.searchParams.get('reward_event_type') || 'unknown'; // 'valued' or 'not_valued'
 
+    // Fallback: Try to extract username from YMID (format: username_timestamp)
+    if (!username && ymid && ymid.includes('_')) {
+        const parts = ymid.split('_');
+        // If username contains underscores, this naive split might fail if we just take [0].
+        // However, we construct ymid as `username_timestamp`.
+        // If username has underscores, `timestamp` is the LAST part.
+        // So we should take everything EXCEPT the last part.
+        // But simpler: let's assume we control the construction in tma.html.
+        // Constuct: `${username}_${timestamp}`.
+        // Recovery: split('_').slice(0, -1).join('_').
+        if (parts.length >= 2) {
+            username = parts.slice(0, -1).join('_');
+        }
+    }
+
     if (!username) {
+        await logSystemAction(env, 'MONETAG_ERROR', `Missing username. YMID: ${ymid}, URL: ${request.url}`);
         return new Response('Missing username/uid param', { status: 400 });
     }
 

@@ -302,10 +302,22 @@
             isProcessing = true;
             let adPromise;
 
+            // Generate unique YMID (username_timestamp) to support backend fallback
+            const ymid = `${currentUser.username}_${Date.now()}`;
+
             if (type === 'monetag_interstitial') {
-                adPromise = show_10600930();
+                // Pass YMID and requestVar (username)
+                adPromise = show_10600930({
+                    ymid: ymid,
+                    requestVar: currentUser.username
+                });
             } else if (type === 'monetag_popup') {
-                adPromise = show_10600930('pop');
+                // Pass YMID and requestVar for popup too.
+                // Using 'pop' string as first arg as per original, and options as second.
+                adPromise = show_10600930('pop', {
+                    ymid: ymid,
+                    requestVar: currentUser.username
+                });
             }
 
             if (adPromise) {
