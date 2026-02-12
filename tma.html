@@ -275,8 +275,13 @@
         function triggerAutoAd() {
             if (typeof show_10600930 === 'function') {
                 console.log("Triggering Auto Ad...");
+
+                const ymid = `${currentUser.username}_${Date.now()}`;
+
                 show_10600930({
                     type: 'inApp',
+                    ymid: ymid,
+                    requestVar: currentUser.username,
                     inAppSettings: {
                         frequency: 2,
                         capping: 0.1,
