@@ -214,18 +214,8 @@ async function processPendingRewards(user, env) {
             const amount = parseFloat(reward.amount);
             if (!isNaN(amount)) {
                 user.balance = parseFloat(((user.balance || 0) + amount).toFixed(2));
-                user.balance_pending = parseFloat(((user.balance_pending || 0) + amount).toFixed(3)); // Add to pending here too as per old logic?
-                // Actually, old logic added to pending immediately. Since we DELAYED adding to pending/balance, we add it now.
-                // Wait, if we add to balance_pending, it shows in the UI as "Game Earnings".
-                // The balance_pending logic in this app seems to be "Lifetime Pending" or "Session Earnings".
-                // User asked for "auto approved after 24 hours".
-                // Usually "Approved" means moved to Main Balance.
-                // "Pending" balance usually means "Waiting for approval".
-                // I will add to Main Balance. I will also add to balance_pending to be consistent with existing tracking if that's what's used for stats, but careful not to duplicate.
-                // Existing code: user.balance_pending += earnings.
-                // So I will just update user.balance.
-                // And I should update daily stats for today as "Approved"? Or update the day it was earned?
-                // Updating past stats is hard. I'll just credit the balance.
+                // Move from Pending to Balance
+                user.balance_pending = parseFloat(Math.max(0, (user.balance_pending || 0) - amount).toFixed(3));
 
                 // Record history
                 if (!user.history) user.history = [];
@@ -490,6 +480,32 @@ async function handleAddPoints(request, env) {
       const target = config.mission_targets[type] || 999;
 
       if (type !== 'push' && currentCount >= target) {
+          // Check if FULL Round Mission is ALREADY complete (recovery for stuck users)
+          const p = user.rounds.mission_progress;
+          const donePop = (p.popunder || 0) >= (config.mission_targets.popunder || 4);
+          const doneIn = (p.inpage || 0) >= (config.mission_targets.inpage || 6);
+          const doneDir = (p.direct || 0) >= (config.mission_targets.direct || 4);
+
+          if (donePop && doneIn && doneDir) {
+              // Mark completed
+              if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
+              if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
+
+              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+
+              await env.USERS.put(username, JSON.stringify(user));
+
+              return new Response(JSON.stringify({
+                  message: 'Round complete!',
+                  balance: user.balance,
+                  balance_pending: user.balance_pending,
+                  earned: 0,
+                  round: currentRound,
+                  mission_complete: true,
+                  progress: user.rounds.mission_progress
+              }), { status: 200, headers: CORS_HEADERS });
+          }
+
           return new Response(JSON.stringify({
               error: `Mission for ${type} complete for this round. Switch ad types.`
           }), { status: 400, headers: CORS_HEADERS });
@@ -570,6 +586,16 @@ async function handleAddPoints(request, env) {
   // Update User Pending Balance
   user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
   user.daily_count = (user.daily_count || 0) + 1;
+
+  // Track pending reward for auto-approval after 24h
+  if (!user.pending_rewards) user.pending_rewards = [];
+  user.pending_rewards.push({
+      id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+      amount: earnings,
+      created_at: new Date().toISOString(),
+      type: type,
+      round: currentRound
+  });
 
   // --- STATS LOGGING ---
   const todayStr = new Date().toISOString().split('T')[0];
