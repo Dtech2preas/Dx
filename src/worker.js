@@ -17,13 +17,13 @@ const DEFAULT_CONFIG = {
     mission_targets: {
         'popunder': 4,
         'inpage': 6,
-        'direct': 8
+        'direct': 4
     },
     rewards: {
-        r1_min: 0.10, r1_max: 0.30,
-        r2_min_low: 0.10, r2_max_low: 0.20,
-        r2_min_high: 0.20, r2_max_high: 0.30,
-        r3_min: 0.001, r3_max: 0.10,
+        r1_min: 0.005, r1_max: 0.20,
+        r2_min_low: 0.005, r2_max_low: 0.01,
+        r2_min_high: 0.05, r2_max_high: 0.20,
+        r3_min: 0.001, r3_max: 0.01,
         shadow_min: 0.0001, shadow_max: 0.001,
         monetag_interstitial_min: 0.15, monetag_interstitial_max: 0.35,
         monetag_popup_min: 0.05, monetag_popup_max: 0.15,
@@ -429,7 +429,7 @@ async function handleLogin(request, env) {
 }
 
 async function handleAddPoints(request, env) {
-  const { username, token, type } = await request.json(); // Type: popunder, inpage, direct, push, monetag_*
+  const { username, token, type, quality } = await request.json(); // Type: popunder, inpage, direct, push, monetag_*
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
 
@@ -522,6 +522,12 @@ async function handleAddPoints(request, env) {
       else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
   } else {
       min = config.rewards.r3_min; max = config.rewards.r3_max;
+  }
+
+  // Penalty Override for "Red Light" clicks (In-Page)
+  if (type === 'inpage' && quality === 'low') {
+      min = 0.001;
+      max = 0.10;
   }
 
   if (user.is_shadow_banned) {
