@@ -500,10 +500,11 @@ async function handleAddPoints(request, env) {
 
       // Check if FULL Round Mission is complete
       const p = user.rounds.mission_progress;
-      if (p.popunder >= config.mission_targets.popunder &&
-          p.inpage >= config.mission_targets.inpage &&
-          p.direct >= config.mission_targets.direct) {
+      const donePop = (p.popunder || 0) >= (config.mission_targets.popunder || 4);
+      const doneIn = (p.inpage || 0) >= (config.mission_targets.inpage || 6);
+      const doneDir = (p.direct || 0) >= (config.mission_targets.direct || 4);
 
+      if (donePop && doneIn && doneDir) {
           missionComplete = true;
           // Mark completed
           if (currentRound === 1) user.rounds.r1_last_completed = Date.now();

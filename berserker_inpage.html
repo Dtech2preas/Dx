@@ -250,6 +250,10 @@
 
                 window.adInjected = true;
             } else {
+                const msg = document.createElement('div');
+                msg.style.cssText = 'position:fixed;bottom:10px;left:10px;background:rgba(239, 68, 68, 0.9);color:white;padding:8px 12px;z-index:9999;font-size:0.8rem;border-radius:6px;pointer-events:none;';
+                msg.innerText = "NO AD CONFIGURED";
+                document.body.appendChild(msg);
                 showMessage("Warning: No Ad Assigned. Contact Admin.", 5000);
             }
         }
