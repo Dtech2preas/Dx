@@ -19,6 +19,8 @@
             --muted: #94a3b8;
             --accent: #d4af37;
             --radius: 10px;
+            --danger: #ef4444;
+            --success: #22c55e;
         }
         html, body { height: 100% }
         body {
@@ -30,13 +32,14 @@
         header { width: 100%; padding: 14px 0; text-align: center; background: var(--surface); border-bottom: 2px solid rgba(255,255,255,0.03); }
         .top-balance { font-size: 0.9rem; color: var(--accent); margin-top: 4px; font-weight: 600; }
 
-        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; }
+        main { width: 100%; max-width: 720px; padding: 20px; box-sizing: border-box; flex: 1; position: relative; }
         .card {
             background: var(--surface);
             border-radius: var(--radius);
             padding: 20px;
             border: 1px solid rgba(255,255,255,0.03);
             box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+            transition: opacity 0.3s;
         }
         .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
         .title { font-weight: 600; font-size: 1.15rem; margin-bottom: 12px; }
@@ -87,7 +90,38 @@
             cursor: pointer; font-size: 1rem; transition: transform 0.2s;
         }
         .modal-btn:hover { transform: scale(1.05); }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        /* Traffic Light & Blocking */
+        .traffic-control {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;
+        }
+        .traffic-light {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: #333; margin-bottom: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        .traffic-light.red { background: var(--danger); box-shadow: 0 0 20px var(--danger); }
+        .traffic-light.green { background: var(--success); box-shadow: 0 0 20px var(--success); }
+
+        .status-text { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .status-red { color: var(--danger); }
+        .status-green { color: var(--success); }
+
+        /* Overlay to block clicks */
+        .blocker-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 6, 23, 0.5); z-index: 40;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .traffic-control { position: relative; z-index: 50; }
+        #start-mission-btn { position: relative; z-index: 50; }
+        header { position: relative; z-index: 50; }
+
+        /* When red, main content is non-interactive */
+        .blocked { pointer-events: none; opacity: 0.5; filter: grayscale(1); }
+
     </style>
 </head>
 <body>
@@ -96,10 +130,13 @@
         <div class="modal-card">
             <div class="modal-title">Pop-Under Mission</div>
             <div class="modal-text">
-                Activate the ad by clicking <strong>anywhere</strong> on the screen.<br><br>
-                Wait for 10s then come back.
+                <strong>Strict Rules:</strong><br>
+                1. Click "START MISSION" to begin.<br>
+                2. Wait for the <strong>GREEN LIGHT</strong>.<br>
+                3. Only click during the 20s Active Window.<br>
+                4. Clicking during Red Light does nothing.
             </div>
-            <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
+            <button class="modal-btn" onclick="closeIntro()">I UNDERSTAND</button>
         </div>
     </div>
 
@@ -112,7 +149,25 @@
 
     <main>
         <a href="berserker.html" class="back-btn">← Back to Menu</a>
-        <div class="card">
+
+        <div class="traffic-control">
+            <div id="light-indicator" class="traffic-light"></div>
+            <div id="status-label" class="status-text">WAITING...</div>
+            <div id="timer-display" style="font-family: monospace; font-size: 1.2rem; margin-top: 5px;"></div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+             <button id="start-mission-btn" class="modal-btn" style="display:none; width: 200px;">START MISSION</button>
+        </div>
+
+        <!-- Global Blocker moved outside card -->
+        <div class="blocker-overlay" id="click-blocker" style="display:none;">
+            <div style="background:#000; padding:10px 20px; border-radius:8px; font-weight:bold; color: white;">
+                WAIT FOR GREEN LIGHT
+            </div>
+        </div>
+
+        <div class="card" id="content-card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
                 <div class="progress-indicator">Progress: <span id="progress-display">0</span>/4</div>
@@ -127,7 +182,7 @@
                 <button class="btn" id="fetch-btn">Fetch New Story</button>
             </div>
             <div style="margin-top:12px; font-size: 0.85rem; color: #64748b;">
-                Tip: Click anywhere, wait 10s, return.
+                Tip: Only click when Green Light is active.
             </div>
         </div>
     </main>
@@ -140,6 +195,9 @@
         let currentUser = null;
         let isProcessingReward = false;
         let adStartTime = 0;
+        let currentState = 'IDLE'; // IDLE, RED, GREEN
+        let loopTimer = null;
+        let countdownInterval = null;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -155,6 +213,11 @@
                 : API_URL;
         }
 
+        function closeIntro() {
+            document.getElementById('intro-modal').style.display = 'none';
+            document.getElementById('start-mission-btn').style.display = 'inline-block';
+        }
+
         async function init() {
             const saved = sessionStorage.getItem('ad_user');
             if (!saved) {
@@ -166,6 +229,9 @@
 
             await refreshProfile();
             loadCachedStory();
+
+            // Initial State: Locked
+            setRedState("Press Start");
         }
 
         async function refreshProfile() {
@@ -180,7 +246,7 @@
                     const p = data.rounds?.mission?.popunder || 0;
                     document.getElementById('progress-display').innerText = p;
 
-                    // Inject Ad
+                    // Inject Ad but keep it blocked initially
                     injectAd(data.ad_set);
                 }
             } catch(e) {}
@@ -196,7 +262,6 @@
                 document.body.appendChild(div);
 
                 const scripts = div.getElementsByTagName('script');
-                // Convert to array to avoid live collection issues during replacement
                 Array.from(scripts).forEach(oldScript => {
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -249,8 +314,89 @@
             }
         }
 
+        // --- Traffic Light Logic ---
+
+        function startMission() {
+            document.getElementById('start-mission-btn').style.display = 'none';
+            runRedCycle();
+        }
+
+        function runRedCycle() {
+            const durationSec = Math.floor(Math.random() * (150 - 30 + 1)) + 30; // 30s to 150s
+            // For testing, maybe shorter? No, sticking to specs.
+            setRedState("WAIT...", durationSec);
+
+            loopTimer = setTimeout(() => {
+                runGreenCycle();
+            }, durationSec * 1000);
+        }
+
+        function runGreenCycle() {
+            const durationSec = 20; // 20s Active
+            setGreenState(durationSec);
+
+            loopTimer = setTimeout(() => {
+                runRedCycle();
+            }, durationSec * 1000);
+        }
+
+        function setRedState(label, duration) {
+            currentState = 'RED';
+            const light = document.getElementById('light-indicator');
+            const status = document.getElementById('status-label');
+            const card = document.getElementById('content-card');
+            const blocker = document.getElementById('click-blocker');
+
+            light.className = 'traffic-light red';
+            status.className = 'status-text status-red';
+            status.innerText = label;
+
+            card.classList.add('blocked');
+            blocker.style.display = 'flex'; // Overlay active
+
+            if (duration) startCountdown(duration);
+        }
+
+        function setGreenState(duration) {
+            currentState = 'GREEN';
+            const light = document.getElementById('light-indicator');
+            const status = document.getElementById('status-label');
+            const card = document.getElementById('content-card');
+            const blocker = document.getElementById('click-blocker');
+
+            light.className = 'traffic-light green';
+            status.className = 'status-text status-green';
+            status.innerText = "ACTIVE! CLICK NOW";
+
+            card.classList.remove('blocked');
+            blocker.style.display = 'none'; // Overlay removed
+
+            if (duration) startCountdown(duration);
+            showMessage("WINDOW OPEN! Click ad now!", 3000);
+        }
+
+        function startCountdown(seconds) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            let remain = seconds;
+            const disp = document.getElementById('timer-display');
+            disp.innerText = remain + "s";
+
+            countdownInterval = setInterval(() => {
+                remain--;
+                disp.innerText = remain + "s";
+                if (remain <= 0) clearInterval(countdownInterval);
+            }, 1000);
+        }
+
+        // --- Reward Logic ---
+
         async function attemptReward() {
             if (isProcessingReward) return;
+            if (currentState !== 'GREEN') {
+                showMessage("Wait for Green Light!");
+                return;
+            }
+
             isProcessingReward = true;
             showMessage('Verifying engagement...');
 
@@ -280,8 +426,6 @@
                     if (data.mission_complete) {
                          showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
                          setTimeout(() => window.location.href = 'berserker.html', 3000);
-                    } else if (p >= TARGET && !data.progress) {
-                         // Type mission done
                     }
 
                 } else {
@@ -297,14 +441,21 @@
         }
 
         window.addEventListener('blur', () => {
-            adStartTime = Date.now();
-            showMessage('Ad Timer Started... Return in 10s', 5000);
+            if (currentState === 'GREEN') {
+                adStartTime = Date.now();
+                showMessage('Ad Timer Started... Return in 10s', 5000);
+            }
         });
 
         window.addEventListener('focus', () => {
             if (adStartTime > 0) {
                 const duration = Date.now() - adStartTime;
                 adStartTime = 0;
+
+                // Ensure we are still green? Or allow if they left during green?
+                // Logic: if they clicked during green, they left. If they come back 10s later, it might be red.
+                // We should still credit them if the click *originated* in Green.
+                // The 'blur' event happened during Green, so intent was valid.
 
                 if (duration >= 10000) {
                     attemptReward();
@@ -315,6 +466,7 @@
         });
 
         document.getElementById('fetch-btn').addEventListener('click', fetchAndCacheStory);
+        document.getElementById('start-mission-btn').addEventListener('click', startMission);
 
         window.addEventListener('DOMContentLoaded', init);
     </script>

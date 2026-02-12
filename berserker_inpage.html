@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>info</title>
+    <title>Berserker - In-Page Mode</title>
 
     <!-- Ad Tag Injected Dynamically -->
 
@@ -19,6 +19,8 @@
             --muted: #94a3b8;
             --accent: #d4af37;
             --radius: 10px;
+            --danger: #ef4444;
+            --success: #22c55e;
         }
         html, body { height: 100% }
         body {
@@ -26,7 +28,7 @@
             background: var(--bg);
             color: var(--text);
             margin: 0; display: flex; flex-direction: column; align-items: center;
-            padding-top: 20vh; /* 20% Top Space for Ads */
+            padding-top: 15vh;
         }
         header {
             width: 100%; padding: 14px 0; text-align: center;
@@ -95,6 +97,23 @@
         .progress-indicator { color: var(--accent); font-weight: 700; }
 
         .back-btn { display: inline-block; margin-bottom: 15px; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+
+        /* Traffic Light */
+        .traffic-control {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;
+        }
+        .traffic-light {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #333; margin-bottom: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        .traffic-light.red { background: var(--danger); box-shadow: 0 0 15px var(--danger); }
+        .traffic-light.green { background: var(--success); box-shadow: 0 0 15px var(--success); }
+
+        .status-text { font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .status-red { color: var(--danger); }
+        .status-green { color: var(--success); }
     </style>
 </head>
 <body>
@@ -104,7 +123,8 @@
             <div class="modal-title">In-Page Mission</div>
             <div class="modal-text">
                 Top area reserved for ads.<br><br>
-                <strong>Click notifications to activate.</strong><br>
+                <strong>Wait for the GREEN Signal.</strong><br>
+                Clicking on RED gives lower rewards.<br>
                 Wait 10s after clicking for reward.
             </div>
             <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
@@ -120,6 +140,13 @@
 
     <main>
         <a href="berserker.html" class="back-btn">← Back to Menu</a>
+
+        <div class="traffic-control">
+            <div id="light-indicator" class="traffic-light red"></div>
+            <div id="status-label" class="status-text status-red">WAIT FOR SIGNAL...</div>
+            <div id="timer-display" style="font-family: monospace; font-size: 1rem; margin-top: 4px; color: #64748b;"></div>
+        </div>
+
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
@@ -135,7 +162,7 @@
                 <button class="btn" id="fetch-btn">Fetch New Story</button>
             </div>
             <div style="margin-top:12px; font-size: 0.85rem; color: #64748b;">
-                Tip: Interact with the ad, then return after 10s to claim.
+                Tip: Green Light = Max Rewards. Red Light = Low Rewards.
             </div>
         </div>
     </main>
@@ -148,6 +175,11 @@
         let currentUser = null;
         let isProcessingReward = false;
         let adStartTime = 0;
+
+        // Traffic Light State
+        let currentState = 'RED'; // RED, GREEN
+        let loopTimer = null;
+        let countdownInterval = null;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -174,8 +206,10 @@
 
             // Fetch fresh profile to get progress
             await refreshProfile();
-
             loadCachedStory();
+
+            // Start Traffic Light Cycle
+            runRedCycle();
         }
 
         async function refreshProfile() {
@@ -259,10 +293,69 @@
             }
         }
 
+        // --- Traffic Light Logic ---
+        function runRedCycle() {
+            const durationSec = Math.floor(Math.random() * (100 - 30 + 1)) + 30; // 30s to 100s
+            setRedState("WAIT...", durationSec);
+            loopTimer = setTimeout(() => {
+                runGreenCycle();
+            }, durationSec * 1000);
+        }
+
+        function runGreenCycle() {
+            const durationSec = 20; // 20s Window (assumed consistent with Popunder)
+            setGreenState(durationSec);
+            loopTimer = setTimeout(() => {
+                runRedCycle();
+            }, durationSec * 1000);
+        }
+
+        function setRedState(label, duration) {
+            currentState = 'RED';
+            const light = document.getElementById('light-indicator');
+            const status = document.getElementById('status-label');
+
+            light.className = 'traffic-light red';
+            status.className = 'status-text status-red';
+            status.innerText = label;
+
+            if (duration) startCountdown(duration);
+        }
+
+        function setGreenState(duration) {
+            currentState = 'GREEN';
+            const light = document.getElementById('light-indicator');
+            const status = document.getElementById('status-label');
+
+            light.className = 'traffic-light green';
+            status.className = 'status-text status-green';
+            status.innerText = "CLICK NOW (MAX REWARD)";
+
+            if (duration) startCountdown(duration);
+            showMessage("WINDOW OPEN! Best time to click.", 3000);
+        }
+
+        function startCountdown(seconds) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            let remain = seconds;
+            const disp = document.getElementById('timer-display');
+            disp.innerText = remain + "s";
+
+            countdownInterval = setInterval(() => {
+                remain--;
+                disp.innerText = remain + "s";
+                if (remain <= 0) clearInterval(countdownInterval);
+            }, 1000);
+        }
+
+        // --- Reward Logic ---
+
         async function attemptReward() {
             if (isProcessingReward) return;
             isProcessingReward = true;
             showMessage('Verifying engagement...');
+
+            const quality = (currentState === 'GREEN') ? 'high' : 'low';
 
             try {
                 const res = await fetch(`${getBaseUrl()}/add-points`, {
@@ -271,7 +364,8 @@
                     body: JSON.stringify({
                         username: currentUser.username,
                         token: currentUser.token,
-                        type: 'inpage'
+                        type: 'inpage',
+                        quality: quality // Send Quality Flag
                     })
                 });
                 const data = await res.json();
@@ -289,14 +383,10 @@
                     document.getElementById('progress-display').innerText = p;
 
                     if (data.mission_complete) {
-                         // Full Mission Complete (All types)
                          showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
                          setTimeout(() => window.location.href = 'berserker.html', 3000);
                     } else if (p >= TARGET && !data.progress) {
-                        // Current Type Mission Complete (progress is null in R3, but in R1/R2 it's obj)
-                        // If p >= TARGET, backend returns error? No, backend increments THEN checks.
-                        // Actually my backend code: "If currentCount >= target ... return Error".
-                        // So the LAST successful claim puts it AT target.
+                        // Current Type Mission Complete
                     }
 
                 } else {

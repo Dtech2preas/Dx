@@ -58,6 +58,9 @@
         .link-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: transparent; }
         .badge { background: var(--accent); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; }
 
+        .status-done { background: #22c55e; color: #fff; }
+        .status-locked { background: #334155; color: #94a3b8; }
+
         #message {
             position: fixed; top: 72px; left: 50%;
             transform: translateX(-50%); z-index: 60;
@@ -103,8 +106,8 @@
         <div class="modal-card">
             <div class="modal-title">Direct Mission</div>
             <div class="modal-text">
-                Complete tasks by clicking the buttons.<br>
-                <strong>2 clicks per button required.</strong><br>
+                Complete tasks in order.<br>
+                <strong>1 click per button required.</strong><br>
                 Wait 10s on the page for each click.
             </div>
             <button class="modal-btn" onclick="document.getElementById('intro-modal').style.display='none'">START</button>
@@ -123,11 +126,11 @@
         <div class="card">
             <div class="meta">
                 <div>User: <span id="user-display">...</span></div>
-                <div class="progress-indicator">Progress: <span id="total-progress">0</span>/8</div>
+                <div class="progress-indicator">Progress: <span id="total-progress">0</span>/4</div>
             </div>
 
             <div class="title">Complete All Tasks</div>
-            <p style="color:var(--muted); font-size:0.9rem;">Click each link and view for 10 seconds. You must complete each link 2 times.</p>
+            <p style="color:var(--muted); font-size:0.9rem;">Click each link and view for 10 seconds.</p>
 
             <div class="link-grid" id="link-container">
                 <!-- Buttons injected by JS -->
@@ -143,15 +146,13 @@
             { id: 3, url: '' },
             { id: 4, url: '' }
         ];
-        const CLICKS_PER_LINK = 2;
 
         let currentUser = null;
         let isProcessingReward = false;
         let adStartTime = 0;
         let activeLinkId = null;
-
-        // Local tracking for UI buttons
-        let localProgress = {};
+        let serverProgress = 0;
+        let currentRound = 1;
 
         function showMessage(txt, ms = 2500) {
             const el = document.getElementById('message');
@@ -176,17 +177,7 @@
             currentUser = JSON.parse(saved);
             document.getElementById('user-display').innerText = currentUser.username || '…';
 
-            // Restore Local Progress
-            try {
-                localProgress = JSON.parse(sessionStorage.getItem('local_progress_direct') || '{}');
-            } catch { localProgress = {}; }
-
-            LINKS.forEach(l => {
-                if (localProgress[l.id] === undefined) localProgress[l.id] = 0;
-            });
-
             await refreshProfile();
-            renderButtons();
         }
 
         async function refreshProfile() {
@@ -198,18 +189,23 @@
                     currentUser.balance_pending = data.balance_pending || 0;
                     updateBalanceUI(currentUser.balance_pending);
 
+                    // Use Server Progress directly
+                    // Note: R3 returns null for mission progress usually, but we assume R1/R2 structure
                     const p = data.rounds?.mission?.direct || 0;
-                    document.getElementById('total-progress').innerText = p;
+                    serverProgress = p;
+                    currentRound = data.rounds?.current || 1;
+                    document.getElementById('total-progress').innerText = (currentRound === 3) ? '∞' : p;
 
                     // Update Links
                     if (data.ad_set && data.ad_set.direct && data.ad_set.direct.link) {
                         const dl = data.ad_set.direct.link;
                         LINKS.forEach(l => l.url = dl);
                     } else {
-                        showMessage("Warning: No Direct Link Assigned.", 5000);
-                        document.getElementById('link-container').innerHTML = '<div style="color:red; text-align:center;">Error: No Ad Assigned. Contact Admin.</div>';
-                        return; // Stop render
+                        // showMessage("Warning: No Direct Link Assigned.", 5000);
+                        // If logic allows, keep running for UI check, but link might be empty
                     }
+
+                    renderButtons();
                 }
             } catch(e) {}
         }
@@ -223,25 +219,56 @@
             container.innerHTML = '';
 
             LINKS.forEach((link, idx) => {
-                const count = localProgress[link.id] || 0;
-                const isComplete = count >= CLICKS_PER_LINK;
+                // Logic:
+                // Index 0 (Task 1) is active if Progress == 0. Done if Progress > 0.
+                // Index 1 (Task 2) is active if Progress == 1. Locked if Progress < 1.
+
+                let state = 'locked';
+                let badgeClass = 'status-locked';
+                let badgeText = 'LOCKED';
+
+                if (currentRound === 3) {
+                    // Round 3: All Active
+                    state = 'active';
+                    badgeClass = 'badge';
+                    badgeText = 'GRIND';
+                } else {
+                    // Round 1 & 2: Sequential
+                    if (idx < serverProgress) {
+                        state = 'done';
+                        badgeClass = 'status-done';
+                        badgeText = 'DONE';
+                    } else if (idx === serverProgress) {
+                        state = 'active';
+                        badgeClass = 'badge';
+                        badgeText = 'START';
+                    }
+                }
 
                 const btn = document.createElement('button');
                 btn.className = 'link-btn';
-                btn.disabled = isComplete;
+                btn.disabled = (state !== 'active'); // Only active button is clickable
+
+                // If done, also disabled
+                if (state === 'done') btn.disabled = true;
+
                 btn.innerHTML = `
                     <span>Task #${idx + 1}</span>
-                    <span class="badge">${count}/${CLICKS_PER_LINK}</span>
+                    <span class="${badgeClass}">${badgeText}</span>
                 `;
 
-                btn.onclick = () => handleLinkClick(link.id, link.url);
+                if (state === 'active') {
+                    btn.onclick = () => handleLinkClick(link.id, link.url);
+                }
+
                 container.appendChild(btn);
             });
         }
 
         function handleLinkClick(id, url) {
             activeLinkId = id;
-            window.open(url, '_blank');
+            if (url) window.open(url, '_blank');
+            else window.open('https://google.com', '_blank'); // Fallback if empty
             showMessage('Timer Started... Return after 10s.');
         }
 
@@ -271,16 +298,13 @@
 
                     showMessage(`Task Complete! +R ${data.earned}`);
 
-                    // Update Local Progress
-                    localProgress[activeLinkId]++;
-                    sessionStorage.setItem('local_progress_direct', JSON.stringify(localProgress));
-
-                    // Update Total Progress from Backend
+                    // Update Progress from Backend
                     const p = data.progress?.direct || 0;
+                    serverProgress = p; // Sync local state
                     document.getElementById('total-progress').innerText = p;
 
                     activeLinkId = null;
-                    renderButtons();
+                    renderButtons(); // Re-render to unlock next button
 
                     if (data.mission_complete) {
                         showMessage('ALL MISSIONS COMPLETE! Round Finished.', 3000);
@@ -290,7 +314,6 @@
                 } else {
                     showMessage(data.error || 'Reward failed.');
                     if (data.error && data.error.includes('complete')) {
-                        // Maybe backend says mission complete but frontend didn't know
                          setTimeout(() => window.location.href = 'berserker.html', 2000);
                     }
                 }
