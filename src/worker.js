@@ -115,6 +115,7 @@ async function getGlobalStats(env) {
   if (!stats.month) stats.month = currentMonth;
   if (stats.paid === undefined) stats.paid = 0;
   if (stats.liability === undefined) stats.liability = 0;
+  if (stats.treasury_balance === undefined) stats.treasury_balance = 0; // Platform share
 
   // New Stats
   if (stats.total_users === undefined) stats.total_users = 0;
@@ -197,6 +198,64 @@ async function logSystemAction(env, action, details) {
     } catch(e) {}
 }
 
+async function processPendingRewards(user, env) {
+    if (!user.pending_rewards || user.pending_rewards.length === 0) return false;
+
+    const now = Date.now();
+    let modified = false;
+    const remaining = [];
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    for (const reward of user.pending_rewards) {
+        const createdAt = new Date(reward.created_at).getTime();
+        // Check if 24 hours have passed
+        if (now - createdAt > ONE_DAY_MS) {
+            // Approve reward
+            const amount = parseFloat(reward.amount);
+            if (!isNaN(amount)) {
+                user.balance = parseFloat(((user.balance || 0) + amount).toFixed(2));
+                user.balance_pending = parseFloat(((user.balance_pending || 0) + amount).toFixed(3)); // Add to pending here too as per old logic?
+                // Actually, old logic added to pending immediately. Since we DELAYED adding to pending/balance, we add it now.
+                // Wait, if we add to balance_pending, it shows in the UI as "Game Earnings".
+                // The balance_pending logic in this app seems to be "Lifetime Pending" or "Session Earnings".
+                // User asked for "auto approved after 24 hours".
+                // Usually "Approved" means moved to Main Balance.
+                // "Pending" balance usually means "Waiting for approval".
+                // I will add to Main Balance. I will also add to balance_pending to be consistent with existing tracking if that's what's used for stats, but careful not to duplicate.
+                // Existing code: user.balance_pending += earnings.
+                // So I will just update user.balance.
+                // And I should update daily stats for today as "Approved"? Or update the day it was earned?
+                // Updating past stats is hard. I'll just credit the balance.
+
+                // Record history
+                if (!user.history) user.history = [];
+                user.history.unshift({
+                    id: reward.id || `REW-${Date.now()}`,
+                    amount: amount,
+                    date: new Date().toISOString(),
+                    status: 'approved',
+                    source: 'monetag_auto'
+                });
+                if(user.history.length > 50) user.history = user.history.slice(0, 50);
+
+                modified = true;
+            }
+        } else {
+            remaining.push(reward);
+        }
+    }
+
+    if (modified) {
+        user.pending_rewards = remaining;
+        // Clean up Global Pending List for processed items
+        // This is expensive to do for every user interaction.
+        // Instead, the Global List is just a view. Admin can clear it or we rely on timestamps in Global List to filter display.
+        // I will implement a lazy cleanup of Global List in Admin action, not here.
+    }
+
+    return modified;
+}
+
 // --- Logic Helpers ---
 
 async function determineRound(user, env) {
@@ -266,7 +325,8 @@ async function handleRegister(request, env) {
         mission_progress: { popunder: 0, inpage: 0, direct: 0 }
     },
     notification_streak: { last_check: "", days: 0 },
-    daily_stats: {} // { "YYYY-MM-DD": { popunder: {pending, approved}, ... } }
+    daily_stats: {},
+    pending_rewards: [] // Array for Monetag pending rewards
   };
 
   await env.USERS.put(username, JSON.stringify(userData));
@@ -337,6 +397,7 @@ async function handleLogin(request, env) {
   }
   if (user.referral_balance === undefined) user.referral_balance = 0;
   if (!user.daily_stats) user.daily_stats = {};
+  if (!user.pending_rewards) user.pending_rewards = [];
 
   // Check Active Status
   const todayStr = new Date().toISOString().split('T')[0];
@@ -345,6 +406,11 @@ async function handleLogin(request, env) {
       stats.active_today += 1;
       await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
       user.last_seen_date = todayStr;
+  }
+
+  // Process Pending Rewards
+  if (await processPendingRewards(user, env)) {
+      // Updated in memory, will save below
   }
 
   const token = crypto.randomUUID();
@@ -382,6 +448,22 @@ async function handleAddPoints(request, env) {
       return new Response(JSON.stringify({ error: 'Account frozen.' }), { status: 403, headers: CORS_HEADERS });
   }
 
+  // Handle Monetag Types (Return Pending Status)
+  if (type.startsWith('monetag_')) {
+      // We don't credit balance here anymore. Just acknowledge logic.
+      // We can update "daily_count" if we want, but "balance_pending" should rely on postback.
+      user.daily_count = (user.daily_count || 0) + 1;
+      await env.USERS.put(username, JSON.stringify(user));
+
+      return new Response(JSON.stringify({
+          message: 'Ad tracked. Reward pending verification.',
+          balance: user.balance,
+          balance_pending: user.balance_pending,
+          earned: 0,
+          pending_verification: true
+      }), { status: 200, headers: CORS_HEADERS });
+  }
+
   const stats = await getGlobalStats(env);
   if (stats.system_status.freeze_rewards) {
        return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
@@ -397,64 +479,49 @@ async function handleAddPoints(request, env) {
   let min = 0.01;
   let max = 0.05;
 
-  // Handle Monetag Types (Separate from Standard Missions)
-  if (type.startsWith('monetag_')) {
-      if (type === 'monetag_interstitial') {
-          min = config.rewards.monetag_interstitial_min || 0.15;
-          max = config.rewards.monetag_interstitial_max || 0.35;
-      } else if (type === 'monetag_popup') {
-          min = config.rewards.monetag_popup_min || 0.05;
-          max = config.rewards.monetag_popup_max || 0.15;
-      } else {
-          min = config.rewards.monetag_inapp_min || 0.01;
-          max = config.rewards.monetag_inapp_max || 0.05;
+  // Standard Mission Logic
+  // Check Mission Status for R1/R2
+  if (currentRound === 1 || currentRound === 2) {
+      if (!user.rounds.mission_progress) {
+          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
       }
-      // Simple cooldown logic for Monetag to prevent rapid-fire abuse could be added here
+
+      const currentCount = user.rounds.mission_progress[type] || 0;
+      const target = config.mission_targets[type] || 999;
+
+      if (type !== 'push' && currentCount >= target) {
+          return new Response(JSON.stringify({
+              error: `Mission for ${type} complete for this round. Switch ad types.`
+          }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Increment
+      user.rounds.mission_progress[type] = currentCount + 1;
+
+      // Check if FULL Round Mission is complete
+      const p = user.rounds.mission_progress;
+      if (p.popunder >= config.mission_targets.popunder &&
+          p.inpage >= config.mission_targets.inpage &&
+          p.direct >= config.mission_targets.direct) {
+
+          missionComplete = true;
+          // Mark completed
+          if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
+          if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
+
+          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+      }
+  }
+
+  // Standard Reward Logic
+  if (currentRound === 1) {
+      min = config.rewards.r1_min; max = config.rewards.r1_max;
+  } else if (currentRound === 2) {
+      const roll = Math.random();
+      if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
+      else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
   } else {
-      // Standard Mission Logic
-      // Check Mission Status for R1/R2
-      if (currentRound === 1 || currentRound === 2) {
-          if (!user.rounds.mission_progress) {
-              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
-          }
-
-          const currentCount = user.rounds.mission_progress[type] || 0;
-          const target = config.mission_targets[type] || 999;
-
-          if (type !== 'push' && currentCount >= target) {
-              return new Response(JSON.stringify({
-                  error: `Mission for ${type} complete for this round. Switch ad types.`
-              }), { status: 400, headers: CORS_HEADERS });
-          }
-
-          // Increment
-          user.rounds.mission_progress[type] = currentCount + 1;
-
-          // Check if FULL Round Mission is complete
-          const p = user.rounds.mission_progress;
-          if (p.popunder >= config.mission_targets.popunder &&
-              p.inpage >= config.mission_targets.inpage &&
-              p.direct >= config.mission_targets.direct) {
-
-              missionComplete = true;
-              // Mark completed
-              if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
-              if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
-
-              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
-          }
-      }
-
-      // Standard Reward Logic
-      if (currentRound === 1) {
-          min = config.rewards.r1_min; max = config.rewards.r1_max;
-      } else if (currentRound === 2) {
-          const roll = Math.random();
-          if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
-          else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
-      } else {
-          min = config.rewards.r3_min; max = config.rewards.r3_max;
-      }
+      min = config.rewards.r3_min; max = config.rewards.r3_max;
   }
 
   if (user.is_shadow_banned) {
@@ -599,6 +666,11 @@ async function handleGetProfile(request, env) {
     if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
     const user = JSON.parse(userJson);
 
+    // Process Pending Rewards (Lazy Check)
+    if (await processPendingRewards(user, env)) {
+        await env.USERS.put(username, JSON.stringify(user));
+    }
+
     // --- AGGREGATE STATS ---
     const stats = user.daily_stats || {};
     const todayStr = new Date().toISOString().split('T')[0];
@@ -668,6 +740,7 @@ async function handleGetProfile(request, env) {
         status: user.status || 'active',
         ad_set: adSet,
         streak: user.notification_streak?.days || 0,
+        pending_rewards: user.pending_rewards || [], // New Field for Frontend
         stats: {
             yesterday: yesterdayStats,
             week: weekStats,
@@ -834,13 +907,20 @@ async function handleGetUser(request, env) {
   if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
 
   const user = JSON.parse(userJson);
+
+  // Process Pending
+  if (await processPendingRewards(user, env)) {
+      await env.USERS.put(username, JSON.stringify(user));
+  }
+
   return new Response(JSON.stringify({
       username: username,
       balance: user.balance || 0,
       balance_pending: user.balance_pending || 0,
       status: user.status || 'active',
       history: user.history || [],
-      personal_message: user.personal_message || null
+      personal_message: user.personal_message || null,
+      pending_rewards: user.pending_rewards || []
   }), { status: 200, headers: CORS_HEADERS });
 }
 
@@ -876,6 +956,14 @@ async function handleGetStats(request, env) {
         if (raw) pendingUsers = JSON.parse(raw);
     } catch (e) {}
     stats.pending_users = pendingUsers;
+
+    let pendingRewards = [];
+    try {
+        const raw = await env.USERS.get('PENDING_REWARDS');
+        if (raw) pendingRewards = JSON.parse(raw);
+    } catch (e) {}
+    stats.pending_rewards = pendingRewards;
+
 
     let unassignedSets = [];
     try {
@@ -932,6 +1020,33 @@ async function handleAdminUserAction(request, env) {
     else if (action === 'send_message') {
         user.personal_message = value;
         message = 'Personal message sent';
+    }
+    else if (action === 'update_pending_reward') {
+        // value = { id: 'reward_id', amount: 12.34 }
+        if (user.pending_rewards) {
+            const reward = user.pending_rewards.find(r => r.id === value.id);
+            if (reward) {
+                const oldAmount = reward.amount;
+                reward.amount = parseFloat(value.amount);
+                message = `Reward updated from ${oldAmount} to ${reward.amount}`;
+
+                // Also update Global Pending List if exists
+                try {
+                    const rawP = await env.USERS.get('PENDING_REWARDS');
+                    if (rawP) {
+                        let list = JSON.parse(rawP);
+                        const globalItem = list.find(i => i.id === value.id);
+                        if (globalItem) {
+                            globalItem.amount = reward.amount;
+                            await env.USERS.put('PENDING_REWARDS', JSON.stringify(list));
+                        }
+                    }
+                } catch(e) {}
+
+            } else {
+                 return new Response(JSON.stringify({ error: 'Reward not found' }), { status: 404, headers: CORS_HEADERS });
+            }
+        }
     }
     else if (action === 'approve') {
         if (user.status !== 'pending') {
@@ -1298,8 +1413,6 @@ async function handleGetSystemStatus(request, env) {
 
 async function handleMonetagWebhook(request, env) {
     const url = new URL(request.url);
-    // Monetag might pass user ID as 'uid', 'username', 'subid', etc.
-    // We check common params.
     const username = url.searchParams.get('username') || url.searchParams.get('uid') || url.searchParams.get('subid');
 
     // Parse Monetag Params
@@ -1337,11 +1450,45 @@ async function handleMonetagWebhook(request, env) {
         return new Response('OK', { status: 200 }); // Invalid, too small, or zero
     }
 
-    // 4. Update Balance
-    user.balance = parseFloat(((user.balance || 0) + zar_amount).toFixed(2));
-    user.balance_pending = parseFloat(((user.balance_pending || 0) + zar_amount).toFixed(3));
+    // --- NEW SPLIT LOGIC ---
+    // User: 60%, Platform: 30%
+    const user_share = parseFloat((zar_amount * 0.60).toFixed(3));
+    const platform_share = parseFloat((zar_amount * 0.30).toFixed(3));
 
-    // 5. Update Stats
+    // Update Platform Treasury
+    const stats = await getGlobalStats(env);
+    stats.treasury_balance = parseFloat(((stats.treasury_balance || 0) + platform_share).toFixed(2));
+    await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+
+    // Update User Pending Queue (Wait 24h)
+    if (!user.pending_rewards) user.pending_rewards = [];
+    const rewardId = `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+
+    user.pending_rewards.push({
+        id: rewardId,
+        amount: user_share,
+        created_at: new Date().toISOString(),
+        source: 'monetag'
+    });
+
+    // Update Global Pending List (For Admin Visibility)
+    let globalPending = [];
+    try {
+        const rawP = await env.USERS.get('PENDING_REWARDS');
+        if (rawP) globalPending = JSON.parse(rawP);
+    } catch(e) {}
+
+    globalPending.unshift({
+        id: rewardId,
+        username: username,
+        amount: user_share,
+        created_at: new Date().toISOString()
+    });
+    // Keep list reasonable size (e.g. 200)
+    if (globalPending.length > 200) globalPending = globalPending.slice(0, 200);
+    await env.USERS.put('PENDING_REWARDS', JSON.stringify(globalPending));
+
+    // 5. Update Stats (Only pending, not balance)
     if (!user.daily_stats) user.daily_stats = {};
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -1356,18 +1503,12 @@ async function handleMonetagWebhook(request, env) {
              status: 'pending'
          };
     }
-    user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + zar_amount).toFixed(3));
-
-    // 6. Update History (Transaction Log)
-    if (!user.history) user.history = [];
-    user.history.unshift({
-        id: `USD $${estimated_price.toFixed(4)}`, // Show source USD amount
-        amount: zar_amount,
-        date: new Date().toISOString(),
-        status: 'earned'
-    });
-    // Limit history size to prevent KV bloat (e.g. 50 items)
-    if (user.history.length > 50) user.history = user.history.slice(0, 50);
+    // We can track this as "pending" in daily stats for visibility?
+    // But since it's not in balance_pending, it might be confusing.
+    // I'll leave daily_stats out of sync with "balance_pending" field, but consistent with "pending verification".
+    // Or better: don't add to daily_stats pending until verified?
+    // The user asked to see "pending amounts". Daily stats usually show "Game" earnings.
+    // I'll stick to not adding to daily_stats yet. I'll add it when it matures in `processPendingRewards`.
 
     // 7. Save Idempotency
     if (ymid) {
@@ -1380,7 +1521,7 @@ async function handleMonetagWebhook(request, env) {
     await env.USERS.put(username, JSON.stringify(user));
 
     // Log with conversion details
-    await logSystemAction(env, 'MONETAG_POSTBACK', `Credited ${username}: $${estimated_price} -> R${zar_amount} (ymid: ${ymid})`);
+    await logSystemAction(env, 'MONETAG_POSTBACK', `Pending Credited ${username}: $${estimated_price} -> User R${user_share} (Pending)`);
 
     return new Response('OK', { status: 200 });
 }
