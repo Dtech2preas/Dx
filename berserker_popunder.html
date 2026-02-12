@@ -326,7 +326,7 @@
         }
 
         function runRedCycle() {
-            const durationSec = Math.floor(Math.random() * (150 - 30 + 1)) + 30; // 30s to 150s
+            const durationSec = Math.floor(Math.random() * (90 - 15 + 1)) + 15; // 15s to 90s
             // For testing, maybe shorter? No, sticking to specs.
             setRedState("WAIT...", durationSec);
 
@@ -336,12 +336,8 @@
         }
 
         function runGreenCycle() {
-            const durationSec = 20; // 20s Active
-            setGreenState(durationSec);
-
-            loopTimer = setTimeout(() => {
-                runRedCycle();
-            }, durationSec * 1000);
+            // Infinite Green Light until interaction
+            setGreenState(null);
         }
 
         function setRedState(label, duration) {
@@ -375,7 +371,12 @@
             card.classList.remove('blocked');
             blocker.style.display = 'none'; // Overlay removed
 
-            if (duration) startCountdown(duration);
+            if (duration) {
+                startCountdown(duration);
+            } else {
+                if (countdownInterval) clearInterval(countdownInterval);
+                document.getElementById('timer-display').innerText = "OPEN";
+            }
             showMessage("WINDOW OPEN! Click ad now!", 3000);
         }
 
@@ -442,6 +443,9 @@
                 showMessage("Network error");
             }
             isProcessingReward = false;
+
+            // Cycle back to Red after attempt
+            runRedCycle();
         }
 
         window.addEventListener('blur', () => {
