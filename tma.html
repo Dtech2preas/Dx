@@ -239,10 +239,6 @@
         let autoInterval = null;
         let nextTaskTime = Date.now() + 300000; // 5 mins
 
-        // Ad Validation Tracking
-        let currentAdType = null;
-        let waitingForTabReturn = false;
-
         async function init() {
             let saved = sessionStorage.getItem('ad_user');
             if (!saved) {
@@ -347,22 +343,6 @@
             }
         }
 
-        // Visibility Change Listener for Ad Validation
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                if (currentAdType) {
-                    waitingForTabReturn = true;
-                }
-            } else {
-                if (waitingForTabReturn && currentAdType) {
-                    waitingForTabReturn = false;
-                    // User returned to the tab after clicking the ad, claim reward
-                    claimReward(currentAdType);
-                    currentAdType = null;
-                }
-            }
-        });
-
         // --- Manual Ad Logic ---
         function triggerAd(type) {
             if (isProcessing) return;
@@ -396,28 +376,19 @@
 
             if (adPromise) {
                 adPromise.then(() => {
-                    // Start waiting for the user to leave the tab and return
-                    currentAdType = type;
-                    waitingForTabReturn = false; // Reset just in case
-                    isProcessing = false; // Allow other interactions while waiting
-
-                    // Fallback: If they don't click anything within 30 seconds, cancel waiting
-                    setTimeout(() => {
-                        if (currentAdType === type && !waitingForTabReturn) {
-                            currentAdType = null;
-                            waitingForTabReturn = false;
-                        }
-                    }, 30000);
+                    // Ad completed/closed successfully, claim reward immediately
+                    claimReward(type);
                 }).catch(e => {
                     console.error("Ad Error:", e);
-                    showToast("Ad closed.", true);
+                    showToast("Ad closed or failed.", true);
                     isProcessing = false;
                 });
+            } else {
+                isProcessing = false;
             }
         }
 
         async function claimReward(type) {
-            isProcessing = true;
             if (type !== 'monetag_inapp') showToast("Verifying reward...");
 
             try {
