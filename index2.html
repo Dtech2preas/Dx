@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script src='//libtl.com/sdk.js' data-zone='10600930' data-sdk='show_10600930'></script>
+     <meta name="monetag" content="d49fd91943a61dbefcad4d9521aaa91b">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Seakwa Jonas Mochebane, known online as PREASX24, is a South African technology founder and digital builder. He is the visionary founder and driving force behind the DTECH ecosystem — a growing network of practical, community-oriented digital platforms.">
+    <meta name="author" content="Seakwa Jonas Mochebane (PREASX24)">
+    <meta name="keywords" content="Seakwa Jonas Mochebane, PREASX24, DTECH, South Africa, Technology Founder, Digital Builder, D-TECH Ecosystem">
+    <title>DTech Student Rewards Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Brand Palette - Blue & Black Theme */
+            --primary: #3b82f6;      /* Bright Tech Blue */
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --accent: #d4af37;       /* Metallic Gold */
+            --accent-hover: #b5952f;
+            --bg: #020617;           /* Deep Black/Blue */
+            --surface: #0f172a;      /* Slate 900 (Dark Blue) */
+            --surface-hover: #1e293b;
+            --text-main: #f8fafc;    /* White-ish */
+            --text-light: #94a3b8;   /* Slate 400 */
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #1e293b;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Hero Section --- */
+        .hero-section {
+            width: 100%;
+            position: relative;
+            background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            padding: 3rem 0 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-content h1 {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .hero-content p {
+            margin: 10px 0 0;
+            color: var(--primary-light);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        /* --- Layout --- */
+        main {
+            width: 100%;
+            max-width: 500px; /* Constrained for focus */
+            padding: 0 20px;
+            box-sizing: border-box;
+            flex-grow: 1;
+            z-index: 10;
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.5;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2, h3 {
+            color: var(--primary);
+            margin-top: 0;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* --- Forms & Inputs --- */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: var(--radius);
+            border: 1px solid #334155;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            background: #1e293b;
+            color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #f8fafc;
+            color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        /* --- Bento Grid Layout --- */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto auto;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .bento-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            min-height: 100px;
+        }
+
+        .bento-item:hover {
+            transform: translateY(-5px);
+            background: var(--surface-hover);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3);
+        }
+
+        .bento-item:active {
+            transform: scale(0.98);
+        }
+
+        .bento-item .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .bento-item .label {
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bento-item .sub {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* Specific Bento Items */
+        .item-berserker {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), var(--surface));
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+        .item-berserker:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.3);
+        }
+        .item-berserker .icon { font-size: 2.5rem; }
+        .item-berserker .label { color: var(--accent); font-size: 1.2rem; }
+
+        .item-task {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), var(--surface));
+            border-color: rgba(59, 130, 246, 0.3);
+            cursor: default; /* Contains buttons */
+        }
+        .item-task:hover { transform: none; background: var(--surface); } /* Less movement for interactive card */
+        .action-btn {
+            background: var(--primary); border: none; color: white;
+            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; margin: 0 5px; transition: background 0.2s;
+        }
+        .action-btn:hover { background: var(--primary-light); }
+        .action-btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+        .action-btn.secondary { background: transparent; border: 1px solid var(--border); }
+        .action-btn.secondary:hover { border-color: var(--danger); color: var(--danger); }
+        .action-btn.secondary:disabled { border-color: #334155; color: #94a3b8; }
+
+
+        .item-withdraw {
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .item-withdraw:hover { border-color: var(--success); }
+        .item-withdraw .label { color: var(--success); }
+
+        .item-sync {
+            grid-column: span 2;
+            flex-direction: row;
+            min-height: 60px;
+            gap: 10px;
+            background: transparent;
+            border: 1px dashed var(--border);
+        }
+        .item-sync .icon { font-size: 1.2rem; margin-bottom: 0; }
+        .item-sync:hover { background: rgba(255,255,255,0.03); border-color: var(--text-light); }
+
+
+        /* --- Auth Buttons (Legacy Style for Auth Form) --- */
+        .btn-group { display: flex; gap: 12px; margin-top: 10px; }
+        .auth-btn {
+            background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: var(--radius); cursor: pointer;
+            font-weight: 600; flex: 1; transition: all 0.2s;
+        }
+        .auth-btn:hover { background: var(--primary-light); }
+        .auth-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
+        .auth-btn.secondary:hover { border-color: var(--primary); color: white; }
+
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .modal-card {
+            background: var(--surface); border: 1px solid var(--accent);
+            padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;
+            max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            color: var(--text-main); position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 15px;
+            background: transparent; border: none; color: var(--text-light);
+            font-size: 1.5rem; cursor: pointer;
+        }
+
+        /* --- Stats Display --- */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-small { height: 35px; width: auto; opacity: 0.8; }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--surface), #1e293b);
+            padding: 25px;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        /* Gold shine effect */
+        .balance-card::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom right, transparent, rgba(255,255,255,0.03), transparent);
+            transform: rotate(45deg); pointer-events: none;
+        }
+
+        .balance-label {
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-light); margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 3rem; font-weight: 700; color: var(--accent);
+            font-family: 'Cinzel', serif; text-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+        }
+
+        /* --- Alerts --- */
+        .alert {
+            padding: 14px; border-radius: var(--radius); margin-top: 20px;
+            font-size: 0.9rem; display: none; text-align: center; font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .alert.success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .alert.error { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .alert.info { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border: 1px solid rgba(59, 130, 246, 0.2); }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 50px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+            width: 100%;
+            background: #020617;
+        }
+        .footer-brand {
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        .footer-tagline {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>D-TECH</h1>
+            <p>Unlock Potential. <br>Earn Rewards.</p>
+        </div>
+    </div>
+
+    <main>
+        <div id="personal-msg-banner" class="alert info" style="display:none; text-align:left; margin-bottom: 20px; border-color: var(--accent); color: var(--text-main); background: rgba(212, 175, 55, 0.25); border: 1px solid var(--accent);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <strong style="color:var(--accent);">📩 MESSAGE:</strong> <span id="personal-msg-text"></span>
+                </div>
+                <button onclick="dismissPersonalMsg()" style="background:none; border:none; color:var(--text-light); cursor:pointer; font-size:1.1rem; line-height:1;">&times;</button>
+            </div>
+        </div>
+
+        <div id="motd-banner" class="alert info" style="display:none; text-align:left; margin-bottom: 20px; border-color: var(--accent); color: var(--text-main); background: rgba(212, 175, 55, 0.1);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <strong style="color:var(--accent);">📢 ANNOUNCEMENT:</strong> <span id="motd-text"></span>
+                </div>
+                <button onclick="document.getElementById('motd-banner').style.display='none'" style="background:none; border:none; color:var(--text-light); cursor:pointer; font-size:1.1rem; line-height:1;">&times;</button>
+            </div>
+        </div>
+
+        <div id="auth-section" class="card">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="logo.png" alt="D-Tech Logo" style="width: 80px; height: auto;">
+            </div>
+            <h2 style="text-align: center;">Access Portal</h2>
+            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px; text-align: center;">
+                Secure login for student reward verification.
+            </p>
+
+            <label for="username">Student ID / Username</label>
+            <input id="username" type="text" placeholder="Enter identification" />
+
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter secure key" />
+
+            <div style="margin-bottom: 20px; text-align: left; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px;">
+                <label style="margin-bottom: 10px; color: var(--accent);">Select Dashboard Version:</label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; font-size: 0.9rem;">
+                        <input type="radio" name="dashboard_mode" value="web" checked style="width: auto; margin: 0 8px 0 0;">
+                        Web Dashboard
+                    </label>
+                    <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; font-size: 0.9rem;">
+                        <input type="radio" name="dashboard_mode" value="tma" style="width: auto; margin: 0 8px 0 0;">
+                        Telegram Mini App
+                    </label>
+                </div>
+            </div>
+
+            <div id="reg-fields" style="display:none; animation: fadeIn 0.4s ease;">
+                <label for="email">Email Address</label>
+                <input id="email" type="text" placeholder="name@example.com" />
+
+                <label for="whatsapp">WhatsApp Number</label>
+                <input id="whatsapp" type="text" placeholder="+27..." />
+                <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:15px; margin-top:-10px;">
+                    * We recommend using your WhatsApp number for faster approval.
+                </div>
+            </div>
+
+            <div id="ref-display" style="display:none; color:var(--accent); font-size:0.8rem; margin-bottom:15px; text-align:center;">
+                Referred by: <span id="ref-username" style="font-weight:bold;"></span>
+            </div>
+
+            <div class="btn-group">
+                <button id="reg-btn" onclick="handleRegister()" class="auth-btn secondary">New Student</button>
+                <button id="login-btn" onclick="handleLogin()" class="auth-btn">Secure Login</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="openTerms()" style="background:none; border:none; color:var(--text-light); font-size:0.8rem; text-decoration:underline; padding:0; box-shadow:none; cursor: pointer;">
+                    Terms & Conditions
+                </button>
+            </div>
+        </div>
+
+        <div id="dashboard-section" style="display:none;">
+
+            <div class="card" style="padding: 20px;">
+                <div class="dashboard-header" style="margin-bottom: 10px; border-bottom: none;">
+                    <div style="font-weight:600; display: flex; align-items: center; color: var(--text-light);">
+                        Hello, <span id="display-username" style="color:var(--primary-light); margin-left: 5px; font-weight: 700;"></span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-size:0.75rem; cursor:pointer; margin-right: 10px; text-transform: uppercase;">Logout</button>
+                        <img src="logo.png" alt="Logo" class="logo-small">
+                    </div>
+                </div>
+
+                <div class="balance-card">
+                    <div class="balance-label">Current Balance</div>
+                    <div class="balance-amount">R <span id="display-balance">0.00</span></div>
+                </div>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Berserker: Main Action -->
+                <a href="berserker.html" class="bento-item item-berserker">
+                    <span class="icon">⚔️</span>
+                    <span class="label">Berserker Mode</span>
+                    <span class="sub">High Yield Tasks</span>
+                </a>
+
+                <!-- Standard Task (Restored) -->
+                <div class="bento-item item-task">
+                    <span class="icon">⚡</span>
+                    <span class="label">Quick Task</span>
+                    <span class="sub">Standard Yield (15s)</span>
+
+                    <div id="timer-status" style="margin: 10px 0; font-weight:bold; color:var(--accent); min-height: 20px;"></div>
+
+                    <div class="btn-group" style="width:100%; justify-content:center; margin-top:0;">
+                         <button id="watch-btn" onclick="startAdWatch()" class="action-btn">Start</button>
+                         <button id="cancel-ad-btn" onclick="cancelAdWatch()" class="action-btn secondary" disabled>Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Profile -->
+                <a href="profile.html" class="bento-item">
+                    <span class="icon">👤</span>
+                    <span class="label">My Profile</span>
+                    <span class="sub">Stats & Info</span>
+                </a>
+
+                <!-- Withdraw -->
+                <a href="withdraw.html" class="bento-item item-withdraw">
+                    <span class="icon">💸</span>
+                    <span class="label">Withdraw</span>
+                    <span class="sub">Cash Out</span>
+                </a>
+
+                <!-- Sync -->
+                <div onclick="refreshBalance()" class="bento-item item-sync">
+                    <span class="icon">🔄</span>
+                    <span class="label" style="font-size: 0.85rem;">Sync Balance</span>
+                </div>
+            </div>
+
+             <div style="text-align:center; margin-top:30px; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                 <a href="guide.html" style="color:var(--text-light); text-decoration:none; font-size: 0.85rem; border-bottom: 1px dotted var(--text-light);">How To Use Guide</a>
+                 <a href="admin.html" style="color:#334155; font-size:0.75rem; text-decoration:none;">Admin Console</a>
+            </div>
+
+        </div>
+
+        <div id="message" class="alert"></div>
+    </main>
+
+    <footer>
+        <div class="footer-brand">MADE BY PREASX24</div>
+        <div class="footer-tagline">"Empowering the youth through digital innovation"</div>
+    </footer>
+
+    <!-- Terms Modal -->
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeTerms()">&times;</button>
+            <h2 style="text-align:center; color:var(--accent); font-family:'Cinzel', serif;">Terms & Conditions</h2>
+
+            <div style="text-align:center; margin-bottom:20px;">
+                <h3 style="margin:0; font-size:1.2rem; color:var(--primary);">D-TECH</h3>
+                <div style="font-size:0.85rem; color:var(--text-light);">Dynamic Tech</div>
+                <div style="font-style:italic; margin-top:8px; color:#cbd5e1;">"Empowering the youth through digital innovation"</div>
+                <div style="font-size:0.75rem; margin-top:5px; color:var(--text-light);">Managed by <strong>PREASX24</strong></div>
+            </div>
+
+            <div style="font-size:0.9rem; line-height:1.6;">
+                <p><strong>1. Acceptance:</strong> By registering and using this platform, you agree to these terms.</p>
+                <p><strong>2. Account Security:</strong> You are responsible for maintaining the security of your account. Use a strong password.</p>
+                <p><strong>3. Fair Usage:</strong> Automated bots, scripts, or any form of exploitation to bypass verification systems are strictly prohibited and will result in a permanent ban.</p>
+                <p><strong>4. Rewards:</strong> All rewards are subject to verification. We reserve the right to withhold payments for suspicious activity.</p>
+                <p><strong>5. Privacy:</strong> Your data is collected solely for the purpose of reward attribution and payout verification.</p>
+            </div>
+
+            <div style="margin-top:20px; text-align:center;">
+                <button onclick="closeTerms()" class="auth-btn">I Agree</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- CONFIG ----------
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+        const AD_LINK = "https://otieu.com/4/10205357";
+
+        // ---------- STATE ----------
+        let currentUser = null;
+        let adStartTime = null;
+        let adWindow = null;
+        let timerInterval = null;
+        let referralCode = null;
+
+        // ---------- UTILS ----------
+        function showMessage(msg, type = 'info') {
+          const el = document.getElementById('message');
+          el.innerText = msg;
+          el.className = `alert ${type}`;
+          el.style.display = 'block';
+
+          // Auto hide success/info, keep error
+          if(type !== 'error') {
+              setTimeout(() => { el.style.display = 'none'; }, 4000);
+          }
+        }
+
+        async function fetchJson(path, opts = {}) {
+          const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                          ? 'http://localhost:8000'
+                          : API_URL;
+
+          const url = `${baseUrl}${path}`;
+          const defaultHeaders = { 'Content-Type': 'application/json' };
+          const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
+
+          if (safeOpts.body && !safeOpts.headers['Content-Type']) {
+            safeOpts.headers['Content-Type'] = 'application/json';
+          }
+
+          try {
+            const res = await fetch(url, safeOpts);
+            let data = null;
+            try { data = await res.json(); } catch (e) {}
+            return { ok: res.ok, status: res.status, data, res };
+          } catch (e) {
+            console.error(e);
+            return { ok: false, status: 0, data: null };
+          }
+        }
+
+        function setAuthUI(loggedIn) {
+          document.getElementById('auth-section').style.display = loggedIn ? 'none' : 'block';
+          document.getElementById('dashboard-section').style.display = loggedIn ? 'block' : 'none';
+
+          if (!loggedIn) {
+            document.getElementById('display-username').innerText = '';
+            document.getElementById('display-balance').innerText = '0.00';
+          }
+        }
+
+        // ---------- AUTH ----------
+        function openTerms() {
+            document.getElementById('terms-modal').style.display = 'flex';
+        }
+        function closeTerms() {
+            document.getElementById('terms-modal').style.display = 'none';
+        }
+
+        async function handleRegister() {
+          const regFields = document.getElementById('reg-fields');
+          const regBtn = document.getElementById('reg-btn');
+
+          // Step 1: Show Fields
+          if (regFields.style.display === 'none') {
+              regFields.style.display = 'block';
+              regBtn.innerText = 'Confirm Registration';
+              document.getElementById('login-btn').style.display = 'none';
+              return showMessage('Please complete contact details for approval.', 'info');
+          }
+
+          // Step 2: Submit
+          const u = document.getElementById('username').value.trim();
+          const p = document.getElementById('password').value.trim();
+          const e = document.getElementById('email').value.trim();
+          const w = document.getElementById('whatsapp').value.trim();
+
+          if (!u || !p || !e || !w) return showMessage('All fields are required.', 'error');
+
+          // Validation
+          if (u.length <= 5) return showMessage('Username must be more than 5 characters.', 'error');
+          if (p.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
+
+          const payload = { username: u, password: p, email: e, whatsapp: w };
+          if(referralCode) payload.referred_by = referralCode;
+
+          const res = await fetchJson('/register', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+              showMessage('Registration Pending. Please wait for admin approval.', 'success');
+              // Reset UI
+              setTimeout(() => {
+                  window.location.reload();
+              }, 3000);
+          }
+          else showMessage(res.data?.error || 'Registration failed', 'error');
+        }
+
+        async function handleLogin() {
+          const u = document.getElementById('username').value.trim();
+          const p = document.getElementById('password').value.trim();
+          if (!u || !p) return showMessage('Credentials required.', 'error');
+
+          const res = await fetchJson('/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: u, password: p })
+          });
+
+          if (res.ok && res.data) {
+            // Check Status
+            if (res.data.status === 'pending') {
+                const tempUser = { username: u, status: 'pending' };
+                sessionStorage.setItem('ad_user', JSON.stringify(tempUser));
+                window.location.href = 'pending.html';
+                return;
+            }
+
+            currentUser = {
+              username: u,
+              balance: res.data.balance || 0,
+              history: res.data.history || [],
+              token: res.data.token,
+              status: res.data.status
+            };
+            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+            updateUI();
+
+            if (res.data.personal_message) {
+                showPersonalMsg(res.data.personal_message);
+            }
+
+            showMessage('Authentication Successful.', 'success');
+
+            // Redirect if TMA mode selected
+            const mode = document.querySelector('input[name="dashboard_mode"]:checked').value;
+            if (mode === 'tma') {
+                setTimeout(() => window.location.href = 'tma.html', 500);
+            }
+
+          } else {
+            showMessage(res.data?.error || 'Invalid credentials.', 'error');
+          }
+        }
+
+        function logout() {
+          currentUser = null;
+          sessionStorage.removeItem('ad_user');
+          updateUI();
+        }
+
+        async function refreshBalance() {
+          if (!currentUser) return;
+          const icon = document.querySelector('.item-sync .icon');
+          if(icon) icon.style.transform = "rotate(360deg)";
+
+          const res = await fetchJson(`/user?username=${encodeURIComponent(currentUser.username)}`, { method: 'GET' });
+          if (res.ok && res.data) {
+             if (res.data.status === 'pending') {
+                 window.location.href = 'pending.html';
+                 return;
+             }
+            currentUser.balance = res.data.balance;
+            currentUser.history = res.data.history || [];
+            sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+            updateUI();
+
+            if (res.data.personal_message) {
+                showPersonalMsg(res.data.personal_message);
+            } else {
+                document.getElementById('personal-msg-banner').style.display = 'none';
+            }
+
+            showMessage('Balance Synced', 'success');
+          }
+          if(icon) setTimeout(() => icon.style.transform = "none", 500);
+        }
+
+        function updateUI() {
+          if (currentUser) {
+            setAuthUI(true);
+            document.getElementById('display-username').innerText = currentUser.username;
+            const balStr = (currentUser.balance || 0).toFixed(2);
+            document.getElementById('display-balance').innerText = balStr;
+          } else {
+            setAuthUI(false);
+          }
+        }
+
+        // ---------- ADS ----------
+        function startAdWatch() {
+          if (!currentUser) return showMessage('Session expired. Login again.', 'error');
+
+          showMessage('Task Initiated. Verifying...', 'info');
+          adStartTime = Date.now();
+          adWindow = window.open(AD_LINK, '_blank');
+
+          document.getElementById('watch-btn').disabled = true;
+          document.getElementById('watch-btn').innerText = 'Verifying...';
+          document.getElementById('cancel-ad-btn').disabled = false;
+
+          // Visual Timer
+          let timeLeft = 15;
+          document.getElementById('timer-status').innerText = `Time Remaining: ${timeLeft}s`;
+          if(timerInterval) clearInterval(timerInterval);
+
+          timerInterval = setInterval(() => {
+              timeLeft--;
+              if(timeLeft >= 0) {
+                  document.getElementById('timer-status').innerText = `Time Remaining: ${timeLeft}s`;
+              } else {
+                  document.getElementById('timer-status').innerText = `Processing...`;
+              }
+          }, 1000);
+        }
+
+        function cancelAdWatch() {
+          adStartTime = null;
+          if (adWindow) adWindow.close();
+          if(timerInterval) clearInterval(timerInterval);
+          resetAdUI();
+          showMessage('Task Aborted.', 'info');
+        }
+
+        function resetAdUI() {
+            document.getElementById('watch-btn').disabled = false;
+            document.getElementById('watch-btn').innerText = 'Start';
+            document.getElementById('cancel-ad-btn').disabled = true;
+            document.getElementById('timer-status').innerText = '';
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+          if (document.visibilityState === 'visible' && adStartTime) {
+            const elapsed = (Date.now() - adStartTime) / 1000;
+            adStartTime = null;
+            if (adWindow) adWindow.close();
+            if (timerInterval) clearInterval(timerInterval);
+
+            resetAdUI();
+
+            if (elapsed >= 15) {
+                await addPoints();
+            } else {
+                showMessage(`Verification Failed. Detected ${Math.floor(elapsed)}s of 15s required.`, 'error');
+            }
+          }
+        });
+
+        async function addPoints() {
+          const res = await fetchJson('/add-points', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: currentUser.username,
+                token: currentUser.token
+            })
+          });
+
+          if (res.ok) {
+              currentUser.balance = res.data.balance;
+              sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+              updateUI();
+              showMessage(`Task Verified. +R ${res.data.earned} credited.`, 'success');
+          } else {
+              // Handle specific errors
+              if(res.status === 429) {
+                 showMessage(res.data?.error || 'Please wait before next task.', 'error');
+              } else if(res.status === 503) {
+                 showMessage('Monthly Budget Reached. System paused until next month.', 'error');
+              } else {
+                 showMessage(res.data?.error || 'System error.', 'error');
+              }
+          }
+        }
+
+        // ---------- INIT ----------
+        async function checkSystemStatus() {
+            const res = await fetchJson('/system-status');
+            if (res.ok && res.data) {
+                if (res.data.motd) {
+                     const banner = document.getElementById('motd-banner');
+                     const text = document.getElementById('motd-text');
+                     if(banner && text) {
+                         text.innerText = res.data.motd;
+                         banner.style.display = 'block';
+                     }
+                }
+            }
+        }
+
+        function showPersonalMsg(msg) {
+            const banner = document.getElementById('personal-msg-banner');
+            const text = document.getElementById('personal-msg-text');
+            if(banner && text) {
+                text.innerText = msg;
+                banner.style.display = 'block';
+            }
+        }
+
+        async function dismissPersonalMsg() {
+            if(!currentUser) return;
+            const banner = document.getElementById('personal-msg-banner');
+            banner.style.display = 'none'; // Hide immediately
+
+            await fetchJson('/dismiss-message', {
+                method: 'POST',
+                body: JSON.stringify({ username: currentUser.username, token: currentUser.token })
+            });
+        }
+
+        (function init() {
+          // Check Status
+          checkSystemStatus();
+
+          // Check Referral
+          const urlParams = new URLSearchParams(window.location.search);
+          const ref = urlParams.get('ref');
+          if(ref) {
+              referralCode = ref;
+              const d = document.getElementById('ref-display');
+              document.getElementById('ref-username').innerText = ref;
+              d.style.display = 'block';
+          }
+
+          const saved = sessionStorage.getItem('ad_user');
+          if (saved) {
+            try {
+                currentUser = JSON.parse(saved);
+                if(currentUser.status === 'pending') {
+                    window.location.href = 'pending.html';
+                    return;
+                }
+                updateUI();
+                refreshBalance();
+            } catch(e) {
+                sessionStorage.removeItem('ad_user');
+            }
+          }
+        })();
+
+    </script>
+</body>
+</html>

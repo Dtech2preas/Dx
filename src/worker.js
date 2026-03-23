@@ -51,6 +51,8 @@ export default {
         return await handleLogin(request, env);
       } else if (path === '/add-points' && request.method === 'POST') {
         return await handleAddPoints(request, env);
+      } else if (path === '/generate-voucher' && request.method === 'POST') {
+        return await handleGenerateVoucher(request, env);
       } else if (path === '/redeem' && request.method === 'POST') {
         return await handleRedeem(request, env);
       } else if (path === '/user' && request.method === 'GET') {
@@ -786,6 +788,88 @@ async function handleGetProfile(request, env) {
             r2_cooldown_ms: r2Remaining,
             mission: user.rounds?.mission_progress || { popunder: 0, inpage: 0, direct: 0 }
         }
+    }), { status: 200, headers: CORS_HEADERS });
+}
+
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+
+async function handleGenerateVoucher(request, env) {
+    const { username, token, amount } = await request.json();
+
+    if (!username || !token || !amount) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: CORS_HEADERS });
+    }
+
+    const amountR = parseFloat(amount);
+    if (![10, 20, 30, 40, 50].includes(amountR)) {
+        return new Response(JSON.stringify({ error: 'Invalid voucher amount' }), { status: 400, headers: CORS_HEADERS });
+    }
+
+    const userJson = await env.USERS.get(username);
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+
+    const user = JSON.parse(userJson);
+    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+
+    if (user.withdrawal_disabled) {
+        return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: CORS_HEADERS });
+    }
+
+    const stats = await getGlobalStats(env);
+    if (!stats.system_status.withdrawals_enabled) {
+        return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: CORS_HEADERS });
+    }
+
+    if ((user.balance || 0) < amountR) {
+        return new Response(JSON.stringify({ error: 'Insufficient balance' }), { status: 400, headers: CORS_HEADERS });
+    }
+
+    // Deduct from balance
+    user.balance = parseFloat((user.balance - amountR).toFixed(2));
+
+    // Generate voucher code: x24-{4 chars}-{4 chars}
+    const voucherCode = `x24-${generateRandomString(4)}-${generateRandomString(4)}`;
+
+    // Create voucher object
+    const voucherData = {
+        worth: amountR,
+        is_used: false,
+        username: username,
+        created_at: new Date().toISOString()
+    };
+
+    // Store voucher in KV
+    await env.USERS.put(`VOUCHER:${voucherCode}`, JSON.stringify(voucherData));
+
+    // Record in history
+    if (!user.history) user.history = [];
+    user.history.unshift({
+        id: `VOUCHER-${Date.now()}`,
+        amount: amountR,
+        date: new Date().toISOString(),
+        status: 'issued',
+        source: 'voucher_withdrawal'
+    });
+
+    if (user.history.length > 50) user.history = user.history.slice(0, 50);
+
+    // Save user state
+    await env.USERS.put(username, JSON.stringify(user));
+
+    // Log the action
+    await logSystemAction(env, 'VOUCHER_GENERATED', `User ${username} generated ${amountR}R voucher ${voucherCode}`);
+
+    return new Response(JSON.stringify({
+        message: 'Voucher generated successfully',
+        voucher_code: voucherCode,
+        balance: user.balance
     }), { status: 200, headers: CORS_HEADERS });
 }
 
