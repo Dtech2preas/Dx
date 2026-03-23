@@ -115,6 +115,47 @@
             border-bottom: 1px dashed var(--muted);
         }
 
+        .withdraw-section {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border-radius: var(--radius);
+            border: 1px dashed rgba(212, 175, 55, 0.3);
+            text-align: center;
+        }
+
+        .withdraw-section h3 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .withdraw-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .withdraw-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .withdraw-btn:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         /* Pending List Styles */
         #pending-container {
             width: 100%; max-width: 400px;
@@ -166,13 +207,27 @@
         <div style="margin-top:10px; font-size:0.75rem; color:var(--muted);" id="auto-timer">Next task in: ...</div>
     </div>
 
+    <!-- Withdraw Vouchers Section -->
+    <div class="withdraw-section">
+        <h3>Withdraw DTECH Voucher</h3>
+        <div class="desc" style="margin-bottom: 15px;">Convert your balance to a DTECH voucher.</div>
+        <div class="withdraw-options">
+            <button class="withdraw-btn" onclick="requestVoucher(10)">10 R</button>
+            <button class="withdraw-btn" onclick="requestVoucher(20)">20 R</button>
+            <button class="withdraw-btn" onclick="requestVoucher(30)">30 R</button>
+            <button class="withdraw-btn" onclick="requestVoucher(40)">40 R</button>
+            <button class="withdraw-btn" onclick="requestVoucher(50)">50 R</button>
+        </div>
+        <div id="voucher-result" style="margin-top: 15px; font-weight: bold; color: var(--success); display: none; word-break: break-all;"></div>
+    </div>
+
     <!-- Pending Rewards Section -->
     <div id="pending-container">
         <h3 style="font-size:1rem; color:var(--muted); margin-bottom:10px;">Pending Verification</h3>
         <div id="pending-list"></div>
     </div>
 
-    <a href="index.html" class="nav-link">Log Out / Switch Mode</a>
+    <a href="#" onclick="logout()" class="nav-link">Log Out</a>
 
     <div id="toast">Reward Credited!</div>
 
@@ -357,6 +412,49 @@
                 showToast("Network Error", true);
             }
             isProcessing = false;
+        }
+
+        async function requestVoucher(amount) {
+            if (isProcessing) return;
+
+            if (!confirm(`Are you sure you want to withdraw ${amount}R as a DTECH voucher?`)) {
+                return;
+            }
+
+            isProcessing = true;
+            showToast("Generating voucher...");
+            document.getElementById('voucher-result').style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/generate-voucher`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        token: currentUser.token,
+                        amount: amount
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast("Voucher generated!", false);
+                    document.getElementById('voucher-result').innerText = `Voucher Code: ${data.voucher_code}`;
+                    document.getElementById('voucher-result').style.display = 'block';
+                    updateBalance(data.balance);
+                } else {
+                    showToast(data.error || "Withdrawal failed", true);
+                }
+            } catch (e) {
+                showToast("Network Error", true);
+            }
+            isProcessing = false;
+        }
+
+        function logout() {
+            sessionStorage.removeItem('ad_user');
+            window.location.href = 'index.html';
         }
 
         window.addEventListener('DOMContentLoaded', init);
