@@ -300,7 +300,7 @@ async function handleRegister(request, env) {
     passwordHash: passwordHash,
     balance: 0.00,
     balance_pending: 0.00,
-    status: 'pending',
+    status: 'active', // Changed from pending to active by default
     ad_set_id: null,
     email: email,
     whatsapp: whatsapp,
@@ -328,20 +328,20 @@ async function handleRegister(request, env) {
   stats.total_users += 1;
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
-  // Add to Pending List
-  let pendingList = [];
-  try {
-      const raw = await env.USERS.get('PENDING_USERS');
-      if (raw) pendingList = JSON.parse(raw);
-  } catch(e) {}
+  // // Add to Pending List - Disabled
+  // let pendingList = [];
+  // try {
+  //     const raw = await env.USERS.get('PENDING_USERS');
+  //     if (raw) pendingList = JSON.parse(raw);
+  // } catch(e) {}
 
-  pendingList.push({
-      username: username,
-      email: email,
-      whatsapp: whatsapp,
-      date: new Date().toISOString()
-  });
-  await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
+  // pendingList.push({
+  //     username: username,
+  //     email: email,
+  //     whatsapp: whatsapp,
+  //     date: new Date().toISOString()
+  // });
+  // await env.USERS.put('PENDING_USERS', JSON.stringify(pendingList));
 
   // Update Referrer Count
   if (validReferrer) {
@@ -585,19 +585,30 @@ async function handleAddPoints(request, env) {
       await env.USERS.put('RED_ZONE_USERS', JSON.stringify(redList));
   }
 
-  // Update User Pending Balance
-  user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
+  // // Update User Pending Balance
+  // user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
+  user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(3));
   user.daily_count = (user.daily_count || 0) + 1;
 
   // Track pending reward for auto-approval after 24h
-  if (!user.pending_rewards) user.pending_rewards = [];
-  user.pending_rewards.push({
+  // if (!user.pending_rewards) user.pending_rewards = [];
+  // user.pending_rewards.push({
+  //     id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+  //     amount: earnings,
+  //     created_at: new Date().toISOString(),
+  //     type: type,
+  //     round: currentRound
+  // });
+
+  if (!user.history) user.history = [];
+  user.history.unshift({
       id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
       amount: earnings,
-      created_at: new Date().toISOString(),
-      type: type,
-      round: currentRound
+      date: new Date().toISOString(),
+      status: 'approved',
+      source: 'web_instant'
   });
+  if(user.history.length > 50) user.history = user.history.slice(0, 50);
 
   // --- STATS LOGGING ---
   const todayStr = new Date().toISOString().split('T')[0];
@@ -610,17 +621,21 @@ async function handleAddPoints(request, env) {
           push: { pending: 0, approved: 0 },
           total_pending: 0,
           total_approved: 0,
-          status: 'pending'
+          status: 'approved' // Changed from pending to approved
       };
+  } else {
+      user.daily_stats[todayStr].status = 'approved';
   }
 
-  // Increment pending for specific type
+  // Increment approved for specific type
   if (!user.daily_stats[todayStr][type]) {
       // Safety init if schema drift
       user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
   }
-  user.daily_stats[todayStr][type].pending += earnings;
-  user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + earnings).toFixed(3));
+  // user.daily_stats[todayStr][type].pending += earnings;
+  // user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + earnings).toFixed(3));
+  user.daily_stats[todayStr][type].approved += earnings;
+  user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + earnings).toFixed(3));
 
   // Referral Commission
   let referralBonus = 0;
@@ -1584,14 +1599,15 @@ async function handleMonetagWebhook(request, env) {
     }
 
     // --- NEW SPLIT LOGIC ---
-    // User: 90%, Platform: 10%
-    const user_share = parseFloat((zar_amount * 0.90).toFixed(3));
-    const platform_share = parseFloat((zar_amount * 0.10).toFixed(3));
+  // // User: 90%, Platform: 10%
+  // const user_share = parseFloat((zar_amount * 0.90).toFixed(3));
+  // const platform_share = parseFloat((zar_amount * 0.10).toFixed(3));
+  const user_share = zar_amount; // 100% to the user now
 
     // Update Platform Treasury
     const stats = await getGlobalStats(env);
-    stats.treasury_balance = parseFloat(((stats.treasury_balance || 0) + platform_share).toFixed(2));
-    await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+  // stats.treasury_balance = parseFloat(((stats.treasury_balance || 0) + platform_share).toFixed(2));
+  // await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
     // Direct Credit to Balance (Immediate Availability)
     user.balance = parseFloat(((user.balance || 0) + user_share).toFixed(2));

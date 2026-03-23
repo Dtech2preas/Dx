@@ -278,7 +278,7 @@
             const res = await fetchJson('/register', { method: 'POST', body: JSON.stringify(payload) });
 
             if (res.ok) {
-                showMessage('Registration Pending. Please wait for admin approval.', 'success');
+                showMessage('Registration successful. You can now login.', 'success');
                 setTimeout(() => window.location.reload(), 3000);
             } else showMessage(res.data?.error || 'Registration failed', 'error');
         }
