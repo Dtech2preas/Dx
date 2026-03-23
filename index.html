@@ -202,6 +202,11 @@
             <label for="password">Password</label>
             <input id="password" type="password" placeholder="Enter secure key" />
 
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                <input type="checkbox" id="remember-me" style="width: auto; margin: 0; cursor: pointer;">
+                <label for="remember-me" style="margin: 0; cursor: pointer; text-transform: none; font-size: 0.9rem; color: var(--text-light);">Always remember me</label>
+            </div>
+
             <div id="reg-fields" style="display:none;">
                 <label for="email">Email Address</label>
                 <input id="email" type="text" placeholder="name@example.com" />
@@ -286,6 +291,8 @@
         async function handleLogin() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value.trim();
+            const rememberMe = document.getElementById('remember-me').checked;
+
             if (!u || !p) return showMessage('Credentials required.', 'error');
 
             const res = await fetchJson('/login', {
@@ -308,7 +315,13 @@
                     token: res.data.token,
                     status: res.data.status
                 };
-                sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+
+                if (rememberMe) {
+                    localStorage.setItem('ad_user', JSON.stringify(currentUser));
+                } else {
+                    sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
+                }
+
                 showMessage('Authentication Successful.', 'success');
 
                 // Redirect to TMA dashboard
@@ -323,7 +336,11 @@
             const ref = urlParams.get('ref');
             if (ref) referralCode = ref;
 
-            const saved = sessionStorage.getItem('ad_user');
+            let saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                saved = localStorage.getItem('ad_user');
+            }
+
             if (saved) {
                 try {
                     const currentUser = JSON.parse(saved);
@@ -334,6 +351,7 @@
                     }
                 } catch(e) {
                     sessionStorage.removeItem('ad_user');
+                    localStorage.removeItem('ad_user');
                 }
             }
         })();

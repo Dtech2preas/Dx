@@ -440,28 +440,100 @@ async function handleAddPoints(request, env) {
       return new Response(JSON.stringify({ error: 'Account frozen.' }), { status: 403, headers: CORS_HEADERS });
   }
 
-  // Handle Monetag Types (Return Pending Status)
-  if (type.startsWith('monetag_')) {
-      // We don't credit balance here anymore. Just acknowledge logic.
-      // We can update "daily_count" if we want, but "balance_pending" should rely on postback.
-      user.daily_count = (user.daily_count || 0) + 1;
-      await env.USERS.put(username, JSON.stringify(user));
-
-      return new Response(JSON.stringify({
-          message: 'Ad tracked. Reward pending verification.',
-          balance: user.balance,
-          balance_pending: user.balance_pending,
-          earned: 0,
-          pending_verification: true
-      }), { status: 200, headers: CORS_HEADERS });
-  }
-
   const stats = await getGlobalStats(env);
   if (stats.system_status.freeze_rewards) {
        return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
   }
 
   const config = await getConfig(env);
+
+  // Handle Monetag Types (Instant Random Reward 0.01 - 1.00)
+  if (type.startsWith('monetag_')) {
+      let earnings = parseFloat((Math.random() * (1.00 - 0.01) + 0.01).toFixed(3));
+
+      if (stats.system_status.emergency_cut) {
+          earnings = parseFloat((earnings * 0.5).toFixed(3));
+      }
+
+      const totalCommitment = stats.paid + stats.liability;
+      if (totalCommitment + earnings > config.monthly_budget) {
+          return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
+      }
+
+      stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
+      stats.ads_today += 1;
+      stats.rewards_today = parseFloat((stats.rewards_today + earnings).toFixed(2));
+      await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+
+      user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(3));
+      user.daily_count = (user.daily_count || 0) + 1;
+
+      if (!user.history) user.history = [];
+      user.history.unshift({
+          id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+          amount: earnings,
+          date: new Date().toISOString(),
+          status: 'approved',
+          source: 'monetag_instant'
+      });
+      if(user.history.length > 50) user.history = user.history.slice(0, 50);
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (!user.daily_stats) user.daily_stats = {};
+      if (!user.daily_stats[todayStr]) {
+          user.daily_stats[todayStr] = {
+              popunder: { pending: 0, approved: 0 },
+              inpage: { pending: 0, approved: 0 },
+              direct: { pending: 0, approved: 0 },
+              push: { pending: 0, approved: 0 },
+              total_pending: 0,
+              total_approved: 0,
+              status: 'approved'
+          };
+      } else {
+          user.daily_stats[todayStr].status = 'approved';
+      }
+
+      if (!user.daily_stats[todayStr][type]) {
+          user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
+      }
+      user.daily_stats[todayStr][type].approved += earnings;
+      user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + earnings).toFixed(3));
+
+      // Referral Commission
+      let referralBonus = 0;
+      if (user.referred_by) {
+          referralBonus = parseFloat((earnings * 0.05).toFixed(3)); // 5%
+
+          const refUserJson = await env.USERS.get(user.referred_by);
+          if (refUserJson) {
+              const refUser = JSON.parse(refUserJson);
+              if (refUser.referral_balance === undefined) refUser.referral_balance = 0;
+
+              refUser.referral_balance = parseFloat((refUser.referral_balance + referralBonus).toFixed(3));
+
+              stats.liability = parseFloat((stats.liability + referralBonus).toFixed(2));
+              await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+
+              await env.USERS.put(user.referred_by, JSON.stringify(refUser));
+          }
+      }
+
+      await env.USERS.put(username, JSON.stringify(user));
+
+      return new Response(JSON.stringify({
+          message: 'Ad tracked and rewarded instantly.',
+          balance: user.balance,
+          balance_pending: user.balance_pending,
+          earned: earnings,
+          pending_verification: false
+      }), { status: 200, headers: CORS_HEADERS });
+  }
+
+  const stats2 = await getGlobalStats(env);
+  if (stats2.system_status.freeze_rewards) {
+       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
+  }
 
   // Determine Round
   const roundInfo = await determineRound(user, env);
@@ -554,21 +626,21 @@ async function handleAddPoints(request, env) {
   }
 
   let earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
-  if (stats.system_status.emergency_cut) {
+  if (stats2.system_status.emergency_cut) {
       earnings = parseFloat((earnings * 0.5).toFixed(3));
   }
 
   // Budget Check
-  const totalCommitment = stats.paid + stats.liability;
+  const totalCommitment = stats2.paid + stats2.liability;
   if (totalCommitment + earnings > config.monthly_budget) {
       return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
   }
 
   // Update Global Stats
-  stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
-  stats.ads_today += 1;
-  stats.rewards_today = parseFloat((stats.rewards_today + earnings).toFixed(2));
-  await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+  stats2.liability = parseFloat((stats2.liability + earnings).toFixed(2));
+  stats2.ads_today += 1;
+  stats2.rewards_today = parseFloat((stats2.rewards_today + earnings).toFixed(2));
+  await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats2));
 
   // RED ZONE TRACKING
   if (currentRound === 3) {
@@ -649,8 +721,8 @@ async function handleAddPoints(request, env) {
 
           refUser.referral_balance = parseFloat((refUser.referral_balance + referralBonus).toFixed(3));
 
-          stats.liability = parseFloat((stats.liability + referralBonus).toFixed(2));
-          await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+          stats2.liability = parseFloat((stats2.liability + referralBonus).toFixed(2));
+          await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats2));
 
           await env.USERS.put(user.referred_by, JSON.stringify(refUser));
       }
