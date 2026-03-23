@@ -239,8 +239,15 @@
         let autoInterval = null;
         let nextTaskTime = Date.now() + 300000; // 5 mins
 
+        // Ad Validation Tracking
+        let currentAdType = null;
+        let waitingForTabReturn = false;
+
         async function init() {
-            const saved = sessionStorage.getItem('ad_user');
+            let saved = sessionStorage.getItem('ad_user');
+            if (!saved) {
+                saved = localStorage.getItem('ad_user');
+            }
             if (!saved) {
                 window.location.href = 'index.html';
                 return;
@@ -340,6 +347,22 @@
             }
         }
 
+        // Visibility Change Listener for Ad Validation
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (currentAdType) {
+                    waitingForTabReturn = true;
+                }
+            } else {
+                if (waitingForTabReturn && currentAdType) {
+                    waitingForTabReturn = false;
+                    // User returned to the tab after clicking the ad, claim reward
+                    claimReward(currentAdType);
+                    currentAdType = null;
+                }
+            }
+        });
+
         // --- Manual Ad Logic ---
         function triggerAd(type) {
             if (isProcessing) return;
@@ -351,6 +374,8 @@
 
             isProcessing = true;
             let adPromise;
+
+            showToast("IMPORTANT: Click the blue 'Continue' button on the ad to get your reward!", false);
 
             // Generate unique YMID (username_timestamp) to support backend fallback
             const ymid = `${currentUser.username}_${Date.now()}`;
@@ -371,7 +396,18 @@
 
             if (adPromise) {
                 adPromise.then(() => {
-                    claimReward(type);
+                    // Start waiting for the user to leave the tab and return
+                    currentAdType = type;
+                    waitingForTabReturn = false; // Reset just in case
+                    isProcessing = false; // Allow other interactions while waiting
+
+                    // Fallback: If they don't click anything within 30 seconds, cancel waiting
+                    setTimeout(() => {
+                        if (currentAdType === type && !waitingForTabReturn) {
+                            currentAdType = null;
+                            waitingForTabReturn = false;
+                        }
+                    }, 30000);
                 }).catch(e => {
                     console.error("Ad Error:", e);
                     showToast("Ad closed.", true);
@@ -381,6 +417,7 @@
         }
 
         async function claimReward(type) {
+            isProcessing = true;
             if (type !== 'monetag_inapp') showToast("Verifying reward...");
 
             try {
@@ -402,7 +439,7 @@
                         // Refresh profile to update pending list
                         setTimeout(fetchProfile, 1000);
                     } else {
-                        updateBalance(data.balance); // Should not happen for monetag types anymore
+                        updateBalance(data.balance);
                         showToast(`+R ${data.earned} Earned!`);
                     }
                 } else {
@@ -454,6 +491,7 @@
 
         function logout() {
             sessionStorage.removeItem('ad_user');
+            localStorage.removeItem('ad_user');
             window.location.href = 'index.html';
         }
 
