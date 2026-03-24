@@ -1,8 +1,26 @@
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://student.dtech-services.co.za',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
-};
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin") || "";
+
+  // Check if it's one of the allowed domains
+  if (
+    origin.endsWith(".dtech-services.co.za") ||
+    origin.endsWith(".preasx24.co.za") ||
+    origin === "https://student.dtech-services.co.za"
+  ) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
+    };
+  }
+
+  // Default fallback for other requests (or you can restrict it further if needed)
+  return {
+    'Access-Control-Allow-Origin': 'https://student.dtech-services.co.za',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
+  };
+}
 
 // Config Defaults
 const DEFAULT_CONFIG = {
@@ -38,7 +56,7 @@ const DEFAULT_CONFIG = {
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS });
+      return new Response(null, { headers: getCorsHeaders(request) });
     }
 
     const url = new URL(request.url);
@@ -55,6 +73,10 @@ export default {
         return await handleGenerateVoucher(request, env);
       } else if (path === '/redeem' && request.method === 'POST') {
         return await handleRedeem(request, env);
+      } else if (path === '/redeem-voucher' && request.method === 'POST') {
+        return await handleRedeemVoucher(request, env);
+      } else if (path === '/verify-payment' && request.method === 'POST') {
+        return await handleVerifyPayment(request, env);
       } else if (path === '/user' && request.method === 'GET') {
         return await handleGetUser(request, env);
       } else if (path === '/profile' && request.method === 'GET') {
@@ -84,13 +106,111 @@ export default {
       } else if ((path === '/monetag-webhook' || path === '/monetag-postback') && request.method === 'GET') {
         return await handleMonetagWebhook(request, env);
       } else {
-        return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
+        return new Response('Not Found', { status: 404, headers: getCorsHeaders(request) });
       }
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: getCorsHeaders(request) });
     }
   },
 };
+
+
+async function handleRedeemVoucher(request, env) {
+  try {
+    const { voucher, amount, order_id } = await request.json();
+
+    if (!voucher || !amount || !order_id) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    const amountR = parseFloat(amount);
+
+    const voucherKey = `VOUCHER:${voucher}`;
+    const voucherJson = await env.USERS.get(voucherKey);
+
+    if (!voucherJson) {
+        return new Response(JSON.stringify({ error: 'Invalid voucher code' }), { status: 404, headers: getCorsHeaders(request) });
+    }
+
+    const voucherData = JSON.parse(voucherJson);
+
+    if (voucherData.is_used) {
+        return new Response(JSON.stringify({ error: 'Voucher has already been used' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    if (parseFloat(voucherData.worth) !== amountR) {
+        return new Response(JSON.stringify({ error: 'Voucher value does not match the exact requested amount' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    // Mark as used
+    voucherData.is_used = true;
+    voucherData.used_at = new Date().toISOString();
+    voucherData.order_id = order_id;
+    await env.USERS.put(voucherKey, JSON.stringify(voucherData));
+
+    // Generate Verification Token
+    const secureToken = crypto.randomUUID();
+    const tokenData = {
+        token: secureToken,
+        order_id: order_id,
+        amount: amountR,
+        voucher: voucher,
+        created_at: new Date().toISOString(),
+        is_verified: false
+    };
+
+    // Store the token (valid for some time, e.g. 1 hour)
+    await env.USERS.put(`VERIFY_TOKEN:${secureToken}`, JSON.stringify(tokenData));
+
+    await logSystemAction(env, 'VOUCHER_REDEEMED', `Voucher ${voucher} redeemed for order ${order_id} (Amount: R${amountR})`);
+
+    return new Response(JSON.stringify({
+        success: true,
+        token: secureToken
+    }), { status: 200, headers: getCorsHeaders(request) });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: getCorsHeaders(request) });
+  }
+}
+
+async function handleVerifyPayment(request, env) {
+  try {
+    const { token, order_id } = await request.json();
+
+    if (!token || !order_id) {
+        return new Response(JSON.stringify({ error: 'Missing token or order_id' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    const tokenKey = `VERIFY_TOKEN:${token}`;
+    const tokenJson = await env.USERS.get(tokenKey);
+
+    if (!tokenJson) {
+        return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 404, headers: getCorsHeaders(request) });
+    }
+
+    const tokenData = JSON.parse(tokenJson);
+
+    if (tokenData.order_id !== order_id) {
+        return new Response(JSON.stringify({ error: 'Order ID mismatch' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    if (tokenData.is_verified) {
+        return new Response(JSON.stringify({ error: 'Token has already been verified' }), { status: 400, headers: getCorsHeaders(request) });
+    }
+
+    // Mark token as verified
+    tokenData.is_verified = true;
+    tokenData.verified_at = new Date().toISOString();
+    await env.USERS.put(tokenKey, JSON.stringify(tokenData));
+
+    return new Response(JSON.stringify({
+        valid: true,
+        amount: tokenData.amount
+    }), { status: 200, headers: getCorsHeaders(request) });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: getCorsHeaders(request) });
+  }
+}
 
 // --- Helpers ---
 
@@ -279,12 +399,12 @@ async function handleRegister(request, env) {
   const { username, password, referred_by, email, whatsapp } = await request.json();
 
   if (!username || !password || !email || !whatsapp) {
-    return new Response(JSON.stringify({ error: 'Missing fields: Username, Password, Email, WhatsApp' }), { status: 400, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ error: 'Missing fields: Username, Password, Email, WhatsApp' }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   const existingUser = await env.USERS.get(username);
   if (existingUser) {
-    return new Response(JSON.stringify({ error: 'Username already taken' }), { status: 409, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ error: 'Username already taken' }), { status: 409, headers: getCorsHeaders(request) });
   }
 
   // Validate Referrer
@@ -354,15 +474,15 @@ async function handleRegister(request, env) {
       }
   }
 
-  return new Response(JSON.stringify({ message: 'User registered successfully' }), { status: 201, headers: CORS_HEADERS });
+  return new Response(JSON.stringify({ message: 'User registered successfully' }), { status: 201, headers: getCorsHeaders(request) });
 }
 
 async function handleLogin(request, env) {
   const { username, password } = await request.json();
-  if (!username || !password) return new Response(JSON.stringify({ error: 'Missing credentials' }), { status: 400, headers: CORS_HEADERS });
+  if (!username || !password) return new Response(JSON.stringify({ error: 'Missing credentials' }), { status: 400, headers: getCorsHeaders(request) });
 
   const userJson = await env.USERS.get(username);
-  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
   const inputHash = await hashPassword(password);
@@ -372,7 +492,7 @@ async function handleLogin(request, env) {
           user.passwordHash = await hashPassword(password);
           delete user.password;
       } else {
-          return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
+          return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: getCorsHeaders(request) });
       }
   }
 
@@ -417,32 +537,32 @@ async function handleLogin(request, env) {
       username: username,
       status: user.status || 'active',
       personal_message: user.personal_message || null
-  }), { status: 200, headers: CORS_HEADERS });
+  }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleAddPoints(request, env) {
   const { username, token, type, quality } = await request.json(); // Type: popunder, inpage, direct, push, monetag_*
 
-  if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+  if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: getCorsHeaders(request) });
 
   const VALID_TYPES = ['popunder', 'inpage', 'direct', 'push', 'monetag_interstitial', 'monetag_popup', 'monetag_inapp'];
   if (!VALID_TYPES.includes(type)) {
-      return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   const userJson = await env.USERS.get(username);
-  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
-  if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+  if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
   if (user.is_frozen) {
-      return new Response(JSON.stringify({ error: 'Account frozen.' }), { status: 403, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Account frozen.' }), { status: 403, headers: getCorsHeaders(request) });
   }
 
   const stats = await getGlobalStats(env);
   if (stats.system_status.freeze_rewards) {
-       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
+       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: getCorsHeaders(request) });
   }
 
   const config = await getConfig(env);
@@ -457,7 +577,7 @@ async function handleAddPoints(request, env) {
 
       const totalCommitment = stats.paid + stats.liability;
       if (totalCommitment + earnings > config.monthly_budget) {
-          return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
+          return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: getCorsHeaders(request) });
       }
 
       stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
@@ -527,12 +647,12 @@ async function handleAddPoints(request, env) {
           balance_pending: user.balance_pending,
           earned: earnings,
           pending_verification: false
-      }), { status: 200, headers: CORS_HEADERS });
+      }), { status: 200, headers: getCorsHeaders(request) });
   }
 
   const stats2 = await getGlobalStats(env);
   if (stats2.system_status.freeze_rewards) {
-       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: CORS_HEADERS });
+       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: getCorsHeaders(request) });
   }
 
   // Determine Round
@@ -577,12 +697,12 @@ async function handleAddPoints(request, env) {
                   round: currentRound,
                   mission_complete: true,
                   progress: user.rounds.mission_progress
-              }), { status: 200, headers: CORS_HEADERS });
+              }), { status: 200, headers: getCorsHeaders(request) });
           }
 
           return new Response(JSON.stringify({
               error: `Mission for ${type} complete for this round. Switch ad types.`
-          }), { status: 400, headers: CORS_HEADERS });
+          }), { status: 400, headers: getCorsHeaders(request) });
       }
 
       // Increment
@@ -633,7 +753,7 @@ async function handleAddPoints(request, env) {
   // Budget Check
   const totalCommitment = stats2.paid + stats2.liability;
   if (totalCommitment + earnings > config.monthly_budget) {
-      return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: getCorsHeaders(request) });
   }
 
   // Update Global Stats
@@ -738,22 +858,22 @@ async function handleAddPoints(request, env) {
       round: currentRound,
       mission_complete: missionComplete,
       progress: (currentRound === 3) ? null : user.rounds.mission_progress
-  }), { status: 200, headers: CORS_HEADERS });
+  }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleNotificationStreak(request, env) {
     const { username, token } = await request.json();
 
     const userJson = await env.USERS.get(username);
-    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
     const user = JSON.parse(userJson);
-    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (!user.notification_streak) user.notification_streak = { last_check: "", days: 0 };
 
     if (user.notification_streak.last_check === todayStr) {
-        return new Response(JSON.stringify({ message: 'Already checked today', days: user.notification_streak.days }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: 'Already checked today', days: user.notification_streak.days }), { status: 200, headers: getCorsHeaders(request) });
     }
 
     const yesterday = new Date();
@@ -776,16 +896,16 @@ async function handleNotificationStreak(request, env) {
     return new Response(JSON.stringify({
         message: 'Notification streak updated',
         days: user.notification_streak.days
-    }), { status: 200, headers: CORS_HEADERS });
+    }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleGetProfile(request, env) {
     const url = new URL(request.url);
     const username = url.searchParams.get('username');
-    if (!username) return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: CORS_HEADERS });
+    if (!username) return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: getCorsHeaders(request) });
 
     const userJson = await env.USERS.get(username);
-    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
     const user = JSON.parse(userJson);
 
     // Process Pending Rewards (Lazy Check)
@@ -875,7 +995,7 @@ async function handleGetProfile(request, env) {
             r2_cooldown_ms: r2Remaining,
             mission: user.rounds?.mission_progress || { popunder: 0, inpage: 0, direct: 0 }
         }
-    }), { status: 200, headers: CORS_HEADERS });
+    }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 function generateRandomString(length) {
@@ -891,31 +1011,31 @@ async function handleGenerateVoucher(request, env) {
     const { username, token, amount } = await request.json();
 
     if (!username || !token || !amount) {
-        return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: getCorsHeaders(request) });
     }
 
     const amountR = parseFloat(amount);
     if (![10, 20, 30, 40, 50].includes(amountR)) {
-        return new Response(JSON.stringify({ error: 'Invalid voucher amount' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Invalid voucher amount' }), { status: 400, headers: getCorsHeaders(request) });
     }
 
     const userJson = await env.USERS.get(username);
-    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
     const user = JSON.parse(userJson);
-    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
     if (user.withdrawal_disabled) {
-        return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: getCorsHeaders(request) });
     }
 
     const stats = await getGlobalStats(env);
     if (!stats.system_status.withdrawals_enabled) {
-        return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: getCorsHeaders(request) });
     }
 
     if ((user.balance || 0) < amountR) {
-        return new Response(JSON.stringify({ error: 'Insufficient balance' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Insufficient balance' }), { status: 400, headers: getCorsHeaders(request) });
     }
 
     // Deduct from balance
@@ -957,43 +1077,43 @@ async function handleGenerateVoucher(request, env) {
         message: 'Voucher generated successfully',
         voucher_code: voucherCode,
         balance: user.balance
-    }), { status: 200, headers: CORS_HEADERS });
+    }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleRedeem(request, env) {
   const { username, token, amount, method } = await request.json();
   const config = await getConfig(env);
 
-  if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+  if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: getCorsHeaders(request) });
 
   if (config.fees[method] === undefined) {
-      return new Response(JSON.stringify({ error: 'Invalid or missing withdrawal method' }), { status: 400, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Invalid or missing withdrawal method' }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   const amountR = parseFloat(amount);
   if (isNaN(amountR) || amountR < config.min_withdrawal || amountR > config.max_withdrawal) {
-      return new Response(JSON.stringify({ error: `Amount must be between R${config.min_withdrawal} and R${config.max_withdrawal}` }), { status: 400, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: `Amount must be between R${config.min_withdrawal} and R${config.max_withdrawal}` }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   const userJson = await env.USERS.get(username);
-  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
-  if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+  if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
   if (user.withdrawal_disabled) {
-      return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Withdrawals disabled for this account.' }), { status: 403, headers: getCorsHeaders(request) });
   }
 
   const stats = await getGlobalStats(env);
   if (!stats.system_status.withdrawals_enabled) {
-      return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Withdrawals are temporarily disabled.' }), { status: 503, headers: getCorsHeaders(request) });
   }
 
   const totalAvailable = (user.balance || 0) + (user.referral_balance || 0);
 
   if (totalAvailable < amountR) {
-      return new Response(JSON.stringify({ error: 'Insufficient balance (Main + Referral)' }), { status: 400, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Insufficient balance (Main + Referral)' }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   let remainingToDeduct = amountR;
@@ -1042,7 +1162,7 @@ async function handleRedeem(request, env) {
       balance: user.balance,
       referral_balance: user.referral_balance,
       cert_id: certId
-  }), { status: 200, headers: CORS_HEADERS });
+  }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleMarkCertPaid(request, env) {
@@ -1050,21 +1170,21 @@ async function handleMarkCertPaid(request, env) {
   const SECRET = env.ADMIN_SECRET;
 
   if (!SECRET) {
-      return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: getCorsHeaders(request) });
   }
 
   if (admin_secret !== SECRET) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
   }
 
   const key = `CERT:${id}`;
   const certJson = await env.USERS.get(key);
 
-  if (!certJson) return new Response(JSON.stringify({ error: 'Certificate not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!certJson) return new Response(JSON.stringify({ error: 'Certificate not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const cert = JSON.parse(certJson);
   if (cert.status === 'paid') {
-      return new Response(JSON.stringify({ error: 'Certificate already paid' }), { status: 400, headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ error: 'Certificate already paid' }), { status: 400, headers: getCorsHeaders(request) });
   }
 
   cert.status = 'paid';
@@ -1088,27 +1208,27 @@ async function handleMarkCertPaid(request, env) {
   if (stats.liability < 0) stats.liability = 0;
   await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
 
-  return new Response(JSON.stringify({ message: 'Certificate marked as paid', cert: cert }), { status: 200, headers: CORS_HEADERS });
+  return new Response(JSON.stringify({ message: 'Certificate marked as paid', cert: cert }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleGetCert(request, env) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
-  if (!id) return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400, headers: CORS_HEADERS });
+  if (!id) return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400, headers: getCorsHeaders(request) });
 
   const certJson = await env.USERS.get(`CERT:${id}`);
-  if (!certJson) return new Response(JSON.stringify({ error: 'Certificate not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!certJson) return new Response(JSON.stringify({ error: 'Certificate not found' }), { status: 404, headers: getCorsHeaders(request) });
 
-  return new Response(certJson, { status: 200, headers: CORS_HEADERS });
+  return new Response(certJson, { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleGetUser(request, env) {
   const url = new URL(request.url);
   const username = url.searchParams.get('username');
-  if (!username) return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: CORS_HEADERS });
+  if (!username) return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400, headers: getCorsHeaders(request) });
 
   const userJson = await env.USERS.get(username);
-  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+  if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
 
@@ -1125,7 +1245,7 @@ async function handleGetUser(request, env) {
       history: user.history || [],
       personal_message: user.personal_message || null,
       pending_rewards: user.pending_rewards || []
-  }), { status: 200, headers: CORS_HEADERS });
+  }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleGetStats(request, env) {
@@ -1133,11 +1253,11 @@ async function handleGetStats(request, env) {
     const EXPECTED = env.ADMIN_SECRET;
 
     if (!EXPECTED) {
-         return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: CORS_HEADERS });
+         return new Response(JSON.stringify({ error: 'Server misconfiguration: ADMIN_SECRET not set' }), { status: 500, headers: getCorsHeaders(request) });
     }
 
     if (secret !== EXPECTED) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
     }
 
     const stats = await getGlobalStats(env);
@@ -1176,18 +1296,18 @@ async function handleGetStats(request, env) {
     } catch (e) {}
     stats.unassigned_sets_count = unassignedSets.length;
 
-    return new Response(JSON.stringify(stats), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify(stats), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleAdminUserAction(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
-    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
 
     const { username, action, value } = await request.json();
-    if (!username || !action) return new Response(JSON.stringify({ error: 'Missing args' }), { status: 400, headers: CORS_HEADERS });
+    if (!username || !action) return new Response(JSON.stringify({ error: 'Missing args' }), { status: 400, headers: getCorsHeaders(request) });
 
     const userJson = await env.USERS.get(username);
-    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
     const user = JSON.parse(userJson);
 
     let message = 'Action completed';
@@ -1248,13 +1368,13 @@ async function handleAdminUserAction(request, env) {
                 } catch(e) {}
 
             } else {
-                 return new Response(JSON.stringify({ error: 'Reward not found' }), { status: 404, headers: CORS_HEADERS });
+                 return new Response(JSON.stringify({ error: 'Reward not found' }), { status: 404, headers: getCorsHeaders(request) });
             }
         }
     }
     else if (action === 'approve') {
         if (user.status !== 'pending') {
-             return new Response(JSON.stringify({ error: 'User is not pending' }), { status: 400, headers: CORS_HEADERS });
+             return new Response(JSON.stringify({ error: 'User is not pending' }), { status: 400, headers: getCorsHeaders(request) });
         }
 
         let unassigned = [];
@@ -1264,7 +1384,7 @@ async function handleAdminUserAction(request, env) {
         } catch(e) {}
 
         if (unassigned.length === 0) {
-            return new Response(JSON.stringify({ error: 'No ad sets available. Create one first.' }), { status: 400, headers: CORS_HEADERS });
+            return new Response(JSON.stringify({ error: 'No ad sets available. Create one first.' }), { status: 400, headers: getCorsHeaders(request) });
         }
 
         const setId = unassigned.shift();
@@ -1341,20 +1461,20 @@ async function handleAdminUserAction(request, env) {
             message = 'User unlinked from Ad Set and moved to Pending';
             await logSystemAction(env, 'UNLINK_AD_SET', `Unlinked ${username} from ${setId}`);
         } else {
-            return new Response(JSON.stringify({ error: 'User has no ad set assigned' }), { status: 400, headers: CORS_HEADERS });
+            return new Response(JSON.stringify({ error: 'User has no ad set assigned' }), { status: 400, headers: getCorsHeaders(request) });
         }
     }
     else {
-        return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: getCorsHeaders(request) });
     }
 
     await env.USERS.put(username, JSON.stringify(user));
-    return new Response(JSON.stringify({ message, user }), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ message, user }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleAdSets(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
-    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
 
     if (request.method === 'GET') {
         let index = [];
@@ -1368,7 +1488,7 @@ async function handleAdSets(request, env) {
             return raw ? JSON.parse(raw) : null;
         }));
 
-        return new Response(JSON.stringify(sets.filter(s => s)), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify(sets.filter(s => s)), { status: 200, headers: getCorsHeaders(request) });
     }
     else if (request.method === 'POST') {
         const data = await request.json();
@@ -1402,19 +1522,19 @@ async function handleAdSets(request, env) {
         unassigned.push(id);
         await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
 
-        return new Response(JSON.stringify({ message: 'Ad Set created', id: id }), { status: 201, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: 'Ad Set created', id: id }), { status: 201, headers: getCorsHeaders(request) });
     }
 }
 
 async function handleReconcile(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
-    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
 
     const { date, approvals } = await request.json();
     // approvals: [{ username, breakdown: {popunder:..., inpage:...}, total: ... }]
 
     if (!approvals || !Array.isArray(approvals) || !date) {
-        return new Response(JSON.stringify({ error: 'Invalid data (approvals array and date required)' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Invalid data (approvals array and date required)' }), { status: 400, headers: getCorsHeaders(request) });
     }
 
     let count = 0;
@@ -1474,12 +1594,12 @@ async function handleReconcile(request, env) {
     }
 
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
-    return new Response(JSON.stringify({ message: `Reconciled ${count} users for ${date}` }), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ message: `Reconciled ${count} users for ${date}` }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleAdminSystemAction(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
-    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
 
     const { action, value } = await request.json();
     const stats = await getGlobalStats(env);
@@ -1492,17 +1612,17 @@ async function handleAdminSystemAction(request, env) {
     else if (action === 'toggle_ads') stats.system_status.ads_enabled = !!value;
     else if (action === 'set_motd') {
         await env.USERS.put('SYSTEM:MOTD', String(value));
-        return new Response(JSON.stringify({ message: 'MOTD updated' }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: 'MOTD updated' }), { status: 200, headers: getCorsHeaders(request) });
     }
     else if (action === 'get_logs') {
         let logs = [];
         try { const r = await env.USERS.get('SYSTEM:LOGS'); if(r) logs = JSON.parse(r); } catch(e){}
-        return new Response(JSON.stringify({ logs }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ logs }), { status: 200, headers: getCorsHeaders(request) });
     }
     else if (action === 'get_history') {
         let history = [];
         try { const r = await env.USERS.get('SYSTEM:HISTORY_30_DAYS'); if(r) history = JSON.parse(r); } catch(e){}
-        return new Response(JSON.stringify({ history }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ history }), { status: 200, headers: getCorsHeaders(request) });
     }
     else if (action === 'approve_all_pending') {
         let pending = [];
@@ -1549,7 +1669,7 @@ async function handleAdminSystemAction(request, env) {
         await env.USERS.put('AD_SETS_UNASSIGNED', JSON.stringify(unassigned));
 
         await logSystemAction(env, 'BULK_APPROVE', `Approved ${approvedCount} users`);
-        return new Response(JSON.stringify({ message: `Approved ${approvedCount} users`, remaining: newPending.length }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: `Approved ${approvedCount} users`, remaining: newPending.length }), { status: 200, headers: getCorsHeaders(request) });
     }
     else if (action === 'freeze_red_zone') {
         let redZone = [];
@@ -1568,39 +1688,39 @@ async function handleAdminSystemAction(request, env) {
             }
         }
         await logSystemAction(env, 'BULK_FREEZE', `Frozen ${count} red zone users`);
-        return new Response(JSON.stringify({ message: `Frozen ${count} users` }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: `Frozen ${count} users` }), { status: 200, headers: getCorsHeaders(request) });
     }
-    else return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: CORS_HEADERS });
+    else return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: getCorsHeaders(request) });
 
     await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
-    return new Response(JSON.stringify({ message: 'System updated', status: stats.system_status }), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ message: 'System updated', status: stats.system_status }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleDismissMessage(request, env) {
     const { username, token } = await request.json();
     const userJson = await env.USERS.get(username);
-    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: CORS_HEADERS });
+    if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
     const user = JSON.parse(userJson);
-    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: CORS_HEADERS });
+    if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
     user.personal_message = null;
     await env.USERS.put(username, JSON.stringify(user));
-    return new Response(JSON.stringify({ message: 'Message dismissed' }), { status: 200, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ message: 'Message dismissed' }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleSystemConfig(request, env) {
     const secret = request.headers.get('X-Admin-Secret');
-    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: CORS_HEADERS });
+    if (secret !== env.ADMIN_SECRET) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403, headers: getCorsHeaders(request) });
 
     if (request.method === 'GET') {
         const config = await getConfig(env);
-        return new Response(JSON.stringify(config), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify(config), { status: 200, headers: getCorsHeaders(request) });
     } else if (request.method === 'POST') {
         const newConfig = await request.json();
         const merged = { ...DEFAULT_CONFIG, ...newConfig };
         await env.USERS.put('SYSTEM:CONFIG', JSON.stringify(merged));
         await logSystemAction(env, 'CONFIG_UPDATE', 'System configuration updated');
-        return new Response(JSON.stringify({ message: 'Configuration saved', config: merged }), { status: 200, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ message: 'Configuration saved', config: merged }), { status: 200, headers: getCorsHeaders(request) });
     }
 }
 
@@ -1612,7 +1732,7 @@ async function handleGetSystemStatus(request, env) {
     return new Response(JSON.stringify({
         system_status: stats.system_status,
         motd: motd
-    }), { status: 200, headers: CORS_HEADERS });
+    }), { status: 200, headers: getCorsHeaders(request) });
 }
 
 async function handleMonetagWebhook(request, env) {
