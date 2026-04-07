@@ -2,667 +2,308 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>DTECH Secure Gateway | Voucher Authentication</title>
-    <!-- Google Fonts & Font Awesome for modern icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-TECH Secure Payment Gateway</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --primary-color: #58a6ff;
+            --success-color: #238636;
+            --error-color: #f85149;
+            --border-color: #30363d;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #050a14;
-            background-image: radial-gradient(circle at 10% 20%, #0a1120 0%, #050a14 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            position: relative;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        /* animated mesh gradient overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 70% 30%, rgba(37, 99, 235, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* main card container — glassmorphic elevated design */
-        .gateway-card {
-            position: relative;
-            z-index: 2;
-            max-width: 480px;
-            width: 100%;
-            background: rgba(10, 15, 22, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 1.25rem;
-            border: 1px solid rgba(37, 99, 235, 0.3);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(37, 99, 235, 0.1) inset;
-            transition: transform 0.2s ease, box-shadow 0.3s ease;
-            overflow: hidden;
-        }
-
-        .gateway-card:hover {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(37, 99, 235, 0.4) inset;
-        }
-
-        /* header with branding */
-        .brand-header {
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(37, 99, 235, 0.2);
-            background: rgba(15, 20, 30, 0.4);
-        }
-
-        .brand-logo {
-            width: 60px;
-            height: auto;
-            margin-bottom: 0.5rem;
-            filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.4));
-        }
-
-        .brand-header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: -0.3px;
-        }
-
-        .brand-header p {
-            font-size: 0.75rem;
-            color: #8b949e;
-            margin-top: 0.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }
-
-        /* content area */
-        .content-pane {
-            padding: 1.5rem;
-        }
-
-        /* loader state (skeleton shimmer) */
-        .skeleton-loader {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .skeleton-line {
-            height: 1.2rem;
-            background: linear-gradient(90deg, #1e2a36 25%, #2a3a48 50%, #1e2a36 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.2s infinite;
+        .payment-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            text-align: center;
         }
 
-        .skeleton-line.large {
-            height: 2.2rem;
-            width: 70%;
-            margin: 0 auto;
+        h2 {
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 20px;
         }
 
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .order-details {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
         }
 
-        /* order details card */
-        .order-summary {
-            background: rgba(10, 15, 24, 0.6);
-            border-radius: 1rem;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(37, 99, 235, 0.15);
-            transition: all 0.2s;
-        }
-
-        .summary-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-            color: #2563eb;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .detail-item {
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 0.7rem;
-            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
-        .detail-item:last-child {
+        .detail-row:last-child {
             margin-bottom: 0;
         }
 
-        .detail-label {
-            font-size: 0.8rem;
+        .label {
             color: #8b949e;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
+            font-size: 0.9em;
         }
 
-        .detail-value {
-            font-weight: 600;
-            color: #f0f6fc;
-            font-size: 0.95rem;
-            word-break: break-word;
-            text-align: right;
-        }
-
-        .amount-value {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #3b82f6;
-        }
-
-        .order-id-badge {
-            font-family: monospace;
-            background: #0d1117;
-            padding: 0.2rem 0.5rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            letter-spacing: 0.3px;
-        }
-
-        /* voucher input group */
-        .input-group-modern {
-            margin-bottom: 1.25rem;
-        }
-
-        .input-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #c9d1d9;
-            margin-bottom: 0.5rem;
-        }
-
-        .voucher-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .voucher-input-wrapper i {
-            position: absolute;
-            left: 1rem;
-            color: #2563eb;
-            font-size: 1rem;
-            pointer-events: none;
-        }
-
-        #voucherCode {
-            width: 100%;
-            padding: 0.8rem 1rem 0.8rem 2.6rem;
-            background: #050a14;
-            border: 1.5px solid rgba(37, 99, 235, 0.3);
-            border-radius: 0.75rem;
-            font-family: 'Inter', monospace;
-            font-size: 0.95rem;
+        .value {
+            font-weight: bold;
             color: #ffffff;
-            transition: all 0.2s ease;
-            outline: none;
-            letter-spacing: 0.5px;
         }
 
-        #voucherCode:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-            background: #0a1120;
+        .amount {
+            font-size: 1.2em;
+            color: var(--primary-color);
         }
 
-        /* warning card */
-        .warning-card {
-            background: rgba(210, 153, 34, 0.08);
-            border-left: 3px solid #d29922;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.75rem;
-            display: flex;
-            gap: 0.6rem;
-            align-items: flex-start;
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        .warning-card i {
-            color: #d29922;
-            font-size: 1.1rem;
-            margin-top: 0.1rem;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8b949e;
+            font-size: 0.9em;
         }
 
-        .warning-card .warning-text {
-            color: #f0c674;
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        /* modern button */
-        .btn-pay {
-            background: #2563eb;
-            border: none;
+        input[type="text"] {
             width: 100%;
-            padding: 0.85rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
+            padding: 12px;
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 1em;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        .warning-text {
+            font-size: 0.8em;
+            color: #d29922;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--success-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: background-color 0.2s;
         }
 
-        .btn-pay:hover:not(:disabled) {
-            background: #3b82f6;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        button:hover {
+            background-color: #2ea043;
         }
 
-        .btn-pay:disabled {
-            opacity: 0.6;
+        button:disabled {
+            background-color: #23863680;
             cursor: not-allowed;
-            transform: none;
-            filter: grayscale(0.05);
         }
 
-        /* message toast style */
-        .message-toast {
-            margin-top: 1.2rem;
-            padding: 0.8rem 1rem;
-            border-radius: 1rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            backdrop-filter: blur(8px);
-            animation: fadeSlideUp 0.2s ease;
+        #message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-size: 0.9em;
         }
 
-        .message-toast.error {
-            background: rgba(248, 81, 73, 0.12);
+        .error {
+            background-color: rgba(248, 81, 73, 0.1);
+            color: var(--error-color);
             border: 1px solid rgba(248, 81, 73, 0.4);
-            color: #ff8a7a;
         }
 
-        .message-toast.success {
-            background: rgba(35, 134, 54, 0.12);
-            border: 1px solid rgba(35, 134, 54, 0.5);
-            color: #3fb950;
+        .success {
+            background-color: rgba(35, 134, 54, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(35, 134, 54, 0.4);
         }
 
-        @keyframes fadeSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* loader inside button */
-        .loader-icon {
+        .loader {
             display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.7s linear infinite;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        /* security footer */
-        .security-footer {
-            margin-top: 1.2rem;
-            padding-top: 1rem;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #6e7681;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            border-top: 1px solid rgba(37, 99, 235, 0.15);
-        }
-
-        .security-footer i {
-            margin-right: 0.3rem;
-        }
-
-        /* responsive */
-        @media (max-width: 480px) {
-            .content-pane {
-                padding: 1.5rem;
-            }
-            .brand-header h1 {
-                font-size: 1.5rem;
-            }
-            .amount-value {
-                font-size: 1.2rem;
-            }
-            .order-summary {
-                padding: 1rem;
-            }
-        }
     </style>
 </head>
 <body>
-<div class="gateway-card">
-    <div class="brand-header">
-        <img src="images/logo.png" alt="DTECH Logo" class="brand-logo">
-        <h1>DTECH Gateway</h1>
-        <p><i class="fas fa-lock"></i> Secure voucher authentication · end-to-end encrypted</p>
-    </div>
 
-    <div class="content-pane">
-        <!-- Loading indicator -->
-        <div id="loadingState" class="skeleton-loader">
-            <div class="skeleton-line large"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line" style="width: 80%;"></div>
-        </div>
+    <div class="payment-card">
+        <h2>D-TECH Gateway</h2>
 
-        <!-- Main payment form (hidden initially) -->
+        <div id="loadingState">Loading payment details...</div>
+
         <div id="paymentForm" style="display: none;">
-            <!-- Order details section with icons -->
-            <div class="order-summary">
-                <div class="summary-title">
-                    <i class="fas fa-receipt"></i> ORDER SUMMARY
+            <div class="order-details">
+                <div class="detail-row">
+                    <span class="label">Item:</span>
+                    <span class="value" id="itemName">-</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="fas fa-tag"></i> Item</span>
-                    <span class="detail-value" id="itemName">—</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="fas fa-credit-card"></i> Amount Due</span>
-                    <span class="detail-value amount-value" id="amountDisplay">R0.00</span>
-                </div>
-                <div class="detail-item" id="orderIdRow" style="display: none;">
-                    <span class="detail-label"><i class="fas fa-hashtag"></i> Order reference</span>
-                    <span class="detail-value order-id-badge" id="orderIdRef">—</span>
+                <div class="detail-row">
+                    <span class="label">Amount Due:</span>
+                    <span class="value amount">R<span id="amountDue">0.00</span></span>
                 </div>
             </div>
 
-            <!-- Voucher input -->
-            <div class="input-group-modern">
-                <div class="input-label">
-                    <i class="fas fa-ticket-alt"></i> D-TECH Voucher code
-                </div>
-                <div class="voucher-input-wrapper">
-                    <i class="fas fa-qrcode"></i>
-                    <input type="text" id="voucherCode" placeholder="e.g., X24-9F3A-7K2L" autocomplete="off" spellcheck="false">
-                </div>
+            <div class="input-group">
+                <label for="voucherCode">Enter D-TECH Voucher Code</label>
+                <input type="text" id="voucherCode" placeholder="x24-XXXX-XXXX" autocomplete="off">
             </div>
 
-            <!-- Enhanced warning notice -->
-            <div class="warning-card">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div class="warning-text">
-                    <strong>One‑time use only</strong> — voucher value must <strong>exactly match</strong> the amount due.
-                    Any surplus value cannot be refunded or credited.
-                </div>
+            <div class="warning-text">
+                ⚠️ <strong>Important:</strong> The voucher value must match the exact Amount Due. Any extra value will be lost, as vouchers are strictly one-time use.
             </div>
 
-            <!-- Payment button -->
-            <button id="payBtn" class="btn-pay" onclick="processPayment()">
-                <i class="fas fa-arrow-right"></i> <span id="btnText">Pay Now</span>
-                <span id="btnLoader" style="display: none;"><div class="loader-icon"></div></span>
+            <button id="payBtn" onclick="processPayment()">
+                <span id="btnText">Pay Now</span>
+                <span id="btnLoader" class="loader"></span>
             </button>
 
-            <!-- Dynamic message area -->
             <div id="message"></div>
         </div>
-
-        <div class="security-footer">
-            <span><i class="fas fa-check-circle"></i> PCI compliant</span>
-            <span><i class="fas fa-clock"></i> Real‑time validation</span>
-            <span><i class="fas fa-fingerprint"></i> Authenticity guaranteed</span>
-        </div>
     </div>
-</div>
 
-<script>
-    // API endpoint (unchanged from original spec)
-    const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+    <script>
+        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev"; // Adjust if different
 
-    let orderParams = {
-        amount: null,
-        item: null,
-        order_id: null,
-        return_url: null
-    };
+        let orderParams = {};
 
-    // Helper: display beautiful messages
-    function showMessage(msg, type) {
-        const messageDiv = document.getElementById('message');
-        messageDiv.innerHTML = `
-            <div class="message-toast ${type}">
-                <i class="fas ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i>
-                <span>${escapeHtml(msg)}</span>
-            </div>
-        `;
-        messageDiv.style.display = 'block';
-    }
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
 
-    // simple sanitization to avoid injection (extra safety)
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
-
-    // main initialization
-    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        orderParams = {
-            amount: urlParams.get('amount'),
-            item: urlParams.get('item'),
-            order_id: urlParams.get('order_id'),
-            return_url: urlParams.get('return_url')
-        };
-
-        const loadingDiv = document.getElementById('loadingState');
-        const paymentFormDiv = document.getElementById('paymentForm');
-
-        // Validate required parameters
-        if (!orderParams.amount || !orderParams.item || !orderParams.order_id || !orderParams.return_url) {
-            loadingDiv.style.display = 'none';
-            showMessage('❌ Missing payment parameters. Please return to the store and try again.', 'error');
-            // hide pay button and form if missing critical info
-            paymentFormDiv.style.display = 'none';
-            // also disable any interaction
-            return;
-        }
-
-        // Ensure amount is numeric
-        const amountNum = parseFloat(orderParams.amount);
-        if (isNaN(amountNum) || amountNum <= 0) {
-            loadingDiv.style.display = 'none';
-            showMessage('⚠️ Invalid amount specified. Contact support.', 'error');
-            paymentFormDiv.style.display = 'none';
-            return;
-        }
-
-        // Populate order details with styling
-        document.getElementById('itemName').textContent = escapeHtml(orderParams.item);
-        const formattedAmount = amountNum.toFixed(2);
-        document.getElementById('amountDisplay').innerHTML = `R${formattedAmount}`;
-        // store amount for later (numeric)
-        orderParams.amount = amountNum;
-
-        // optional: show order ID for transparency
-        if (orderParams.order_id) {
-            const orderIdRow = document.getElementById('orderIdRow');
-            orderIdRow.style.display = 'flex';
-            document.getElementById('orderIdRef').textContent = escapeHtml(orderParams.order_id.substring(0, 12) + (orderParams.order_id.length > 12 ? '…' : ''));
-        }
-
-        // smooth transition: hide loader and show form
-        loadingDiv.style.display = 'none';
-        paymentFormDiv.style.display = 'block';
-        paymentFormDiv.style.animation = 'fadeSlideUp 0.3s ease';
-
-        // optional: add format hint for voucher input
-        const voucherInput = document.getElementById('voucherCode');
-        voucherInput.addEventListener('input', function(e) {
-            // just UI polish: remove leading/trailing spaces automatically on paste
-            // and uppercase transformation for consistency
-            let raw = e.target.value;
-            if (raw !== raw.toUpperCase()) {
-                e.target.value = raw.toUpperCase();
-            }
-        });
-    });
-
-    // main payment processing with enhanced UI/UX
-    async function processPayment() {
-        const voucherCodeElem = document.getElementById('voucherCode');
-        let voucherCode = voucherCodeElem.value.trim();
-
-        if (!voucherCode) {
-            showMessage('Please enter a valid DTECH voucher code.', 'error');
-            voucherCodeElem.focus();
-            return;
-        }
-
-        // additional front-end length sanity (just user friendly)
-        if (voucherCode.length < 6) {
-            showMessage('Voucher code seems incomplete. Please double‑check the code.', 'error');
-            return;
-        }
-
-        const payBtn = document.getElementById('payBtn');
-        const btnTextSpan = document.getElementById('btnText');
-        const btnLoaderSpan = document.getElementById('btnLoader');
-        const originalBtnHTML = btnTextSpan.innerHTML;
-
-        // disable button and show loader
-        payBtn.disabled = true;
-        btnTextSpan.style.display = 'none';
-        btnLoaderSpan.style.display = 'inline-block';
-
-        // hide previous messages
-        const messageDiv = document.getElementById('message');
-        messageDiv.style.display = 'none';
-        messageDiv.innerHTML = '';
-
-        try {
-            const payload = {
-                voucher: voucherCode,
-                amount: orderParams.amount,   // numeric amount
-                order_id: orderParams.order_id
+            orderParams = {
+                amount: urlParams.get('amount'),
+                item: urlParams.get('item'),
+                order_id: urlParams.get('order_id'),
+                return_url: urlParams.get('return_url')
             };
 
-            const response = await fetch(`${API_URL}/redeem-voucher`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const loadingState = document.getElementById('loadingState');
+            const paymentForm = document.getElementById('paymentForm');
+            const messageEl = document.getElementById('message');
 
-            let data;
+            if (!orderParams.amount || !orderParams.item || !orderParams.order_id || !orderParams.return_url) {
+                loadingState.style.display = 'none';
+                showMessage('Missing required payment parameters in URL.', 'error');
+                return;
+            }
+
+            document.getElementById('itemName').textContent = orderParams.item;
+            document.getElementById('amountDue').textContent = parseFloat(orderParams.amount).toFixed(2);
+
+            loadingState.style.display = 'none';
+            paymentForm.style.display = 'block';
+        });
+
+        function showMessage(msg, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = msg;
+            messageEl.className = type; // 'error' or 'success'
+            messageEl.style.display = 'block';
+        }
+
+        async function processPayment() {
+            const voucherCode = document.getElementById('voucherCode').value.trim();
+            if (!voucherCode) {
+                showMessage('Please enter a voucher code.', 'error');
+                return;
+            }
+
+            const payBtn = document.getElementById('payBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+
+            payBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline-block';
+            document.getElementById('message').style.display = 'none';
+
             try {
-                data = await response.json();
-            } catch (e) {
-                throw new Error('Invalid server response');
-            }
+                const response = await fetch(`${API_URL}/redeem-voucher`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        voucher: voucherCode,
+                        amount: orderParams.amount,
+                        order_id: orderParams.order_id
+                    })
+                });
 
-            if (response.ok && data && data.success === true) {
-                // success flow
-                showMessage('✓ Payment successful! Redirecting to complete your order...', 'success');
+                const data = await response.json();
 
-                // Build return URL with status, token and order_id
-                const returnBase = orderParams.return_url;
-                let returnUrlObj;
-                try {
-                    returnUrlObj = new URL(returnBase);
-                } catch (e) {
-                    // fallback: if return_url is malformed, try naive concatenation but respect original
-                    console.warn("Invalid return_url, fallback redirect");
-                    window.location.href = `${returnBase}?status=success&token=${encodeURIComponent(data.token || '')}&order_id=${encodeURIComponent(orderParams.order_id)}`;
-                    return;
+                if (response.ok && data.success) {
+                    showMessage('Payment Successful! Redirecting...', 'success');
+
+                    // Construct return URL
+                    const returnUrlObj = new URL(orderParams.return_url);
+                    returnUrlObj.searchParams.append('status', 'success');
+                    returnUrlObj.searchParams.append('token', data.token);
+                    returnUrlObj.searchParams.append('order_id', orderParams.order_id);
+
+                    setTimeout(() => {
+                        window.location.href = returnUrlObj.toString();
+                    }, 1500);
+                } else {
+                    showMessage(data.error || 'Payment failed.', 'error');
+                    payBtn.disabled = false;
+                    btnText.style.display = 'inline-block';
+                    btnLoader.style.display = 'none';
                 }
-
-                returnUrlObj.searchParams.set('status', 'success');
-                returnUrlObj.searchParams.set('token', data.token || '');
-                returnUrlObj.searchParams.set('order_id', orderParams.order_id);
-
-                // slight delay to show success message
-                setTimeout(() => {
-                    window.location.href = returnUrlObj.toString();
-                }, 1300);
-            } else {
-                // error from backend
-                const errorMsg = data?.error || data?.message || 'Voucher redemption failed. Please verify the code and amount.';
-                showMessage(`✗ ${errorMsg}`, 'error');
-                resetButton(payBtn, btnTextSpan, btnLoaderSpan);
-            }
-        } catch (error) {
-            console.error('Payment network error:', error);
-            let friendlyError = 'Network error. Please check your connection and try again.';
-            if (error.message.includes('fetch')) friendlyError = 'Unable to reach DTECH secure servers. Please retry.';
-            showMessage(`⚠️ ${friendlyError}`, 'error');
-            resetButton(payBtn, btnTextSpan, btnLoaderSpan);
-        }
-    }
-
-    function resetButton(btn, textSpan, loaderSpan) {
-        btn.disabled = false;
-        textSpan.style.display = 'inline-block';
-        loaderSpan.style.display = 'none';
-        // optional focus back to input
-        document.getElementById('voucherCode').focus();
-    }
-
-    // extra: prevent accidental double-submit via keyboard (enter on input)
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && document.getElementById('paymentForm') && document.getElementById('paymentForm').style.display === 'block') {
-            const btn = document.getElementById('payBtn');
-            if (btn && !btn.disabled) {
-                e.preventDefault();
-                processPayment();
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+                payBtn.disabled = false;
+                btnText.style.display = 'inline-block';
+                btnLoader.style.display = 'none';
             }
         }
-    });
-</script>
+    </script>
 </body>
 </html>
