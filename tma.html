@@ -130,30 +130,134 @@
             margin-top: 0;
             color: var(--accent);
             font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .withdraw-options {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
             gap: 10px;
             margin-top: 15px;
         }
 
         .withdraw-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text);
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 600;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--accent);
+            padding: 12px 5px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .withdraw-btn span {
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-weight: 400;
+            margin-top: 2px;
         }
 
         .withdraw-btn:hover {
-            background: rgba(212, 175, 55, 0.1);
+            background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.05));
             border-color: var(--accent);
-            color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .withdraw-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Voucher Display Styles */
+        .voucher-display {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #1e293b, #020617);
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            display: none;
+            position: relative;
+        }
+
+        .voucher-display.active {
+            display: block;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .voucher-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .voucher-code {
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--success);
+            letter-spacing: 2px;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            user-select: all;
+        }
+
+        .copy-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #b8860b;
+        }
+
+        .apps-link-btn {
+            margin-top: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid #3b82f6;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        .apps-link-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
         }
 
         /* Pending List Styles */
@@ -212,13 +316,24 @@
         <h3>Withdraw DTECH Voucher</h3>
         <div class="desc" style="margin-bottom: 15px;">Convert your balance to a DTECH voucher.</div>
         <div class="withdraw-options">
-            <button class="withdraw-btn" onclick="requestVoucher(10)">10 R</button>
-            <button class="withdraw-btn" onclick="requestVoucher(20)">20 R</button>
-            <button class="withdraw-btn" onclick="requestVoucher(30)">30 R</button>
-            <button class="withdraw-btn" onclick="requestVoucher(40)">40 R</button>
-            <button class="withdraw-btn" onclick="requestVoucher(50)">50 R</button>
+            <button class="withdraw-btn" onclick="requestVoucher(10)">10 R<span>VOUCHER</span></button>
+            <button class="withdraw-btn" onclick="requestVoucher(20)">20 R<span>VOUCHER</span></button>
+            <button class="withdraw-btn" onclick="requestVoucher(30)">30 R<span>VOUCHER</span></button>
+            <button class="withdraw-btn" onclick="requestVoucher(40)">40 R<span>VOUCHER</span></button>
+            <button class="withdraw-btn" onclick="requestVoucher(50)">50 R<span>VOUCHER</span></button>
         </div>
-        <div id="voucher-result" style="margin-top: 15px; font-weight: bold; color: var(--success); display: none; word-break: break-all;"></div>
+
+        <div id="voucher-display" class="voucher-display">
+            <div class="voucher-label">Your Voucher Code</div>
+            <div id="voucher-code" class="voucher-code"></div>
+            <button class="copy-btn" onclick="copyVoucher()">
+                📋 Copy Code
+            </button>
+        </div>
+
+        <a href="apps.html" class="apps-link-btn">
+            View DTECH Apps to Redeem ➔
+        </a>
     </div>
 
     <!-- Pending Rewards Section -->
@@ -431,7 +546,9 @@
 
             isProcessing = true;
             showToast("Generating voucher...");
-            document.getElementById('voucher-result').style.display = 'none';
+
+            const display = document.getElementById('voucher-display');
+            display.classList.remove('active');
 
             try {
                 const res = await fetch(`${API_URL}/generate-voucher`, {
@@ -448,8 +565,8 @@
 
                 if (res.ok) {
                     showToast("Voucher generated!", false);
-                    document.getElementById('voucher-result').innerText = `Voucher Code: ${data.voucher_code}`;
-                    document.getElementById('voucher-result').style.display = 'block';
+                    document.getElementById('voucher-code').innerText = data.voucher_code;
+                    display.classList.add('active');
                     updateBalance(data.balance);
                 } else {
                     showToast(data.error || "Withdrawal failed", true);
@@ -458,6 +575,17 @@
                 showToast("Network Error", true);
             }
             isProcessing = false;
+        }
+
+        function copyVoucher() {
+            const code = document.getElementById('voucher-code').innerText;
+            if (!code) return;
+
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("Voucher code copied!");
+            }).catch(err => {
+                showToast("Failed to copy code", true);
+            });
         }
 
         function logout() {
