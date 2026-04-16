@@ -310,7 +310,7 @@
         }
 
         async function init() {
-            const saved = sessionStorage.getItem('ad_user');
+            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
                 return;
@@ -422,7 +422,7 @@
         async function checkStreak() {
             const btn = document.getElementById('streak-btn');
             const msg = document.getElementById('streak-msg');
-            const saved = JSON.parse(sessionStorage.getItem('ad_user'));
+            const saved = JSON.parse(sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user'));
 
             btn.disabled = true;
             btn.innerText = "CHECKING...";

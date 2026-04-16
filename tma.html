@@ -380,7 +380,6 @@
                 if (data.balance !== undefined) {
                     // Show Main Balance (Approved Funds)
                     updateBalance(data.balance || 0);
-                    currentUser.token = sessionStorage.getItem('token') || currentUser.token;
 
                     // Update Pending List
                     renderPending(data.pending_rewards || []);

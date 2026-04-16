@@ -260,7 +260,7 @@
         }
 
         async function init() {
-            const saved = sessionStorage.getItem('ad_user');
+            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
                 return;
@@ -373,7 +373,7 @@
             msg.style.display = 'none';
 
             // Need Token from Session
-            const localUser = JSON.parse(sessionStorage.getItem('ad_user'));
+            const localUser = JSON.parse(sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user'));
 
             try {
                 const res = await fetch(`${getBaseUrl()}/redeem`, {
