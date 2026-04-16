@@ -341,7 +341,7 @@
         }
 
         async function init() {
-            const saved = sessionStorage.getItem('ad_user');
+            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
             if (!saved) {
                 window.location.href = 'index.html';
                 return;
@@ -364,8 +364,7 @@
             if(data.error) throw new Error(data.error);
 
             currentUser.balance = data.balance;
-            currentUser.token = sessionStorage.getItem('token') || currentUser.token; // Keep token
-            currentAdSet = data.ad_set;
+                        currentAdSet = data.ad_set;
 
             updateUI(data);
         }

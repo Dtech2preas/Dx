@@ -907,7 +907,7 @@
               d.style.display = 'block';
           }
 
-          const saved = sessionStorage.getItem('ad_user');
+          let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
           if (saved) {
             try {
                 currentUser = JSON.parse(saved);
