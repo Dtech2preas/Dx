@@ -450,6 +450,14 @@
                 console.log("Triggering Auto Ad...");
                 const ymid = `${currentUser.username}_${Date.now()}`;
                 show_10600930({
+                    type: 'inApp',
+                    inAppSettings: {
+                        frequency: 2,
+                        capping: 0.1,
+                        interval: 30,
+                        timeout: 5,
+                        everyPage: false
+                    },
                     ymid: ymid,
                     requestVar: currentUser.username
                 }).then(() => {
@@ -484,6 +492,7 @@
             } else if (type === 'monetag_popup') {
                 // Use standard call to ensure ymid is passed correctly
                 adPromise = show_10600930({
+                    type: 'pop',
                     ymid: ymid,
                     requestVar: currentUser.username
                 });
