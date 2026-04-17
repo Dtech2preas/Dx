@@ -541,13 +541,33 @@ async function handleLogin(request, env) {
 }
 
 async function handleAddPoints(request, env) {
-  const { username, token, type, quality } = await request.json(); // Type: popunder, inpage, direct, push, monetag_*
+  const payload = await request.json(); // May contain `type` (single) or `batch` (array of types)
+  const { username, token, quality } = payload;
 
   if (!username || !token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: getCorsHeaders(request) });
 
+  let typesToProcess = [];
+  if (payload.batch && Array.isArray(payload.batch)) {
+      typesToProcess = payload.batch;
+  } else if (payload.type) {
+      typesToProcess = [payload.type];
+  } else {
+      return new Response(JSON.stringify({ error: 'Missing type or batch parameter' }), { status: 400, headers: getCorsHeaders(request) });
+  }
+
+  if (typesToProcess.length === 0) {
+      return new Response(JSON.stringify({ error: 'Empty batch' }), { status: 400, headers: getCorsHeaders(request) });
+  }
+
+  if (typesToProcess.length > 50) {
+      return new Response(JSON.stringify({ error: 'Batch too large (max 50)' }), { status: 400, headers: getCorsHeaders(request) });
+  }
+
   const VALID_TYPES = ['popunder', 'inpage', 'direct', 'push', 'monetag_interstitial', 'monetag_popup', 'monetag_inapp'];
-  if (!VALID_TYPES.includes(type)) {
-      return new Response(JSON.stringify({ error: 'Invalid ad type' }), { status: 400, headers: getCorsHeaders(request) });
+  for (const t of typesToProcess) {
+      if (!VALID_TYPES.includes(t)) {
+          return new Response(JSON.stringify({ error: `Invalid ad type: ${t}` }), { status: 400, headers: getCorsHeaders(request) });
+      }
   }
 
   const userJson = await env.USERS.get(username);
@@ -560,250 +580,22 @@ async function handleAddPoints(request, env) {
       return new Response(JSON.stringify({ error: 'Account frozen.' }), { status: 403, headers: getCorsHeaders(request) });
   }
 
-  const stats = await getGlobalStats(env);
+  let stats = await getGlobalStats(env);
   if (stats.system_status.freeze_rewards) {
        return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: getCorsHeaders(request) });
   }
 
   const config = await getConfig(env);
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  // Handle Monetag Types (Instant Random Reward 0.01 - 1.00)
-  if (type.startsWith('monetag_')) {
-      let earnings = parseFloat((Math.random() * (1.00 - 0.01) + 0.01).toFixed(3));
+  let totalEarnings = 0;
+  let totalReferralBonus = 0;
+  let missionComplete = false;
 
-      if (stats.system_status.emergency_cut) {
-          earnings = parseFloat((earnings * 0.5).toFixed(3));
-      }
-
-      const totalCommitment = stats.paid + stats.liability;
-      if (totalCommitment + earnings > config.monthly_budget) {
-          return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: getCorsHeaders(request) });
-      }
-
-      stats.liability = parseFloat((stats.liability + earnings).toFixed(2));
-      stats.ads_today += 1;
-      stats.rewards_today = parseFloat((stats.rewards_today + earnings).toFixed(2));
-      await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
-
-      user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(3));
-      user.daily_count = (user.daily_count || 0) + 1;
-
-      if (!user.history) user.history = [];
-      user.history.unshift({
-          id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-          amount: earnings,
-          date: new Date().toISOString(),
-          status: 'approved',
-          source: 'monetag_instant'
-      });
-      if(user.history.length > 50) user.history = user.history.slice(0, 50);
-
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (!user.daily_stats) user.daily_stats = {};
-      if (!user.daily_stats[todayStr]) {
-          user.daily_stats[todayStr] = {
-              popunder: { pending: 0, approved: 0 },
-              inpage: { pending: 0, approved: 0 },
-              direct: { pending: 0, approved: 0 },
-              push: { pending: 0, approved: 0 },
-              total_pending: 0,
-              total_approved: 0,
-              status: 'approved'
-          };
-      } else {
-          user.daily_stats[todayStr].status = 'approved';
-      }
-
-      if (!user.daily_stats[todayStr][type]) {
-          user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
-      }
-      user.daily_stats[todayStr][type].approved += earnings;
-      user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + earnings).toFixed(3));
-
-      // Referral Commission
-      let referralBonus = 0;
-      if (user.referred_by) {
-          referralBonus = parseFloat((earnings * 0.05).toFixed(3)); // 5%
-
-          const refUserJson = await env.USERS.get(user.referred_by);
-          if (refUserJson) {
-              const refUser = JSON.parse(refUserJson);
-              if (refUser.referral_balance === undefined) refUser.referral_balance = 0;
-
-              refUser.referral_balance = parseFloat((refUser.referral_balance + referralBonus).toFixed(3));
-
-              stats.liability = parseFloat((stats.liability + referralBonus).toFixed(2));
-              await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
-
-              await env.USERS.put(user.referred_by, JSON.stringify(refUser));
-          }
-      }
-
-      await env.USERS.put(username, JSON.stringify(user));
-
-      return new Response(JSON.stringify({
-          message: 'Ad tracked and rewarded instantly.',
-          balance: user.balance,
-          balance_pending: user.balance_pending,
-          earned: earnings,
-          pending_verification: false
-      }), { status: 200, headers: getCorsHeaders(request) });
-  }
-
-  const stats2 = await getGlobalStats(env);
-  if (stats2.system_status.freeze_rewards) {
-       return new Response(JSON.stringify({ error: 'Rewards paused.' }), { status: 503, headers: getCorsHeaders(request) });
-  }
-
-  // Determine Round
   const roundInfo = await determineRound(user, env);
   const currentRound = roundInfo.round;
 
-  let missionComplete = false;
-  let min = 0.01;
-  let max = 0.05;
-
-  // Standard Mission Logic
-  // Check Mission Status for R1/R2
-  if (currentRound === 1 || currentRound === 2) {
-      if (!user.rounds.mission_progress) {
-          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
-      }
-
-      const currentCount = user.rounds.mission_progress[type] || 0;
-      const target = config.mission_targets[type] || 999;
-
-      if (type !== 'push' && currentCount >= target) {
-          // Check if FULL Round Mission is ALREADY complete (recovery for stuck users)
-          const p = user.rounds.mission_progress;
-          const donePop = (p.popunder || 0) >= (config.mission_targets.popunder || 4);
-          const doneIn = (p.inpage || 0) >= (config.mission_targets.inpage || 6);
-          const doneDir = (p.direct || 0) >= (config.mission_targets.direct || 4);
-
-          if (donePop && doneIn && doneDir) {
-              // Mark completed
-              if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
-              if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
-
-              user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
-
-              await env.USERS.put(username, JSON.stringify(user));
-
-              return new Response(JSON.stringify({
-                  message: 'Round complete!',
-                  balance: user.balance,
-                  balance_pending: user.balance_pending,
-                  earned: 0,
-                  round: currentRound,
-                  mission_complete: true,
-                  progress: user.rounds.mission_progress
-              }), { status: 200, headers: getCorsHeaders(request) });
-          }
-
-          return new Response(JSON.stringify({
-              error: `Mission for ${type} complete for this round. Switch ad types.`
-          }), { status: 400, headers: getCorsHeaders(request) });
-      }
-
-      // Increment
-      user.rounds.mission_progress[type] = currentCount + 1;
-
-      // Check if FULL Round Mission is complete
-      const p = user.rounds.mission_progress;
-      const donePop = (p.popunder || 0) >= (config.mission_targets.popunder || 4);
-      const doneIn = (p.inpage || 0) >= (config.mission_targets.inpage || 6);
-      const doneDir = (p.direct || 0) >= (config.mission_targets.direct || 4);
-
-      if (donePop && doneIn && doneDir) {
-          missionComplete = true;
-          // Mark completed
-          if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
-          if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
-
-          user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
-      }
-  }
-
-  // Standard Reward Logic
-  if (currentRound === 1) {
-      min = config.rewards.r1_min; max = config.rewards.r1_max;
-  } else if (currentRound === 2) {
-      const roll = Math.random();
-      if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
-      else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
-  } else {
-      min = config.rewards.r3_min; max = config.rewards.r3_max;
-  }
-
-  // Penalty Override for "Red Light" clicks (In-Page)
-  if (type === 'inpage' && quality === 'low') {
-      min = 0.001;
-      max = 0.10;
-  }
-
-  if (user.is_shadow_banned) {
-      min = config.rewards.shadow_min; max = config.rewards.shadow_max;
-  }
-
-  let earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
-  if (stats2.system_status.emergency_cut) {
-      earnings = parseFloat((earnings * 0.5).toFixed(3));
-  }
-
-  // Budget Check
-  const totalCommitment = stats2.paid + stats2.liability;
-  if (totalCommitment + earnings > config.monthly_budget) {
-      return new Response(JSON.stringify({ error: 'Monthly budget reached.' }), { status: 503, headers: getCorsHeaders(request) });
-  }
-
-  // Update Global Stats
-  stats2.liability = parseFloat((stats2.liability + earnings).toFixed(2));
-  stats2.ads_today += 1;
-  stats2.rewards_today = parseFloat((stats2.rewards_today + earnings).toFixed(2));
-  await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats2));
-
-  // RED ZONE TRACKING
-  if (currentRound === 3) {
-      let redList = [];
-      try {
-          const raw = await env.USERS.get('RED_ZONE_USERS');
-          if (raw) redList = JSON.parse(raw);
-      } catch (e) {}
-
-      redList = redList.filter(u => u.username !== username);
-      redList.unshift({ username: username, time: new Date().toISOString(), earned: earnings });
-      if (redList.length > 50) redList = redList.slice(0, 50);
-
-      await env.USERS.put('RED_ZONE_USERS', JSON.stringify(redList));
-  }
-
-  // // Update User Pending Balance
-  // user.balance_pending = parseFloat(((user.balance_pending || 0) + earnings).toFixed(3));
-  user.balance = parseFloat(((user.balance || 0) + earnings).toFixed(3));
-  user.daily_count = (user.daily_count || 0) + 1;
-
-  // Track pending reward for auto-approval after 24h
-  // if (!user.pending_rewards) user.pending_rewards = [];
-  // user.pending_rewards.push({
-  //     id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-  //     amount: earnings,
-  //     created_at: new Date().toISOString(),
-  //     type: type,
-  //     round: currentRound
-  // });
-
-  if (!user.history) user.history = [];
-  user.history.unshift({
-      id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-      amount: earnings,
-      date: new Date().toISOString(),
-      status: 'approved',
-      source: 'web_instant'
-  });
-  if(user.history.length > 50) user.history = user.history.slice(0, 50);
-
-  // --- STATS LOGGING ---
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Initialize user objects if missing
   if (!user.daily_stats) user.daily_stats = {};
   if (!user.daily_stats[todayStr]) {
       user.daily_stats[todayStr] = {
@@ -811,53 +603,161 @@ async function handleAddPoints(request, env) {
           inpage: { pending: 0, approved: 0 },
           direct: { pending: 0, approved: 0 },
           push: { pending: 0, approved: 0 },
+          monetag_interstitial: { pending: 0, approved: 0 },
+          monetag_popup: { pending: 0, approved: 0 },
+          monetag_inapp: { pending: 0, approved: 0 },
           total_pending: 0,
           total_approved: 0,
-          status: 'approved' // Changed from pending to approved
+          status: 'approved'
       };
   } else {
       user.daily_stats[todayStr].status = 'approved';
   }
 
-  // Increment approved for specific type
-  if (!user.daily_stats[todayStr][type]) {
-      // Safety init if schema drift
-      user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
-  }
-  // user.daily_stats[todayStr][type].pending += earnings;
-  // user.daily_stats[todayStr].total_pending = parseFloat((user.daily_stats[todayStr].total_pending + earnings).toFixed(3));
-  user.daily_stats[todayStr][type].approved += earnings;
-  user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + earnings).toFixed(3));
+  for (const type of typesToProcess) {
+      // Check budget before processing each item, including any pending earnings in this loop
+      const totalCommitment = stats.paid + stats.liability + totalEarnings + totalReferralBonus;
+      if (totalCommitment >= config.monthly_budget) {
+          // Soft break, allow previously processed items in batch to save
+          break;
+      }
 
-  // Referral Commission
-  let referralBonus = 0;
-  if (user.referred_by) {
-      referralBonus = parseFloat((earnings * 0.05).toFixed(3)); // 5%
+      let earnings = 0;
+      let min = 0.01;
+      let max = 0.05;
 
-      const refUserJson = await env.USERS.get(user.referred_by);
-      if (refUserJson) {
-          const refUser = JSON.parse(refUserJson);
-          if (refUser.referral_balance === undefined) refUser.referral_balance = 0;
+      // 1. Monetag Types (Instant Random Reward 0.01 - 1.00)
+      if (type.startsWith('monetag_')) {
+          earnings = parseFloat((Math.random() * (1.00 - 0.01) + 0.01).toFixed(3));
+      } else {
+          // 2. Standard Web Mission Logic
+          if (currentRound === 1 || currentRound === 2) {
+              if (!user.rounds.mission_progress) {
+                  user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
+              }
 
-          refUser.referral_balance = parseFloat((refUser.referral_balance + referralBonus).toFixed(3));
+              const currentCount = user.rounds.mission_progress[type] || 0;
+              const target = config.mission_targets[type] || 999;
 
-          stats2.liability = parseFloat((stats2.liability + referralBonus).toFixed(2));
-          await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats2));
+              if (type !== 'push' && currentCount >= target) {
+                  // Skip if mission is complete for this ad type
+                  continue;
+              }
 
-          await env.USERS.put(user.referred_by, JSON.stringify(refUser));
+              user.rounds.mission_progress[type] = currentCount + 1;
+
+              // Check if FULL Round Mission is complete
+              const p = user.rounds.mission_progress;
+              const donePop = (p.popunder || 0) >= (config.mission_targets.popunder || 4);
+              const doneIn = (p.inpage || 0) >= (config.mission_targets.inpage || 6);
+              const doneDir = (p.direct || 0) >= (config.mission_targets.direct || 4);
+
+              if (donePop && doneIn && doneDir) {
+                  missionComplete = true;
+                  if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
+                  if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
+                  user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+              }
+          }
+
+          if (currentRound === 1) {
+              min = config.rewards.r1_min; max = config.rewards.r1_max;
+          } else if (currentRound === 2) {
+              const roll = Math.random();
+              if (roll < 0.80) { min = config.rewards.r2_min_low; max = config.rewards.r2_max_low; }
+              else { min = config.rewards.r2_min_high; max = config.rewards.r2_max_high; }
+          } else {
+              min = config.rewards.r3_min; max = config.rewards.r3_max;
+          }
+
+          if (type === 'inpage' && quality === 'low') {
+              min = 0.001; max = 0.10;
+          }
+
+          if (user.is_shadow_banned) {
+              min = config.rewards.shadow_min; max = config.rewards.shadow_max;
+          }
+
+          earnings = parseFloat((Math.random() * (max - min) + min).toFixed(3));
+      }
+
+      if (stats.system_status.emergency_cut) {
+          earnings = parseFloat((earnings * 0.5).toFixed(3));
+      }
+
+      totalEarnings = parseFloat((totalEarnings + earnings).toFixed(3));
+      user.daily_count = (user.daily_count || 0) + 1;
+
+      if (!user.daily_stats[todayStr][type]) {
+          user.daily_stats[todayStr][type] = { pending: 0, approved: 0 };
+      }
+      user.daily_stats[todayStr][type].approved += earnings;
+
+      // Referral Commission
+      if (user.referred_by) {
+          totalReferralBonus = parseFloat((totalReferralBonus + (earnings * 0.05)).toFixed(3));
       }
   }
 
-  await env.USERS.put(username, JSON.stringify(user));
+  if (totalEarnings > 0) {
+      // Update Global Stats
+      stats.liability = parseFloat((stats.liability + totalEarnings + totalReferralBonus).toFixed(2));
+      stats.ads_today += typesToProcess.length;
+      stats.rewards_today = parseFloat((stats.rewards_today + totalEarnings).toFixed(2));
+      await env.USERS.put('GLOBAL_STATS', JSON.stringify(stats));
+
+      // Update User
+      user.balance = parseFloat(((user.balance || 0) + totalEarnings).toFixed(3));
+      user.daily_stats[todayStr].total_approved = parseFloat(((user.daily_stats[todayStr].total_approved || 0) + totalEarnings).toFixed(3));
+
+      if (!user.history) user.history = [];
+      user.history.unshift({
+          id: `REW-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+          amount: totalEarnings,
+          date: new Date().toISOString(),
+          status: 'approved',
+          source: typesToProcess.length > 1 ? 'batch_instant' : (typesToProcess[0].startsWith('monetag') ? 'monetag_instant' : 'web_instant')
+      });
+      if(user.history.length > 50) user.history = user.history.slice(0, 50);
+
+      // Referral Processing (Batch)
+      if (user.referred_by && totalReferralBonus > 0) {
+          const refUserJson = await env.USERS.get(user.referred_by);
+          if (refUserJson) {
+              const refUser = JSON.parse(refUserJson);
+              if (refUser.referral_balance === undefined) refUser.referral_balance = 0;
+              refUser.referral_balance = parseFloat((refUser.referral_balance + totalReferralBonus).toFixed(3));
+              await env.USERS.put(user.referred_by, JSON.stringify(refUser));
+          }
+      }
+
+      // RED ZONE TRACKING
+      if (currentRound === 3 && totalEarnings > 0) {
+          let redList = [];
+          try {
+              const raw = await env.USERS.get('RED_ZONE_USERS');
+              if (raw) redList = JSON.parse(raw);
+          } catch (e) {}
+
+          redList = redList.filter(u => u.username !== username);
+          redList.unshift({ username: username, time: new Date().toISOString(), earned: totalEarnings });
+          if (redList.length > 50) redList = redList.slice(0, 50);
+
+          await env.USERS.put('RED_ZONE_USERS', JSON.stringify(redList));
+      }
+
+      await env.USERS.put(username, JSON.stringify(user));
+  }
 
   return new Response(JSON.stringify({
       message: 'Earnings credited',
       balance: user.balance,
       balance_pending: user.balance_pending,
-      earned: earnings,
+      earned: totalEarnings,
       round: currentRound,
       mission_complete: missionComplete,
-      progress: (currentRound === 3) ? null : user.rounds.mission_progress
+      progress: (currentRound === 3) ? null : user.rounds.mission_progress,
+      processed: typesToProcess.length
   }), { status: 200, headers: getCorsHeaders(request) });
 }
 

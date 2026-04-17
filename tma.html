@@ -311,6 +311,14 @@
         <div style="margin-top:10px; font-size:0.75rem; color:var(--muted);" id="auto-timer">Next task in: ...</div>
     </div>
 
+    <!-- Batch Claim Card -->
+    <div class="action-card">
+        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">Pending Rewards</div>
+        <div class="desc">Unclaimed tasks: <span id="unclaimed-count" style="color:var(--accent);font-weight:bold;">0</span></div>
+        <button id="claim-batch-btn" class="btn-large" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;" onclick="claimBatchedRewards()">Claim Now</button>
+        <div style="margin-top:10px; font-size:0.75rem; color:var(--muted);" id="auto-claim-timer">Next auto-claim in: ...</div>
+    </div>
+
     <!-- Withdraw Vouchers Section -->
     <div class="withdraw-section">
         <h3>Withdraw DTECH Voucher</h3>
@@ -354,7 +362,28 @@
         let autoInterval = null;
         let nextTaskTime = Date.now() + 300000; // 5 mins
 
+        let pendingBatch = [];
+        let nextAutoClaimTime = Date.now() + 1200000; // 20 mins
+        let manualClaimCooldown = 0; // ms when it unlocks
+
         async function init() {
+            // Load pending batch from localStorage
+            try {
+                const storedBatch = localStorage.getItem('dtech_pending_batch');
+                if (storedBatch) pendingBatch = JSON.parse(storedBatch);
+            } catch(e) {}
+
+            // Load cooldown from localStorage
+            try {
+                 const storedCooldown = localStorage.getItem('dtech_claim_cooldown');
+                 if (storedCooldown) manualClaimCooldown = parseInt(storedCooldown, 10);
+            } catch(e) {}
+
+            updatePendingUI();
+
+            // Start Auto-Claim timer
+            setInterval(updateClaimTimers, 1000);
+
             let saved = sessionStorage.getItem('ad_user');
             if (!saved) {
                 saved = localStorage.getItem('ad_user');
@@ -424,6 +453,46 @@
         }
 
         // --- Auto Task Logic ---
+        function updatePendingUI() {
+            document.getElementById('unclaimed-count').innerText = pendingBatch.length;
+        }
+
+        function savePendingBatch() {
+            localStorage.setItem('dtech_pending_batch', JSON.stringify(pendingBatch));
+        }
+
+        function updateClaimTimers() {
+            const now = Date.now();
+
+            // Auto Claim UI
+            const diffAuto = Math.max(0, Math.ceil((nextAutoClaimTime - now) / 1000));
+            const minsAuto = Math.floor(diffAuto / 60);
+            const secsAuto = diffAuto % 60;
+            document.getElementById('auto-claim-timer').innerText = `Next auto-claim in: ${minsAuto}m ${secsAuto}s`;
+
+            if (diffAuto <= 0) {
+                claimBatchedRewards();
+                nextAutoClaimTime = Date.now() + 1200000; // Reset 20 mins
+            }
+
+            // Manual Claim Cooldown UI
+            const btn = document.getElementById('claim-batch-btn');
+            if (now < manualClaimCooldown) {
+                const diffCool = Math.ceil((manualClaimCooldown - now) / 1000);
+                const minsCool = Math.floor(diffCool / 60);
+                const secsCool = diffCool % 60;
+                btn.disabled = true;
+                btn.innerText = `Cooldown (${minsCool}:${secsCool < 10 ? '0' : ''}${secsCool})`;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.innerText = "Claim Now";
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }
+
         function startAutoTask() {
             // Run immediately? Or wait? User said "every 5 mins".
             // Let's run one now if safe, then interval.
@@ -512,35 +581,72 @@
         }
 
         async function claimReward(type) {
-            if (type !== 'monetag_inapp') showToast("Verifying reward...");
+            // Instead of sending request, add to local batch
+            pendingBatch.push(type);
+            savePendingBatch();
+            updatePendingUI();
+
+            if (type !== 'monetag_inapp') {
+                 showToast("Task completed! Reward added to pending batch.");
+            }
+            isProcessing = false;
+        }
+
+        async function claimBatchedRewards() {
+            if (isProcessing) return;
+            if (pendingBatch.length === 0) {
+                showToast("No pending tasks to claim.");
+                return;
+            }
+
+            // Check manual cooldown
+            const now = Date.now();
+            if (now < manualClaimCooldown) {
+                showToast("Claim is on cooldown.", true);
+                return;
+            }
+
+            isProcessing = true;
+            showToast("Claiming batched rewards...");
 
             try {
+                const typesToClaim = [...pendingBatch]; // Copy
+
                 const res = await fetch(`${API_URL}/add-points`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: currentUser.username,
                         token: currentUser.token,
-                        type: type
+                        batch: typesToClaim
                     })
                 });
 
                 const data = await res.json();
 
                 if (res.ok) {
+                    // Success! Remove only the items we claimed
+                    pendingBatch.splice(0, typesToClaim.length);
+                    savePendingBatch();
+                    updatePendingUI();
+
                     if (data.pending_verification) {
-                        showToast("Reward Pending Verification");
-                        // Refresh profile to update pending list
+                        showToast("Rewards Pending Verification");
                         setTimeout(fetchProfile, 1000);
                     } else {
                         updateBalance(data.balance);
-                        showToast(`+R ${data.earned} Earned!`);
+                        showToast(`+R ${data.earned} Earned from batch!`);
                     }
+
+                    // Set manual cooldown for 5 minutes
+                    manualClaimCooldown = Date.now() + 300000;
+                    localStorage.setItem('dtech_claim_cooldown', manualClaimCooldown);
+
                 } else {
-                    showToast(data.error || "Reward failed", true);
+                    showToast(data.error || "Batch claim failed", true);
                 }
             } catch (e) {
-                showToast("Network Error", true);
+                showToast("Network Error during claim", true);
             }
             isProcessing = false;
         }
