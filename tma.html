@@ -1,353 +1,469 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <script src='//libtl.com/sdk.js' data-zone='10600930' data-sdk='show_10600930'></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <script
+      src="//libtl.com/sdk.js"
+      data-zone="10600930"
+      data-sdk="show_10600930"
+    ></script>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>D-TECH | Mini App</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
-        :root {
-            --bg: #050617;
-            --surface: #0f172a;
-            --text: #e6eef8;
-            --muted: #94a3b8;
-            --accent: #d4af37;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --radius: 16px;
+      :root {
+        --bg: #050617;
+        --surface: #0f172a;
+        --text: #e6eef8;
+        --muted: #94a3b8;
+        --accent: #d4af37;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --radius: 16px;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .user-info {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .balance-badge {
+        background: rgba(212, 175, 55, 0.15);
+        color: var(--accent);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 800;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+
+      h2 {
+        margin: 0 0 20px 0;
+        font-size: 1.2rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .action-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 25px;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s;
+      }
+
+      .action-card:active {
+        transform: scale(0.98);
+      }
+
+      .btn-large {
+        background: linear-gradient(135deg, var(--accent), #b8860b);
+        color: #000;
+        border: none;
+        padding: 16px 0;
+        width: 100%;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 15px;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        text-transform: uppercase;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+      }
+
+      .desc {
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      #toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(34, 197, 94, 0.9);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 30px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 100;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      #toast.error {
+        background: rgba(239, 68, 68, 0.9);
+      }
+
+      .nav-link {
+        margin-top: 30px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        border-bottom: 1px dashed var(--muted);
+      }
+
+      .withdraw-section {
+        width: 100%;
+        max-width: 400px;
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius);
+        border: 1px dashed rgba(212, 175, 55, 0.3);
+        text-align: center;
+      }
+
+      .withdraw-section h3 {
+        margin-top: 0;
+        color: var(--accent);
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .withdraw-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .withdraw-btn {
+        background: linear-gradient(145deg, #1e293b, #0f172a);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        color: var(--accent);
+        padding: 12px 5px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .withdraw-btn span {
+        font-size: 0.7rem;
+        color: var(--muted);
+        font-weight: 400;
+        margin-top: 2px;
+      }
+
+      .withdraw-btn:hover {
+        background: linear-gradient(
+          145deg,
+          rgba(212, 175, 55, 0.2),
+          rgba(212, 175, 55, 0.05)
+        );
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2);
+      }
+
+      .withdraw-btn:active {
+        transform: translateY(1px);
+      }
+
+      /* Voucher Display Styles */
+      .voucher-display {
+        margin-top: 20px;
+        background: linear-gradient(135deg, #1e293b, #020617);
+        border: 2px dashed var(--accent);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        display: none;
+        position: relative;
+      }
+
+      .voucher-display.active {
+        display: block;
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      @keyframes popIn {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
         }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+        100% {
+          transform: scale(1);
+          opacity: 1;
         }
+      }
 
-        header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+      .voucher-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+      }
 
-        .user-info { font-size: 0.9rem; font-weight: 600; }
-        .balance-badge {
-            background: rgba(212, 175, 55, 0.15);
-            color: var(--accent);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 800;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
+      .voucher-code {
+        font-family: monospace;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--success);
+        letter-spacing: 2px;
+        margin: 10px 0;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        user-select: all;
+      }
 
-        h2 { margin: 0 0 20px 0; font-size: 1.2rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+      .copy-btn {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background 0.2s;
+      }
 
-        .action-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 25px;
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: transform 0.2s;
-        }
+      .copy-btn:hover {
+        background: #b8860b;
+      }
 
-        .action-card:active { transform: scale(0.98); }
+      .apps-link-btn {
+        margin-top: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border: 1px solid #3b82f6;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.2s;
+      }
 
-        .btn-large {
-            background: linear-gradient(135deg, var(--accent), #b8860b);
-            color: #000;
-            border: none;
-            padding: 16px 0;
-            width: 100%;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 15px;
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-            text-transform: uppercase;
-        }
+      .apps-link-btn:hover {
+        background: rgba(59, 130, 246, 0.2);
+      }
 
-        .btn-secondary {
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: none;
-        }
-
-        .desc { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
-
-        #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(34, 197, 94, 0.9); color: #fff;
-            padding: 12px 24px; border-radius: 30px;
-            font-weight: 600; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; z-index: 100;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        #toast.error { background: rgba(239, 68, 68, 0.9); }
-
-        .nav-link {
-            margin-top: 30px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            border-bottom: 1px dashed var(--muted);
-        }
-
-        .withdraw-section {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(255,255,255,0.02);
-            border-radius: var(--radius);
-            border: 1px dashed rgba(212, 175, 55, 0.3);
-            text-align: center;
-        }
-
-        .withdraw-section h3 {
-            margin-top: 0;
-            color: var(--accent);
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .withdraw-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .withdraw-btn {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            color: var(--accent);
-            padding: 12px 5px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .withdraw-btn span {
-            font-size: 0.7rem;
-            color: var(--muted);
-            font-weight: 400;
-            margin-top: 2px;
-        }
-
-        .withdraw-btn:hover {
-            background: linear-gradient(145deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.05));
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2);
-        }
-
-        .withdraw-btn:active {
-            transform: translateY(1px);
-        }
-
-        /* Voucher Display Styles */
-        .voucher-display {
-            margin-top: 20px;
-            background: linear-gradient(135deg, #1e293b, #020617);
-            border: 2px dashed var(--accent);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            display: none;
-            position: relative;
-        }
-
-        .voucher-display.active {
-            display: block;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .voucher-label {
-            font-size: 0.8rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-
-        .voucher-code {
-            font-family: monospace;
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: var(--success);
-            letter-spacing: 2px;
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            user-select: all;
-        }
-
-        .copy-btn {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.2s;
-        }
-
-        .copy-btn:hover {
-            background: #b8860b;
-        }
-
-        .apps-link-btn {
-            margin-top: 15px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid #3b82f6;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            width: 100%;
-            box-sizing: border-box;
-            transition: all 0.2s;
-        }
-
-        .apps-link-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
-
-        /* Pending List Styles */
-        #pending-container {
-            width: 100%; max-width: 400px;
-            margin-top: 20px;
-            display: none;
-        }
-        .pending-item {
-            background: rgba(255,255,255,0.03);
-            border-left: 3px solid var(--accent);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.85rem;
-        }
-
+      /* Pending List Styles */
+      #pending-container {
+        width: 100%;
+        max-width: 400px;
+        margin-top: 20px;
+        display: none;
+      }
+      .pending-item {
+        background: rgba(255, 255, 255, 0.03);
+        border-left: 3px solid var(--accent);
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+      }
     </style>
-</head>
-<body>
-
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
     <header>
-        <div class="user-info">
-            <div style="font-size: 0.75rem; color: var(--muted);">Welcome</div>
-            <div id="username-display">...</div>
-        </div>
-        <div class="balance-badge">R <span id="balance-display">0.00</span></div>
+      <div class="user-info">
+        <div style="font-size: 0.75rem; color: var(--muted)">Welcome</div>
+        <div id="username-display">...</div>
+      </div>
+      <div class="balance-badge">R <span id="balance-display">0.00</span></div>
     </header>
 
     <h2>Earning Tasks</h2>
 
     <!-- Format 1: Rewarded Interstitial -->
     <div class="action-card">
-        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">High Yield Video</div>
-        <div class="desc">Watch a short video ad to earn maximum rewards.</div>
-        <button class="btn-large" onclick="triggerAd('monetag_interstitial')">Watch Video</button>
+      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
+        High Yield Video
+      </div>
+      <div class="desc">Watch a short video ad to earn maximum rewards.</div>
+      <button class="btn-large" onclick="triggerAd('monetag_interstitial')">
+        Watch Video
+      </button>
     </div>
 
     <!-- Format 2: Rewarded Popup -->
     <div class="action-card">
-        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">Quick Popup</div>
-        <div class="desc">View a quick offer. Instant reward.</div>
-        <button class="btn-large btn-secondary" onclick="triggerAd('monetag_popup')">View Popup</button>
+      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
+        Quick Popup
+      </div>
+      <div class="desc">View a quick offer. Instant reward.</div>
+      <button
+        class="btn-large btn-secondary"
+        onclick="triggerAd('monetag_popup')"
+      >
+        View Popup
+      </button>
     </div>
 
     <!-- Automated Task Indicator (No Button) -->
-    <div class="action-card" style="border-color: rgba(34, 197, 94, 0.2); background: rgba(34, 197, 94, 0.05);">
-        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px; color: var(--success);">Auto-Miner Active</div>
-        <div class="desc">Background tasks running every 5 minutes. Keep app open.</div>
-        <div style="margin-top:10px; font-size:0.75rem; color:var(--muted);" id="auto-timer">Next task in: ...</div>
+    <div
+      class="action-card"
+      style="
+        border-color: rgba(34, 197, 94, 0.2);
+        background: rgba(34, 197, 94, 0.05);
+      "
+    >
+      <div
+        style="
+          font-weight: 700;
+          font-size: 1.1rem;
+          margin-bottom: 5px;
+          color: var(--success);
+        "
+      >
+        Auto-Miner Active
+      </div>
+      <div class="desc">
+        Background tasks running every 5 minutes. Keep app open.
+      </div>
+      <div
+        style="margin-top: 10px; font-size: 0.75rem; color: var(--muted)"
+        id="auto-timer"
+      >
+        Next task in: ...
+      </div>
     </div>
 
     <!-- Batch Claim Card -->
     <div class="action-card">
-        <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px;">Pending Rewards</div>
-        <div class="desc">Unclaimed tasks: <span id="unclaimed-count" style="color:var(--accent);font-weight:bold;">0</span></div>
-        <button id="claim-batch-btn" class="btn-large" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;" onclick="claimBatchedRewards()">Claim Now</button>
-        <div style="margin-top:10px; font-size:0.75rem; color:var(--muted);" id="auto-claim-timer">Next auto-claim in: ...</div>
+      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
+        Pending Rewards
+      </div>
+      <div class="desc">
+        Unclaimed tasks:
+        <span
+          id="unclaimed-count"
+          style="color: var(--accent); font-weight: bold"
+          >0</span
+        >
+      </div>
+      <button
+        id="claim-batch-btn"
+        class="btn-large"
+        style="
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: white;
+        "
+        onclick="claimBatchedRewards()"
+      >
+        Claim Now
+      </button>
+      <div
+        style="margin-top: 10px; font-size: 0.75rem; color: var(--muted)"
+        id="auto-claim-timer"
+      >
+        Next auto-claim in: ...
+      </div>
     </div>
 
     <!-- Withdraw Vouchers Section -->
     <div class="withdraw-section">
-        <h3>Withdraw DTECH Voucher</h3>
-        <div class="desc" style="margin-bottom: 15px;">Convert your balance to a DTECH voucher.</div>
-        <div class="withdraw-options">
-            <button class="withdraw-btn" onclick="requestVoucher(10)">10 R<span>VOUCHER</span></button>
-            <button class="withdraw-btn" onclick="requestVoucher(20)">20 R<span>VOUCHER</span></button>
-            <button class="withdraw-btn" onclick="requestVoucher(30)">30 R<span>VOUCHER</span></button>
-            <button class="withdraw-btn" onclick="requestVoucher(40)">40 R<span>VOUCHER</span></button>
-            <button class="withdraw-btn" onclick="requestVoucher(50)">50 R<span>VOUCHER</span></button>
-        </div>
+      <h3>Withdraw DTECH Voucher</h3>
+      <div class="desc" style="margin-bottom: 15px">
+        Convert your balance to a DTECH voucher.
+      </div>
+      <div class="withdraw-options">
+        <button class="withdraw-btn" onclick="requestVoucher(10)">
+          10 R<span>VOUCHER</span>
+        </button>
+        <button class="withdraw-btn" onclick="requestVoucher(20)">
+          20 R<span>VOUCHER</span>
+        </button>
+        <button class="withdraw-btn" onclick="requestVoucher(30)">
+          30 R<span>VOUCHER</span>
+        </button>
+        <button class="withdraw-btn" onclick="requestVoucher(40)">
+          40 R<span>VOUCHER</span>
+        </button>
+        <button class="withdraw-btn" onclick="requestVoucher(50)">
+          50 R<span>VOUCHER</span>
+        </button>
+      </div>
 
-        <div id="voucher-display" class="voucher-display">
-            <div class="voucher-label">Your Voucher Code</div>
-            <div id="voucher-code" class="voucher-code"></div>
-            <button class="copy-btn" onclick="copyVoucher()">
-                📋 Copy Code
-            </button>
-        </div>
+      <div id="voucher-display" class="voucher-display">
+        <div class="voucher-label">Your Voucher Code</div>
+        <div id="voucher-code" class="voucher-code"></div>
+        <button class="copy-btn" onclick="copyVoucher()">📋 Copy Code</button>
+      </div>
 
-        <a href="apps.html" class="apps-link-btn">
-            View DTECH Apps to Redeem ➔
-        </a>
+      <a href="apps.html" class="apps-link-btn">
+        View DTECH Apps to Redeem ➔
+      </a>
     </div>
 
     <!-- Pending Rewards Section -->
     <div id="pending-container">
-        <h3 style="font-size:1rem; color:var(--muted); margin-bottom:10px;">Pending Verification</h3>
-        <div id="pending-list"></div>
+      <h3 style="font-size: 1rem; color: var(--muted); margin-bottom: 10px">
+        Pending Verification
+      </h3>
+      <div id="pending-list"></div>
     </div>
 
     <a href="#" onclick="logout()" class="nav-link">Log Out</a>
@@ -355,360 +471,427 @@
     <div id="toast">Reward Credited!</div>
 
     <script>
-        // Updated Worker URL
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-        let currentUser = null;
-        let isProcessing = false;
-        let autoInterval = null;
-        let nextTaskTime = Date.now() + 300000; // 5 mins
+      // Updated Worker URL
+      const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+      let currentUser = null;
+      let isProcessing = false;
+      let autoInterval = null;
+      let nextTaskTime = Date.now() + 300000; // 5 mins
 
-        let pendingBatch = [];
-        let nextAutoClaimTime = Date.now() + 1200000; // 20 mins
-        let manualClaimCooldown = 0; // ms when it unlocks
+      let pendingBatch = [];
+      let nextAutoClaimTime = Date.now() + 1200000; // 20 mins
+      let manualClaimCooldown = 0; // ms when it unlocks
 
-        async function init() {
-            // Load pending batch from localStorage
-            try {
-                const storedBatch = localStorage.getItem('dtech_pending_batch');
-                if (storedBatch) pendingBatch = JSON.parse(storedBatch);
-            } catch(e) {}
+      async function init() {
+        // Load pending batch from localStorage
+        try {
+          const storedBatch = localStorage.getItem("dtech_pending_batch");
+          if (storedBatch) pendingBatch = JSON.parse(storedBatch);
+        } catch (e) {}
 
-            // Load cooldown from localStorage
-            try {
-                 const storedCooldown = localStorage.getItem('dtech_claim_cooldown');
-                 if (storedCooldown) manualClaimCooldown = parseInt(storedCooldown, 10);
-            } catch(e) {}
+        // Load cooldown from localStorage
+        try {
+          const storedCooldown = localStorage.getItem("dtech_claim_cooldown");
+          if (storedCooldown)
+            manualClaimCooldown = parseInt(storedCooldown, 10);
+        } catch (e) {}
 
-            updatePendingUI();
+        updatePendingUI();
 
-            // Start Auto-Claim timer
-            setInterval(updateClaimTimers, 1000);
+        // Start Auto-Claim timer
+        setInterval(updateClaimTimers, 1000);
 
-            let saved = sessionStorage.getItem('ad_user');
-            if (!saved) {
-                saved = localStorage.getItem('ad_user');
-            }
-            if (!saved) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = JSON.parse(saved);
-            document.getElementById('username-display').innerText = currentUser.username;
-
-            // Refresh balance & pending
-            fetchProfile();
-
-            // Start Auto-Task Timer
-            startAutoTask();
+        let saved = sessionStorage.getItem("ad_user");
+        if (!saved) {
+          saved = localStorage.getItem("ad_user");
         }
 
-        async function fetchProfile() {
-            try {
-                const res = await fetch(`${API_URL}/profile?username=${currentUser.username}`);
+        if (!saved) {
+          // If not saved, try authenticating via Telegram Web App before kicking to index
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+            if (tgUser) {
+              try {
+                const res = await fetch(`${API_URL}/telegram-auth`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ tgUser: tgUser }),
+                });
                 const data = await res.json();
-                if (data.balance !== undefined) {
-                    // Show Main Balance (Approved Funds)
-                    updateBalance(data.balance || 0);
-
-                    // Update Pending List
-                    renderPending(data.pending_rewards || []);
+                if (res.ok && data.token) {
+                  currentUser = {
+                    username: data.token.split("-")[0],
+                    balance: data.balance || 0,
+                    history: data.history || [],
+                    token: data.token,
+                    status: data.status,
+                  };
+                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
+                  finishInit();
+                  return;
                 }
-            } catch (e) { console.error(e); }
+              } catch (e) {
+                console.error("TG Auth failed in tma.html", e);
+              }
+            }
+          }
+          window.location.href = "index.html";
+          return;
+        } else {
+          currentUser = JSON.parse(saved);
+          finishInit();
         }
+      }
 
-        function updateBalance(amt) {
-            document.getElementById('balance-display').innerText = amt.toFixed(2);
+      function finishInit() {
+        document.getElementById("username-display").innerText =
+          currentUser.username;
+
+        // Refresh balance & pending
+        fetchProfile();
+
+        // Start Auto-Task Timer
+        startAutoTask();
+      }
+
+      async function fetchProfile() {
+        try {
+          const res = await fetch(
+            `${API_URL}/profile?username=${currentUser.username}`,
+          );
+          const data = await res.json();
+          if (data.balance !== undefined) {
+            // Show Main Balance (Approved Funds)
+            updateBalance(data.balance || 0);
+
+            // Update Pending List
+            renderPending(data.pending_rewards || []);
+          }
+        } catch (e) {
+          console.error(e);
         }
+      }
 
-        function renderPending(list) {
-            const container = document.getElementById('pending-container');
-            const listEl = document.getElementById('pending-list');
-            listEl.innerHTML = '';
+      function updateBalance(amt) {
+        document.getElementById("balance-display").innerText = amt.toFixed(2);
+      }
 
-            if (list && list.length > 0) {
-                container.style.display = 'block';
-                // Show last 5
-                const recent = list.slice().reverse().slice(0, 5);
-                recent.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'pending-item';
-                    const date = new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    div.innerHTML = `
+      function renderPending(list) {
+        const container = document.getElementById("pending-container");
+        const listEl = document.getElementById("pending-list");
+        listEl.innerHTML = "";
+
+        if (list && list.length > 0) {
+          container.style.display = "block";
+          // Show last 5
+          const recent = list.slice().reverse().slice(0, 5);
+          recent.forEach((item) => {
+            const div = document.createElement("div");
+            div.className = "pending-item";
+            const date = new Date(item.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            div.innerHTML = `
                         <span>Task @ ${date}</span>
                         <span style="color:var(--accent); font-weight:bold;">R ${parseFloat(item.amount).toFixed(2)}</span>
                     `;
-                    listEl.appendChild(div);
-                });
-            } else {
-                container.style.display = 'none';
-            }
+            listEl.appendChild(div);
+          });
+        } else {
+          container.style.display = "none";
+        }
+      }
+
+      function showToast(msg, isError = false) {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.className = isError ? "error" : "";
+        t.style.opacity = "1";
+        setTimeout(() => (t.style.opacity = "0"), 3000);
+      }
+
+      // --- Auto Task Logic ---
+      function updatePendingUI() {
+        document.getElementById("unclaimed-count").innerText =
+          pendingBatch.length;
+      }
+
+      function savePendingBatch() {
+        localStorage.setItem(
+          "dtech_pending_batch",
+          JSON.stringify(pendingBatch),
+        );
+      }
+
+      function updateClaimTimers() {
+        const now = Date.now();
+
+        // Auto Claim UI
+        const diffAuto = Math.max(
+          0,
+          Math.ceil((nextAutoClaimTime - now) / 1000),
+        );
+        const minsAuto = Math.floor(diffAuto / 60);
+        const secsAuto = diffAuto % 60;
+        document.getElementById("auto-claim-timer").innerText =
+          `Next auto-claim in: ${minsAuto}m ${secsAuto}s`;
+
+        if (diffAuto <= 0) {
+          claimBatchedRewards();
+          nextAutoClaimTime = Date.now() + 1200000; // Reset 20 mins
         }
 
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.className = isError ? 'error' : '';
-            t.style.opacity = '1';
-            setTimeout(() => t.style.opacity = '0', 3000);
+        // Manual Claim Cooldown UI
+        const btn = document.getElementById("claim-batch-btn");
+        if (now < manualClaimCooldown) {
+          const diffCool = Math.ceil((manualClaimCooldown - now) / 1000);
+          const minsCool = Math.floor(diffCool / 60);
+          const secsCool = diffCool % 60;
+          btn.disabled = true;
+          btn.innerText = `Cooldown (${minsCool}:${secsCool < 10 ? "0" : ""}${secsCool})`;
+          btn.style.opacity = "0.5";
+          btn.style.cursor = "not-allowed";
+        } else {
+          btn.disabled = false;
+          btn.innerText = "Claim Now";
+          btn.style.opacity = "1";
+          btn.style.cursor = "pointer";
+        }
+      }
+
+      function startAutoTask() {
+        // Run immediately? Or wait? User said "every 5 mins".
+        // Let's run one now if safe, then interval.
+        // Actually, better to wait to avoid spam on load.
+        // We'll set the timer.
+
+        setInterval(() => {
+          const now = Date.now();
+          const diff = Math.max(0, Math.ceil((nextTaskTime - now) / 1000));
+          const mins = Math.floor(diff / 60);
+          const secs = diff % 60;
+          document.getElementById("auto-timer").innerText =
+            `Next task in: ${mins}m ${secs}s`;
+
+          if (diff <= 0) {
+            triggerAutoAd();
+            nextTaskTime = Date.now() + 300000; // Reset 5 mins
+          }
+        }, 1000);
+      }
+
+      function triggerAutoAd() {
+        if (typeof show_10600930 === "function") {
+          console.log("Triggering Auto Ad...");
+          const ymid = `${currentUser.username}_${Date.now()}`;
+          show_10600930({
+            type: "inApp",
+            inAppSettings: {
+              frequency: 2,
+              capping: 0.1,
+              interval: 30,
+              timeout: 5,
+              everyPage: false,
+            },
+            ymid: ymid,
+            requestVar: currentUser.username,
+          })
+            .then(() => {
+              claimReward("monetag_inapp");
+            })
+            .catch((e) => console.log("Auto ad skipped/failed", e));
+        }
+      }
+
+      // --- Manual Ad Logic ---
+      function triggerAd(type) {
+        if (isProcessing) return;
+
+        if (typeof show_10600930 !== "function") {
+          showToast("Ad SDK not loaded. Please wait.", true);
+          return;
         }
 
-        // --- Auto Task Logic ---
-        function updatePendingUI() {
-            document.getElementById('unclaimed-count').innerText = pendingBatch.length;
+        isProcessing = true;
+        let adPromise;
+
+        showToast(
+          "IMPORTANT: Click the blue 'Continue' button on the ad to get your reward!",
+          false,
+        );
+
+        // Generate unique YMID (username_timestamp) to support backend fallback
+        const ymid = `${currentUser.username}_${Date.now()}`;
+
+        if (type === "monetag_interstitial") {
+          // Pass YMID and requestVar (username)
+          adPromise = show_10600930({
+            ymid: ymid,
+            requestVar: currentUser.username,
+          });
+        } else if (type === "monetag_popup") {
+          // Use standard call to ensure ymid is passed correctly
+          adPromise = show_10600930({
+            type: "pop",
+            ymid: ymid,
+            requestVar: currentUser.username,
+          });
         }
 
-        function savePendingBatch() {
-            localStorage.setItem('dtech_pending_batch', JSON.stringify(pendingBatch));
+        if (adPromise) {
+          adPromise
+            .then(() => {
+              // Ad completed/closed successfully, claim reward immediately
+              claimReward(type);
+            })
+            .catch((e) => {
+              console.error("Ad Error:", e);
+              showToast("Ad closed or failed.", true);
+              isProcessing = false;
+            });
+        } else {
+          isProcessing = false;
+        }
+      }
+
+      async function claimReward(type) {
+        // Instead of sending request, add to local batch
+        pendingBatch.push(type);
+        savePendingBatch();
+        updatePendingUI();
+
+        if (type !== "monetag_inapp") {
+          showToast("Task completed! Reward added to pending batch.");
+        }
+        isProcessing = false;
+      }
+
+      async function claimBatchedRewards() {
+        if (isProcessing) return;
+        if (pendingBatch.length === 0) {
+          showToast("No pending tasks to claim.");
+          return;
         }
 
-        function updateClaimTimers() {
-            const now = Date.now();
-
-            // Auto Claim UI
-            const diffAuto = Math.max(0, Math.ceil((nextAutoClaimTime - now) / 1000));
-            const minsAuto = Math.floor(diffAuto / 60);
-            const secsAuto = diffAuto % 60;
-            document.getElementById('auto-claim-timer').innerText = `Next auto-claim in: ${minsAuto}m ${secsAuto}s`;
-
-            if (diffAuto <= 0) {
-                claimBatchedRewards();
-                nextAutoClaimTime = Date.now() + 1200000; // Reset 20 mins
-            }
-
-            // Manual Claim Cooldown UI
-            const btn = document.getElementById('claim-batch-btn');
-            if (now < manualClaimCooldown) {
-                const diffCool = Math.ceil((manualClaimCooldown - now) / 1000);
-                const minsCool = Math.floor(diffCool / 60);
-                const secsCool = diffCool % 60;
-                btn.disabled = true;
-                btn.innerText = `Cooldown (${minsCool}:${secsCool < 10 ? '0' : ''}${secsCool})`;
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-            } else {
-                btn.disabled = false;
-                btn.innerText = "Claim Now";
-                btn.style.opacity = '1';
-                btn.style.cursor = 'pointer';
-            }
+        // Check manual cooldown
+        const now = Date.now();
+        if (now < manualClaimCooldown) {
+          showToast("Claim is on cooldown.", true);
+          return;
         }
 
-        function startAutoTask() {
-            // Run immediately? Or wait? User said "every 5 mins".
-            // Let's run one now if safe, then interval.
-            // Actually, better to wait to avoid spam on load.
-            // We'll set the timer.
+        isProcessing = true;
+        showToast("Claiming batched rewards...");
 
-            setInterval(() => {
-                const now = Date.now();
-                const diff = Math.max(0, Math.ceil((nextTaskTime - now) / 1000));
-                const mins = Math.floor(diff / 60);
-                const secs = diff % 60;
-                document.getElementById('auto-timer').innerText = `Next task in: ${mins}m ${secs}s`;
+        try {
+          const typesToClaim = [...pendingBatch]; // Copy
 
-                if (diff <= 0) {
-                    triggerAutoAd();
-                    nextTaskTime = Date.now() + 300000; // Reset 5 mins
-                }
-            }, 1000);
-        }
+          const res = await fetch(`${API_URL}/add-points`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: currentUser.username,
+              token: currentUser.token,
+              batch: typesToClaim,
+            }),
+          });
 
-        function triggerAutoAd() {
-            if (typeof show_10600930 === 'function') {
-                console.log("Triggering Auto Ad...");
-                const ymid = `${currentUser.username}_${Date.now()}`;
-                show_10600930({
-                    type: 'inApp',
-                    inAppSettings: {
-                        frequency: 2,
-                        capping: 0.1,
-                        interval: 30,
-                        timeout: 5,
-                        everyPage: false
-                    },
-                    ymid: ymid,
-                    requestVar: currentUser.username
-                }).then(() => {
-                    claimReward('monetag_inapp');
-                }).catch(e => console.log("Auto ad skipped/failed", e));
-            }
-        }
+          const data = await res.json();
 
-        // --- Manual Ad Logic ---
-        function triggerAd(type) {
-            if (isProcessing) return;
-
-            if (typeof show_10600930 !== 'function') {
-                showToast("Ad SDK not loaded. Please wait.", true);
-                return;
-            }
-
-            isProcessing = true;
-            let adPromise;
-
-            showToast("IMPORTANT: Click the blue 'Continue' button on the ad to get your reward!", false);
-
-            // Generate unique YMID (username_timestamp) to support backend fallback
-            const ymid = `${currentUser.username}_${Date.now()}`;
-
-            if (type === 'monetag_interstitial') {
-                // Pass YMID and requestVar (username)
-                adPromise = show_10600930({
-                    ymid: ymid,
-                    requestVar: currentUser.username
-                });
-            } else if (type === 'monetag_popup') {
-                // Use standard call to ensure ymid is passed correctly
-                adPromise = show_10600930({
-                    type: 'pop',
-                    ymid: ymid,
-                    requestVar: currentUser.username
-                });
-            }
-
-            if (adPromise) {
-                adPromise.then(() => {
-                    // Ad completed/closed successfully, claim reward immediately
-                    claimReward(type);
-                }).catch(e => {
-                    console.error("Ad Error:", e);
-                    showToast("Ad closed or failed.", true);
-                    isProcessing = false;
-                });
-            } else {
-                isProcessing = false;
-            }
-        }
-
-        async function claimReward(type) {
-            // Instead of sending request, add to local batch
-            pendingBatch.push(type);
+          if (res.ok) {
+            // Success! Remove only the items we claimed
+            pendingBatch.splice(0, typesToClaim.length);
             savePendingBatch();
             updatePendingUI();
 
-            if (type !== 'monetag_inapp') {
-                 showToast("Task completed! Reward added to pending batch.");
+            if (data.pending_verification) {
+              showToast("Rewards Pending Verification");
+              setTimeout(fetchProfile, 1000);
+            } else {
+              updateBalance(data.balance);
+              showToast(`+R ${data.earned} Earned from batch!`);
             }
-            isProcessing = false;
+
+            // Set manual cooldown for 5 minutes
+            manualClaimCooldown = Date.now() + 300000;
+            localStorage.setItem("dtech_claim_cooldown", manualClaimCooldown);
+          } else {
+            showToast(data.error || "Batch claim failed", true);
+          }
+        } catch (e) {
+          showToast("Network Error during claim", true);
+        }
+        isProcessing = false;
+      }
+
+      async function requestVoucher(amount) {
+        if (isProcessing) return;
+
+        if (
+          !confirm(
+            `Are you sure you want to withdraw ${amount}R as a DTECH voucher?`,
+          )
+        ) {
+          return;
         }
 
-        async function claimBatchedRewards() {
-            if (isProcessing) return;
-            if (pendingBatch.length === 0) {
-                showToast("No pending tasks to claim.");
-                return;
-            }
+        isProcessing = true;
+        showToast("Generating voucher...");
 
-            // Check manual cooldown
-            const now = Date.now();
-            if (now < manualClaimCooldown) {
-                showToast("Claim is on cooldown.", true);
-                return;
-            }
+        const display = document.getElementById("voucher-display");
+        display.classList.remove("active");
 
-            isProcessing = true;
-            showToast("Claiming batched rewards...");
+        try {
+          const res = await fetch(`${API_URL}/generate-voucher`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: currentUser.username,
+              token: currentUser.token,
+              amount: amount,
+            }),
+          });
 
-            try {
-                const typesToClaim = [...pendingBatch]; // Copy
+          const data = await res.json();
 
-                const res = await fetch(`${API_URL}/add-points`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: currentUser.username,
-                        token: currentUser.token,
-                        batch: typesToClaim
-                    })
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    // Success! Remove only the items we claimed
-                    pendingBatch.splice(0, typesToClaim.length);
-                    savePendingBatch();
-                    updatePendingUI();
-
-                    if (data.pending_verification) {
-                        showToast("Rewards Pending Verification");
-                        setTimeout(fetchProfile, 1000);
-                    } else {
-                        updateBalance(data.balance);
-                        showToast(`+R ${data.earned} Earned from batch!`);
-                    }
-
-                    // Set manual cooldown for 5 minutes
-                    manualClaimCooldown = Date.now() + 300000;
-                    localStorage.setItem('dtech_claim_cooldown', manualClaimCooldown);
-
-                } else {
-                    showToast(data.error || "Batch claim failed", true);
-                }
-            } catch (e) {
-                showToast("Network Error during claim", true);
-            }
-            isProcessing = false;
+          if (res.ok) {
+            showToast("Voucher generated!", false);
+            document.getElementById("voucher-code").innerText =
+              data.voucher_code;
+            display.classList.add("active");
+            updateBalance(data.balance);
+          } else {
+            showToast(data.error || "Withdrawal failed", true);
+          }
+        } catch (e) {
+          showToast("Network Error", true);
         }
+        isProcessing = false;
+      }
 
-        async function requestVoucher(amount) {
-            if (isProcessing) return;
+      function copyVoucher() {
+        const code = document.getElementById("voucher-code").innerText;
+        if (!code) return;
 
-            if (!confirm(`Are you sure you want to withdraw ${amount}R as a DTECH voucher?`)) {
-                return;
-            }
+        navigator.clipboard
+          .writeText(code)
+          .then(() => {
+            showToast("Voucher code copied!");
+          })
+          .catch((err) => {
+            showToast("Failed to copy code", true);
+          });
+      }
 
-            isProcessing = true;
-            showToast("Generating voucher...");
+      function logout() {
+        sessionStorage.removeItem("ad_user");
+        localStorage.removeItem("ad_user");
+        window.location.href = "index.html";
+      }
 
-            const display = document.getElementById('voucher-display');
-            display.classList.remove('active');
-
-            try {
-                const res = await fetch(`${API_URL}/generate-voucher`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: currentUser.username,
-                        token: currentUser.token,
-                        amount: amount
-                    })
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    showToast("Voucher generated!", false);
-                    document.getElementById('voucher-code').innerText = data.voucher_code;
-                    display.classList.add('active');
-                    updateBalance(data.balance);
-                } else {
-                    showToast(data.error || "Withdrawal failed", true);
-                }
-            } catch (e) {
-                showToast("Network Error", true);
-            }
-            isProcessing = false;
-        }
-
-        function copyVoucher() {
-            const code = document.getElementById('voucher-code').innerText;
-            if (!code) return;
-
-            navigator.clipboard.writeText(code).then(() => {
-                showToast("Voucher code copied!");
-            }).catch(err => {
-                showToast("Failed to copy code", true);
-            });
-        }
-
-        function logout() {
-            sessionStorage.removeItem('ad_user');
-            localStorage.removeItem('ad_user');
-            window.location.href = 'index.html';
-        }
-
-        window.addEventListener('DOMContentLoaded', init);
+      window.addEventListener("DOMContentLoaded", init);
     </script>
-</body>
+  </body>
 </html>

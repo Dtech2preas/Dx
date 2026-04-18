@@ -1,232 +1,313 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
+  <head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>In-Page Mission | D-TECH</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
     <style>
-        :root {
-            --bg: #020617;
-            --surface: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #d4af37;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: rgba(255,255,255,0.1);
-            --radius: 12px;
-        }
+      :root {
+        --bg: #020617;
+        --surface: #0f172a;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #d4af37;
+        --success: #10b981;
+        --danger: #ef4444;
+        --border: rgba(255, 255, 255, 0.1);
+        --radius: 12px;
+      }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text-main);
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
 
-        header {
-            width: 100%; max-width: 600px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border);
-        }
+      header {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+      }
 
-        .brand { font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; }
+      .brand {
+        font-weight: 800;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+      }
 
-        /* --- Ad Container --- */
-        .ad-container {
-            width: 100%; max-width: 600px;
-            background: #fff; /* Ad usually needs light bg */
-            min-height: 250px;
-            border-radius: var(--radius);
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .ad-placeholder { color: #333; font-weight: 600; }
+      /* --- Ad Container --- */
+      .ad-container {
+        width: 100%;
+        max-width: 600px;
+        background: #fff; /* Ad usually needs light bg */
+        min-height: 250px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .ad-placeholder {
+        color: #333;
+        font-weight: 600;
+      }
 
-        /* --- Controls --- */
-        .controls-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            width: 100%; max-width: 600px;
-            text-align: center;
-        }
+      /* --- Controls --- */
+      .controls-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+      }
 
-        .timer-display {
-            font-size: 2rem; font-weight: 800; color: var(--accent);
-            margin: 10px 0; font-family: monospace;
-        }
+      .timer-display {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--accent);
+        margin: 10px 0;
+        font-family: monospace;
+      }
 
-        .btn-claim {
-            background: var(--success); color: #000; border: none;
-            padding: 15px; width: 100%; border-radius: 8px;
-            font-weight: 800; font-size: 1rem; cursor: pointer;
-            text-transform: uppercase; margin-top: 10px;
-            transition: all 0.2s;
-        }
-        .btn-claim:disabled {
-            background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed;
-        }
-        .btn-claim:hover:not(:disabled) {
-            transform: scale(1.02); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
+      .btn-claim {
+        background: var(--success);
+        color: #000;
+        border: none;
+        padding: 15px;
+        width: 100%;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        text-transform: uppercase;
+        margin-top: 10px;
+        transition: all 0.2s;
+      }
+      .btn-claim:disabled {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+      .btn-claim:hover:not(:disabled) {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+      }
 
-        .back-link { margin-top: 20px; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+      .back-link {
+        margin-top: 20px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
 
-        #message {
-            margin-top: 15px; color: var(--accent); font-size: 0.9rem; min-height: 1.2em;
-        }
-
+      #message {
+        margin-top: 15px;
+        color: var(--accent);
+        font-size: 0.9rem;
+        min-height: 1.2em;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <header>
-        <div class="brand">IN-PAGE MISSION</div>
-        <div style="font-size:0.9rem; color:var(--text-muted);">View Ad</div>
+      <div class="brand">IN-PAGE MISSION</div>
+      <div style="font-size: 0.9rem; color: var(--text-muted)">View Ad</div>
     </header>
 
     <!-- Ad Injection Point -->
     <div class="ad-container" id="ad-slot">
-        <div class="ad-placeholder">Loading Advertisement...</div>
+      <div class="ad-placeholder">Loading Advertisement...</div>
     </div>
 
     <div class="controls-card">
-        <div style="color:var(--text-muted); font-size:0.9rem;">Time Remaining</div>
-        <div class="timer-display" id="timer">15</div>
-        <div id="message">Please engage with the ad above.</div>
-        <button id="claim-btn" class="btn-claim" disabled onclick="claimReward()">Wait...</button>
+      <div style="color: var(--text-muted); font-size: 0.9rem">
+        Time Remaining
+      </div>
+      <div class="timer-display" id="timer">15</div>
+      <div id="message">Please engage with the ad above.</div>
+      <button id="claim-btn" class="btn-claim" disabled onclick="claimReward()">
+        Wait...
+      </button>
     </div>
 
     <a href="berserker.html" class="back-link">← Cancel & Return</a>
 
     <script>
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-        let currentUser = null;
-        let timeLeft = 15;
-        let timerInterval = null;
+      const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+      let currentUser = null;
+      let timeLeft = 15;
+      let timerInterval = null;
 
-        function getBaseUrl() {
-            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                ? 'http://localhost:8000'
-                : API_URL;
-        }
+      function getBaseUrl() {
+        return window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+          ? "http://localhost:8000"
+          : API_URL;
+      }
 
-        async function init() {
-            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
-            if (!saved) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = JSON.parse(saved);
-
-            // Fetch Profile to get Ad Tag
-            try {
-                const res = await fetch(`${getBaseUrl()}/profile?username=${currentUser.username}`);
-                const data = await res.json();
-
-                // Inject Ad
-                if (data.ad_set && data.ad_set.inpage) {
-                    injectAd(data.ad_set.inpage);
-                } else {
-                    document.querySelector('.ad-placeholder').innerText = "No Ad Configured.";
-                }
-            } catch (e) { console.error(e); }
-
-            startTimer();
-        }
-
-        function injectAd(adConfig) {
-            // adConfig might be { tag: "..." } or string
-            const container = document.getElementById('ad-slot');
-            container.innerHTML = ''; // Clear placeholder
-
-            // Create a safe container
-            const div = document.createElement('div');
-            // If adConfig has a 'tag' property, use it. Else assume string.
-            div.innerHTML = adConfig.tag || adConfig;
-            container.appendChild(div);
-
-            // Execute scripts
-            const scripts = div.getElementsByTagName('script');
-            Array.from(scripts).forEach(oldScript => {
-                const newScript = document.createElement('script');
-                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                newScript.text = oldScript.text;
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
-        }
-
-        function startTimer() {
-            const el = document.getElementById('timer');
-            const btn = document.getElementById('claim-btn');
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                el.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    btn.disabled = false;
-                    btn.innerText = "CLAIM REWARD";
-                    document.getElementById('message').innerText = "Task Complete!";
-                    el.style.color = 'var(--success)';
-                }
-            }, 1000);
-        }
-
-        async function claimReward() {
-            const btn = document.getElementById('claim-btn');
-            btn.innerText = "Verifying...";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${getBaseUrl()}/add-points`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: currentUser.username,
-                        token: currentUser.token,
-                        type: 'inpage'
-                    })
+      async function init() {
+        let saved =
+          sessionStorage.getItem("ad_user") || localStorage.getItem("ad_user");
+        if (!saved) {
+          // If not saved, try authenticating via Telegram Web App before kicking to index
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+            if (tgUser) {
+              try {
+                const res = await fetch(`${getBaseUrl()}/telegram-auth`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ tgUser: tgUser }),
                 });
                 const data = await res.json();
-
-                if (res.ok) {
-                    // Update session balance
-                    currentUser.balance_pending = data.balance_pending;
-                    sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-
-                    if(data.mission_complete) {
-                         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                         setTimeout(() => window.location.href = 'berserker.html', 2000);
-                    } else {
-                        window.location.href = 'berserker.html';
-                    }
-                } else {
-                    alert(data.error || "Claim failed.");
-                    btn.innerText = "Retry";
-                    btn.disabled = false;
+                if (res.ok && data.token) {
+                  let currentUser = {
+                    username: data.token.split("-")[0],
+                    balance: data.balance || 0,
+                    history: data.history || [],
+                    token: data.token,
+                    status: data.status,
+                  };
+                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
+                  window.location.reload();
+                  return;
                 }
-            } catch(e) {
-                alert("Network Error");
-                btn.disabled = false;
+              } catch (e) {
+                console.error("TG Auth failed", e);
+              }
             }
+          }
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = JSON.parse(saved);
+
+        // Fetch Profile to get Ad Tag
+        try {
+          const res = await fetch(
+            `${getBaseUrl()}/profile?username=${currentUser.username}`,
+          );
+          const data = await res.json();
+
+          // Inject Ad
+          if (data.ad_set && data.ad_set.inpage) {
+            injectAd(data.ad_set.inpage);
+          } else {
+            document.querySelector(".ad-placeholder").innerText =
+              "No Ad Configured.";
+          }
+        } catch (e) {
+          console.error(e);
         }
 
-        window.addEventListener('DOMContentLoaded', init);
+        startTimer();
+      }
+
+      function injectAd(adConfig) {
+        // adConfig might be { tag: "..." } or string
+        const container = document.getElementById("ad-slot");
+        container.innerHTML = ""; // Clear placeholder
+
+        // Create a safe container
+        const div = document.createElement("div");
+        // If adConfig has a 'tag' property, use it. Else assume string.
+        div.innerHTML = adConfig.tag || adConfig;
+        container.appendChild(div);
+
+        // Execute scripts
+        const scripts = div.getElementsByTagName("script");
+        Array.from(scripts).forEach((oldScript) => {
+          const newScript = document.createElement("script");
+          Array.from(oldScript.attributes).forEach((attr) =>
+            newScript.setAttribute(attr.name, attr.value),
+          );
+          newScript.text = oldScript.text;
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      }
+
+      function startTimer() {
+        const el = document.getElementById("timer");
+        const btn = document.getElementById("claim-btn");
+
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          el.innerText = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            btn.disabled = false;
+            btn.innerText = "CLAIM REWARD";
+            document.getElementById("message").innerText = "Task Complete!";
+            el.style.color = "var(--success)";
+          }
+        }, 1000);
+      }
+
+      async function claimReward() {
+        const btn = document.getElementById("claim-btn");
+        btn.innerText = "Verifying...";
+        btn.disabled = true;
+
+        try {
+          const res = await fetch(`${getBaseUrl()}/add-points`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: currentUser.username,
+              token: currentUser.token,
+              type: "inpage",
+            }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            // Update session balance
+            currentUser.balance_pending = data.balance_pending;
+            sessionStorage.setItem("ad_user", JSON.stringify(currentUser));
+
+            if (data.mission_complete) {
+              confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+              setTimeout(() => (window.location.href = "berserker.html"), 2000);
+            } else {
+              window.location.href = "berserker.html";
+            }
+          } else {
+            alert(data.error || "Claim failed.");
+            btn.innerText = "Retry";
+            btn.disabled = false;
+          }
+        } catch (e) {
+          alert("Network Error");
+          btn.disabled = false;
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", init);
     </script>
-</body>
+  </body>
 </html>

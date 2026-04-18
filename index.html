@@ -1,360 +1,441 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Seakwa Jonas Mochebane, known online as PREASX24, is a South African technology founder and digital builder. He is the visionary founder and driving force behind the DTECH ecosystem — a growing network of practical, community-oriented digital platforms.">
-    <meta name="author" content="Seakwa Jonas Mochebane (PREASX24)">
+    <meta
+      name="description"
+      content="Seakwa Jonas Mochebane, known online as PREASX24, is a South African technology founder and digital builder. He is the visionary founder and driving force behind the DTECH ecosystem — a growing network of practical, community-oriented digital platforms."
+    />
+    <meta name="author" content="Seakwa Jonas Mochebane (PREASX24)" />
     <title>DTech Rewards Portal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
-        :root {
-            /* Brand Palette - Blue & Black Theme */
-            --primary: #3b82f6;      /* Bright Tech Blue */
-            --primary-dark: #2563eb;
-            --primary-light: #60a5fa;
-            --accent: #d4af37;       /* Metallic Gold */
-            --accent-hover: #b5952f;
-            --bg: #020617;           /* Deep Black/Blue */
-            --surface: #0f172a;      /* Slate 900 (Dark Blue) */
-            --text-main: #f8fafc;    /* White-ish */
-            --text-light: #94a3b8;   /* Slate 400 */
-            --danger: #ef4444;
-            --success: #10b981;
-            --border: #1e293b;
-            --radius: 12px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        }
+      :root {
+        /* Brand Palette - Blue & Black Theme */
+        --primary: #3b82f6; /* Bright Tech Blue */
+        --primary-dark: #2563eb;
+        --primary-light: #60a5fa;
+        --accent: #d4af37; /* Metallic Gold */
+        --accent-hover: #b5952f;
+        --bg: #020617; /* Deep Black/Blue */
+        --surface: #0f172a; /* Slate 900 (Dark Blue) */
+        --text-main: #f8fafc; /* White-ish */
+        --text-light: #94a3b8; /* Slate 400 */
+        --danger: #ef4444;
+        --success: #10b981;
+        --border: #1e293b;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text-main);
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
 
-        .hero-section {
-            width: 100%;
-            position: relative;
-            background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0f172a);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            padding: 3rem 0 2rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 30px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
+      .hero-section {
+        width: 100%;
+        position: relative;
+        background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0f172a);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        padding: 3rem 0 2rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+      @keyframes gradientBG {
+        0% {
+          background-position: 0% 50%;
         }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
 
-        .hero-content h1 {
-            margin: 0;
-            font-family: 'Cinzel', serif;
-            font-weight: 700;
-            font-size: 2.5rem;
-            letter-spacing: 2px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+      .hero-content h1 {
+        margin: 0;
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
 
-        .hero-content p {
-            margin: 10px 0 0;
-            color: var(--primary-light);
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
+      .hero-content p {
+        margin: 10px 0 0;
+        color: var(--primary-light);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 600;
+      }
 
-        main {
-            width: 100%;
-            max-width: 400px;
-            padding: 0 20px;
-            box-sizing: border-box;
-            flex-grow: 1;
-        }
+      main {
+        width: 100%;
+        max-width: 400px;
+        padding: 0 20px;
+        box-sizing: border-box;
+        flex-grow: 1;
+      }
 
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 30px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 30px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+      }
 
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            opacity: 0.5;
-        }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        opacity: 0.5;
+      }
 
-        h2 {
-            color: var(--primary);
-            margin-top: 0;
-            font-weight: 700;
-            font-family: 'Cinzel', serif;
-            text-align: center;
-        }
+      h2 {
+        color: var(--primary);
+        margin-top: 0;
+        font-weight: 700;
+        font-family: "Cinzel", serif;
+        text-align: center;
+      }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--text-main);
-            text-transform: uppercase;
-        }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        text-transform: uppercase;
+      }
 
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            border-radius: var(--radius);
-            border: 1px solid #334155;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            box-sizing: border-box;
-            background: #1e293b;
-            color: white;
-            transition: all 0.2s;
-        }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        border-radius: var(--radius);
+        border: 1px solid #334155;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        box-sizing: border-box;
+        background: #1e293b;
+        color: white;
+        transition: all 0.2s;
+      }
 
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: #f8fafc;
-            color: #0f172a;
-        }
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: #f8fafc;
+        color: #0f172a;
+      }
 
-        .btn-group { display: flex; gap: 12px; margin-top: 10px; }
-        .auth-btn {
-            background: var(--primary); color: white; border: none;
-            padding: 12px; border-radius: var(--radius); cursor: pointer;
-            font-weight: 600; flex: 1; transition: all 0.2s;
-        }
-        .auth-btn:hover { background: var(--primary-light); }
-        .auth-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
-        .auth-btn.secondary:hover { border-color: var(--primary); color: white; }
+      .btn-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .auth-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 600;
+        flex: 1;
+        transition: all 0.2s;
+      }
+      .auth-btn:hover {
+        background: var(--primary-light);
+      }
+      .auth-btn.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-light);
+      }
+      .auth-btn.secondary:hover {
+        border-color: var(--primary);
+        color: white;
+      }
 
-        .alert {
-            padding: 14px; border-radius: var(--radius); margin-top: 20px;
-            font-size: 0.9rem; display: none; text-align: center; font-weight: 500;
-        }
-        .alert.error { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .alert.success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .alert.info { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border: 1px solid rgba(59, 130, 246, 0.2); }
+      .alert {
+        padding: 14px;
+        border-radius: var(--radius);
+        margin-top: 20px;
+        font-size: 0.9rem;
+        display: none;
+        text-align: center;
+        font-weight: 500;
+      }
+      .alert.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+      .alert.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+      .alert.info {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--primary-light);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
 
-        footer {
-            margin-top: 50px;
-            padding: 20px;
-            text-align: center;
-            color: var(--text-light);
-            border-top: 1px solid var(--border);
-            width: 100%;
-            background: #020617;
-        }
-        .footer-brand { font-weight: 800; color: var(--primary); font-size: 0.9rem; }
+      footer {
+        margin-top: 50px;
+        padding: 20px;
+        text-align: center;
+        color: var(--text-light);
+        border-top: 1px solid var(--border);
+        width: 100%;
+        background: #020617;
+      }
+      .footer-brand {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 0.9rem;
+      }
     </style>
-</head>
-<body>
-
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
     <div class="hero-section">
-        <div class="hero-content">
-            <h1>D-TECH</h1>
-            <p>Unlock Potential. <br>Earn Vouchers.</p>
-        </div>
+      <div class="hero-content">
+        <h1>D-TECH</h1>
+        <p>Unlock Potential. <br />Earn Vouchers.</p>
+      </div>
     </div>
 
     <main>
-        <div class="card" id="auth-section">
-            <div style="text-align: center; margin-bottom: 15px;">
-                <img src="logo.png" alt="D-Tech Logo" style="width: 80px; height: auto;">
-            </div>
-            <h2>Access Portal</h2>
-            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px; text-align: center;">
-                Secure login for D-TECH vouchers.
-            </p>
+      <div class="card" id="auth-section">
+        <div style="text-align: center; margin-bottom: 15px">
+          <img
+            src="logo.png"
+            alt="D-Tech Logo"
+            style="width: 80px; height: auto"
+          />
+        </div>
+        <h2>Access Portal</h2>
+        <p
+          id="auth-status-text"
+          style="
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            text-align: center;
+          "
+        >
+          Authenticating with Telegram...
+        </p>
 
-            <label for="username">Username</label>
-            <input id="username" type="text" placeholder="Enter username" />
-
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Enter secure key" />
-
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-                <input type="checkbox" id="remember-me" style="width: auto; margin: 0; cursor: pointer;">
-                <label for="remember-me" style="margin: 0; cursor: pointer; text-transform: none; font-size: 0.9rem; color: var(--text-light);">Always remember me</label>
-            </div>
-
-            <div id="reg-fields" style="display:none;">
-                <label for="email">Email Address</label>
-                <input id="email" type="text" placeholder="name@example.com" />
-
-                <label for="whatsapp">WhatsApp Number</label>
-                <input id="whatsapp" type="text" placeholder="+27..." />
-            </div>
-
-            <div class="btn-group">
-                <button id="reg-btn" onclick="handleRegister()" class="auth-btn secondary">New User</button>
-                <button id="login-btn" onclick="handleLogin()" class="auth-btn">Secure Login</button>
-            </div>
+        <div
+          id="loading-spinner"
+          style="text-align: center; margin-bottom: 20px"
+        >
+          <div
+            style="
+              display: inline-block;
+              width: 40px;
+              height: 40px;
+              border: 4px solid rgba(59, 130, 246, 0.3);
+              border-radius: 50%;
+              border-top-color: var(--primary);
+              animation: spin 1s ease-in-out infinite;
+            "
+          ></div>
         </div>
 
-        <div id="message" class="alert"></div>
+        <style>
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        </style>
+      </div>
+
+      <div id="message" class="alert"></div>
     </main>
 
     <footer>
-        <div class="footer-brand">MADE BY PREASX24</div>
-        <div style="font-size: 0.75rem; margin-top: 5px; font-style: italic; opacity: 0.7;">"Empowering the youth through digital innovation"</div>
+      <div class="footer-brand">MADE BY PREASX24</div>
+      <div
+        style="
+          font-size: 0.75rem;
+          margin-top: 5px;
+          font-style: italic;
+          opacity: 0.7;
+        "
+      >
+        "Empowering the youth through digital innovation"
+      </div>
     </footer>
 
     <script>
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-        let referralCode = null;
+      const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+      let referralCode = null;
 
-        function showMessage(msg, type = 'info') {
-            const el = document.getElementById('message');
-            el.innerText = msg;
-            el.className = `alert ${type}`;
-            el.style.display = 'block';
-            if(type !== 'error') setTimeout(() => el.style.display = 'none', 4000);
+      function showMessage(msg, type = "info") {
+        const el = document.getElementById("message");
+        el.innerText = msg;
+        el.className = `alert ${type}`;
+        el.style.display = "block";
+        if (type !== "error")
+          setTimeout(() => (el.style.display = "none"), 4000);
+      }
+
+      async function fetchJson(path, opts = {}) {
+        const url = `${API_URL}${path}`;
+        const defaultHeaders = { "Content-Type": "application/json" };
+        const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
+        if (safeOpts.body && !safeOpts.headers["Content-Type"])
+          safeOpts.headers["Content-Type"] = "application/json";
+
+        try {
+          const res = await fetch(url, safeOpts);
+          let data = null;
+          try {
+            data = await res.json();
+          } catch (e) {}
+          return { ok: res.ok, status: res.status, data, res };
+        } catch (e) {
+          return { ok: false, status: 0, data: null };
         }
+      }
 
-        async function fetchJson(path, opts = {}) {
-            const url = `${API_URL}${path}`;
-            const defaultHeaders = { 'Content-Type': 'application/json' };
-            const safeOpts = Object.assign({ headers: defaultHeaders }, opts);
-            if (safeOpts.body && !safeOpts.headers['Content-Type']) safeOpts.headers['Content-Type'] = 'application/json';
+      async function handleTelegramAuth() {
+        try {
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
 
-            try {
-                const res = await fetch(url, safeOpts);
-                let data = null;
-                try { data = await res.json(); } catch (e) {}
-                return { ok: res.ok, status: res.status, data, res };
-            } catch (e) {
-                return { ok: false, status: 0, data: null };
-            }
-        }
-
-        async function handleRegister() {
-            const regFields = document.getElementById('reg-fields');
-            const regBtn = document.getElementById('reg-btn');
-
-            if (regFields.style.display === 'none') {
-                regFields.style.display = 'block';
-                regBtn.innerText = 'Confirm Registration';
-                document.getElementById('login-btn').style.display = 'none';
-                return showMessage('Please complete contact details for approval.', 'info');
+            if (!tgUser) {
+              showMessage(
+                "Telegram user data not found. Open in Telegram app.",
+                "error",
+              );
+              document.getElementById("auth-status-text").innerText =
+                "Authentication failed. Please open within Telegram.";
+              document.getElementById("loading-spinner").style.display = "none";
+              return;
             }
 
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const e = document.getElementById('email').value.trim();
-            const w = document.getElementById('whatsapp').value.trim();
-
-            if (!u || !p || !e || !w) return showMessage('All fields are required.', 'error');
-            if (u.length <= 5) return showMessage('Username must be more than 5 characters.', 'error');
-            if (p.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
-
-            const payload = { username: u, password: p, email: e, whatsapp: w };
+            const payload = { tgUser: tgUser };
             if (referralCode) payload.referred_by = referralCode;
 
-            const res = await fetchJson('/register', { method: 'POST', body: JSON.stringify(payload) });
-
-            if (res.ok) {
-                showMessage('Registration successful. You can now login.', 'success');
-                setTimeout(() => window.location.reload(), 3000);
-            } else showMessage(res.data?.error || 'Registration failed', 'error');
-        }
-
-        async function handleLogin() {
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const rememberMe = document.getElementById('remember-me').checked;
-
-            if (!u || !p) return showMessage('Credentials required.', 'error');
-
-            const res = await fetchJson('/login', {
-                method: 'POST',
-                body: JSON.stringify({ username: u, password: p })
+            const res = await fetchJson("/telegram-auth", {
+              method: "POST",
+              body: JSON.stringify(payload),
             });
 
             if (res.ok && res.data) {
-                if (res.data.status === 'pending') {
-                    const tempUser = { username: u, status: 'pending' };
-                    sessionStorage.setItem('ad_user', JSON.stringify(tempUser));
-                    window.location.href = 'pending.html';
-                    return;
-                }
-
-                const currentUser = {
-                    username: u,
-                    balance: res.data.balance || 0,
-                    history: res.data.history || [],
-                    token: res.data.token,
-                    status: res.data.status
+              if (res.data.status === "pending") {
+                const tempUser = {
+                  username: res.data.token.split("-")[0],
+                  status: "pending",
                 };
+                sessionStorage.setItem("ad_user", JSON.stringify(tempUser));
+                window.location.href = "pending.html";
+                return;
+              }
 
-                if (rememberMe) {
-                    localStorage.setItem('ad_user', JSON.stringify(currentUser));
-                } else {
-                    sessionStorage.setItem('ad_user', JSON.stringify(currentUser));
-                }
+              const currentUser = {
+                username: res.data.token.split("-")[0],
+                balance: res.data.balance || 0,
+                history: res.data.history || [],
+                token: res.data.token,
+                status: res.data.status,
+              };
 
-                showMessage('Authentication Successful.', 'success');
+              localStorage.setItem("ad_user", JSON.stringify(currentUser));
+              showMessage("Authentication Successful.", "success");
 
-                // Redirect to TMA dashboard
-                setTimeout(() => window.location.href = 'tma.html', 500);
+              setTimeout(() => (window.location.href = "tma.html"), 500);
             } else {
-                showMessage(res.data?.error || 'Invalid credentials.', 'error');
+              showMessage(res.data?.error || "Authentication failed", "error");
+              document.getElementById("auth-status-text").innerText =
+                "Authentication failed.";
+              document.getElementById("loading-spinner").style.display = "none";
             }
+          } else {
+            showMessage("Telegram Web App SDK not found.", "error");
+            document.getElementById("auth-status-text").innerText =
+              "Telegram Web App SDK not found.";
+            document.getElementById("loading-spinner").style.display = "none";
+          }
+        } catch (err) {
+          showMessage("An error occurred during authentication.", "error");
+          document.getElementById("auth-status-text").innerText =
+            "An error occurred.";
+          document.getElementById("loading-spinner").style.display = "none";
+        }
+      }
+
+      (function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get("ref");
+        if (ref) referralCode = ref;
+
+        let saved = sessionStorage.getItem("ad_user");
+        if (!saved) saved = localStorage.getItem("ad_user");
+
+        if (saved) {
+          try {
+            const currentUser = JSON.parse(saved);
+            if (currentUser.status === "pending") {
+              window.location.href = "pending.html";
+              return;
+            } else if (currentUser.token) {
+              window.location.href = "tma.html";
+              return;
+            }
+          } catch (e) {
+            sessionStorage.removeItem("ad_user");
+            localStorage.removeItem("ad_user");
+          }
         }
 
-        (function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const ref = urlParams.get('ref');
-            if (ref) referralCode = ref;
-
-            let saved = sessionStorage.getItem('ad_user');
-            if (!saved) {
-                saved = localStorage.getItem('ad_user');
-            }
-
-            if (saved) {
-                try {
-                    const currentUser = JSON.parse(saved);
-                    if (currentUser.status === 'pending') {
-                        window.location.href = 'pending.html';
-                    } else if (currentUser.token) {
-                        window.location.href = 'tma.html';
-                    }
-                } catch(e) {
-                    sessionStorage.removeItem('ad_user');
-                    localStorage.removeItem('ad_user');
-                }
-            }
-        })();
+        // Trigger Telegram Auth automatically
+        handleTelegramAuth();
+      })();
     </script>
-</body>
+  </body>
 </html>

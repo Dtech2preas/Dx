@@ -1,627 +1,838 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mission Dashboard | D-TECH</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --bg: #020617;
-            --surface: #0f172a;
-            --surface-hover: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #d4af37;       /* Gold */
-            --primary: #3b82f6;      /* Blue */
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: rgba(255,255,255,0.1);
-            --radius: 12px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      :root {
+        --bg: #020617;
+        --surface: #0f172a;
+        --surface-hover: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #d4af37; /* Gold */
+        --primary: #3b82f6; /* Blue */
+        --success: #10b981;
+        --danger: #ef4444;
+        --border: rgba(255, 255, 255, 0.1);
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text-main);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      /* --- Header --- */
+      header {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .brand {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: var(--text-main);
+      }
+      .balance-pill {
+        background: rgba(212, 175, 55, 0.15);
+        color: var(--accent);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tiers Container --- */
+      .tier-container {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* --- Tier Card --- */
+      .tier-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 20px;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
+
+      /* Status States */
+      .tier-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+      }
+      .tier-card.locked {
+        opacity: 0.6;
+        filter: grayscale(1);
+        pointer-events: none;
+      }
+      .tier-card.cooldown {
+        border-color: var(--text-muted);
+        opacity: 0.8;
+      }
+
+      .tier-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .tier-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+      .tier-badge {
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+      }
+
+      .badge-active {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+      }
+      .badge-locked {
+        background: rgba(148, 163, 184, 0.2);
+        color: var(--text-muted);
+      }
+      .badge-cooldown {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--danger);
+      }
+
+      .tier-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      /* --- Task Grid --- */
+      .task-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+      }
+
+      .task-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 80px;
+      }
+
+      .task-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+      .task-btn:active {
+        transform: scale(0.98);
+      }
+
+      .task-icon {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+      }
+      .task-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 2px;
+      }
+      .task-progress {
+        font-size: 0.7rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .task-done {
+        color: var(--success);
+      }
+
+      /* Progress Bar Overlay */
+      .progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+
+      /* --- Modal --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-card {
+        background: var(--surface);
+        border: 1px solid var(--accent);
+        padding: 25px;
+        border-radius: 12px;
+        max-width: 90%;
+        width: 350px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      @keyframes popIn {
+        from {
+          transform: scale(0.9);
+          opacity: 0;
         }
-
-        body {
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        to {
+          transform: scale(1);
+          opacity: 1;
         }
+      }
 
-        /* --- Header --- */
-        header {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border);
+      .modal-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 10px;
+      }
+      .modal-body {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .timer-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-main);
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
         }
-
-        .brand { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; color: var(--text-main); }
-        .balance-pill {
-            background: rgba(212, 175, 55, 0.15);
-            color: var(--accent);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 700;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            font-size: 0.9rem;
+        to {
+          transform: rotate(360deg);
         }
+      }
+      .timer-text {
+        animation: none;
+        transform: none;
+      } /* Counter-rotate if needed, but text is separate usually */
 
-        /* --- Tiers Container --- */
-        .tier-container {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+      .btn-claim {
+        background: var(--success);
+        color: #000;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 800;
+        width: 100%;
+        cursor: pointer;
+        transition: transform 0.2s;
+        text-transform: uppercase;
+      }
+      .btn-claim:disabled {
+        background: var(--surface-hover);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+      .btn-claim:hover:not(:disabled) {
+        transform: scale(1.02);
+        filter: brightness(1.1);
+      }
 
-        /* --- Tier Card --- */
-        .tier-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 20px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, border-color 0.2s;
-        }
+      .nav-link {
+        margin-top: 20px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        border-bottom: 1px dashed var(--text-muted);
+      }
 
-        /* Status States */
-        .tier-card.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
-        .tier-card.locked { opacity: 0.6; filter: grayscale(1); pointer-events: none; }
-        .tier-card.cooldown { border-color: var(--text-muted); opacity: 0.8; }
-
-        .tier-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .tier-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
-        .tier-badge {
-            font-size: 0.75rem;
-            font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .badge-locked { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
-        .badge-cooldown { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-
-        .tier-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4; }
-
-        /* --- Task Grid --- */
-        .task-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-
-        .task-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 80px;
-        }
-
-        .task-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); border-color: var(--accent); }
-        .task-btn:active { transform: scale(0.98); }
-
-        .task-icon { font-size: 1.2rem; margin-bottom: 5px; }
-        .task-label { font-size: 0.75rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
-        .task-progress { font-size: 0.7rem; color: var(--accent); font-weight: 700; }
-        .task-done { color: var(--success); }
-
-        /* Progress Bar Overlay */
-        .progress-bar {
-            position: absolute; bottom: 0; left: 0; height: 3px;
-            background: var(--accent); width: 0%; transition: width 0.5s ease;
-        }
-
-        /* --- Modal --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-card {
-            background: var(--surface); border: 1px solid var(--accent);
-            padding: 25px; border-radius: 12px; max-width: 90%; width: 350px;
-            text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.7);
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .modal-title { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
-        .modal-body { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-
-        .timer-circle {
-            width: 60px; height: 60px; border-radius: 50%;
-            border: 3px solid var(--border); border-top-color: var(--accent);
-            margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; font-weight: 800; color: var(--text-main);
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .timer-text { animation: none; transform: none; } /* Counter-rotate if needed, but text is separate usually */
-
-        .btn-claim {
-            background: var(--success); color: #000; border: none;
-            padding: 12px 24px; border-radius: 8px; font-weight: 800;
-            width: 100%; cursor: pointer; transition: transform 0.2s;
-            text-transform: uppercase;
-        }
-        .btn-claim:disabled { background: var(--surface-hover); color: var(--text-muted); cursor: not-allowed; }
-        .btn-claim:hover:not(:disabled) { transform: scale(1.02); filter: brightness(1.1); }
-
-        .nav-link { margin-top: 20px; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; border-bottom: 1px dashed var(--text-muted); }
-
-        #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--success); color: #000; padding: 10px 20px;
-            border-radius: 20px; font-weight: 700; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; z-index: 2000;
-        }
-
+      #toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--success);
+        color: #000;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 700;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 2000;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <header>
-        <div class="brand">MISSION CONTROL</div>
-        <div class="balance-pill">R <span id="balance-display">0.00</span></div>
+      <div class="brand">MISSION CONTROL</div>
+      <div class="balance-pill">R <span id="balance-display">0.00</span></div>
     </header>
 
-    <div id="loading" style="margin-top: 50px; color: var(--text-muted);">Syncing Profile...</div>
+    <div id="loading" style="margin-top: 50px; color: var(--text-muted)">
+      Syncing Profile...
+    </div>
 
-    <div class="tier-container" id="main-content" style="display:none;">
-
-        <!-- TIER 1: HIGH YIELD -->
-        <div id="tier-1" class="tier-card">
-            <div class="tier-header">
-                <div class="tier-title">Daily Boost (Tier 1)</div>
-                <div id="status-t1" class="tier-badge badge-active">Active</div>
-            </div>
-            <div class="tier-desc">
-                High rewards. Complete these daily to unlock standard tasks.<br>
-                <span id="timer-t1" style="color:var(--danger); display:none; font-weight:bold;">Cooldown: 00:00:00</span>
-            </div>
-            <div class="task-list" id="list-t1">
-                <!-- Popunder -->
-                <div class="task-btn" onclick="startTask('popunder', 1)">
-                    <div class="task-icon">🚀</div>
-                    <div class="task-label">Pop-Under</div>
-                    <div class="task-progress" id="prog-t1-pop">0/4</div>
-                    <div class="progress-bar" id="bar-t1-pop"></div>
-                </div>
-                <!-- In-Page -->
-                <div class="task-btn" onclick="startTask('inpage', 1)">
-                    <div class="task-icon">📑</div>
-                    <div class="task-label">In-Page</div>
-                    <div class="task-progress" id="prog-t1-inpage">0/6</div>
-                    <div class="progress-bar" id="bar-t1-inpage"></div>
-                </div>
-                <!-- Direct -->
-                <div class="task-btn" onclick="startTask('direct', 1)">
-                    <div class="task-icon">🔗</div>
-                    <div class="task-label">Direct Link</div>
-                    <div class="task-progress" id="prog-t1-direct">0/4</div>
-                    <div class="progress-bar" id="bar-t1-direct"></div>
-                </div>
-            </div>
+    <div class="tier-container" id="main-content" style="display: none">
+      <!-- TIER 1: HIGH YIELD -->
+      <div id="tier-1" class="tier-card">
+        <div class="tier-header">
+          <div class="tier-title">Daily Boost (Tier 1)</div>
+          <div id="status-t1" class="tier-badge badge-active">Active</div>
         </div>
-
-        <!-- TIER 2: STANDARD -->
-        <div id="tier-2" class="tier-card locked">
-            <div class="tier-header">
-                <div class="tier-title">Standard Tasks (Tier 2)</div>
-                <div id="status-t2" class="tier-badge badge-locked">Locked</div>
-            </div>
-            <div class="tier-desc">
-                Medium rewards. Unlocks after Tier 1 cooldown.<br>
-                <span id="timer-t2" style="color:var(--danger); display:none; font-weight:bold;">Cooldown: 00:00:00</span>
-            </div>
-            <div class="task-list" id="list-t2">
-                <div class="task-btn" onclick="startTask('popunder', 2)">
-                    <div class="task-icon">🚀</div>
-                    <div class="task-label">Pop-Under</div>
-                    <div class="task-progress" id="prog-t2-pop">0/4</div>
-                    <div class="progress-bar" id="bar-t2-pop"></div>
-                </div>
-                <div class="task-btn" onclick="startTask('inpage', 2)">
-                    <div class="task-icon">📑</div>
-                    <div class="task-label">In-Page</div>
-                    <div class="task-progress" id="prog-t2-inpage">0/6</div>
-                    <div class="progress-bar" id="bar-t2-inpage"></div>
-                </div>
-                <div class="task-btn" onclick="startTask('direct', 2)">
-                    <div class="task-icon">🔗</div>
-                    <div class="task-label">Direct Link</div>
-                    <div class="task-progress" id="prog-t2-direct">0/4</div>
-                    <div class="progress-bar" id="bar-t2-direct"></div>
-                </div>
-            </div>
+        <div class="tier-desc">
+          High rewards. Complete these daily to unlock standard tasks.<br />
+          <span
+            id="timer-t1"
+            style="color: var(--danger); display: none; font-weight: bold"
+            >Cooldown: 00:00:00</span
+          >
         </div>
-
-        <!-- TIER 3: GRIND -->
-        <div id="tier-3" class="tier-card locked">
-            <div class="tier-header">
-                <div class="tier-title">The Grind (Tier 3)</div>
-                <div id="status-t3" class="tier-badge badge-locked">Locked</div>
-            </div>
-            <div class="tier-desc">Unlimited low-yield tasks. Always available when Tiers 1 & 2 are cooling down.</div>
-            <div class="task-list" id="list-t3">
-                <div class="task-btn" onclick="startTask('popunder', 3)">
-                    <div class="task-icon">🚀</div>
-                    <div class="task-label">Pop-Under</div>
-                    <div class="task-progress">∞</div>
-                </div>
-                <div class="task-btn" onclick="startTask('inpage', 3)">
-                    <div class="task-icon">📑</div>
-                    <div class="task-label">In-Page</div>
-                    <div class="task-progress">∞</div>
-                </div>
-                <div class="task-btn" onclick="startTask('direct', 3)">
-                    <div class="task-icon">🔗</div>
-                    <div class="task-label">Direct Link</div>
-                    <div class="task-progress">∞</div>
-                </div>
-            </div>
+        <div class="task-list" id="list-t1">
+          <!-- Popunder -->
+          <div class="task-btn" onclick="startTask('popunder', 1)">
+            <div class="task-icon">🚀</div>
+            <div class="task-label">Pop-Under</div>
+            <div class="task-progress" id="prog-t1-pop">0/4</div>
+            <div class="progress-bar" id="bar-t1-pop"></div>
+          </div>
+          <!-- In-Page -->
+          <div class="task-btn" onclick="startTask('inpage', 1)">
+            <div class="task-icon">📑</div>
+            <div class="task-label">In-Page</div>
+            <div class="task-progress" id="prog-t1-inpage">0/6</div>
+            <div class="progress-bar" id="bar-t1-inpage"></div>
+          </div>
+          <!-- Direct -->
+          <div class="task-btn" onclick="startTask('direct', 1)">
+            <div class="task-icon">🔗</div>
+            <div class="task-label">Direct Link</div>
+            <div class="task-progress" id="prog-t1-direct">0/4</div>
+            <div class="progress-bar" id="bar-t1-direct"></div>
+          </div>
         </div>
+      </div>
 
+      <!-- TIER 2: STANDARD -->
+      <div id="tier-2" class="tier-card locked">
+        <div class="tier-header">
+          <div class="tier-title">Standard Tasks (Tier 2)</div>
+          <div id="status-t2" class="tier-badge badge-locked">Locked</div>
+        </div>
+        <div class="tier-desc">
+          Medium rewards. Unlocks after Tier 1 cooldown.<br />
+          <span
+            id="timer-t2"
+            style="color: var(--danger); display: none; font-weight: bold"
+            >Cooldown: 00:00:00</span
+          >
+        </div>
+        <div class="task-list" id="list-t2">
+          <div class="task-btn" onclick="startTask('popunder', 2)">
+            <div class="task-icon">🚀</div>
+            <div class="task-label">Pop-Under</div>
+            <div class="task-progress" id="prog-t2-pop">0/4</div>
+            <div class="progress-bar" id="bar-t2-pop"></div>
+          </div>
+          <div class="task-btn" onclick="startTask('inpage', 2)">
+            <div class="task-icon">📑</div>
+            <div class="task-label">In-Page</div>
+            <div class="task-progress" id="prog-t2-inpage">0/6</div>
+            <div class="progress-bar" id="bar-t2-inpage"></div>
+          </div>
+          <div class="task-btn" onclick="startTask('direct', 2)">
+            <div class="task-icon">🔗</div>
+            <div class="task-label">Direct Link</div>
+            <div class="task-progress" id="prog-t2-direct">0/4</div>
+            <div class="progress-bar" id="bar-t2-direct"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIER 3: GRIND -->
+      <div id="tier-3" class="tier-card locked">
+        <div class="tier-header">
+          <div class="tier-title">The Grind (Tier 3)</div>
+          <div id="status-t3" class="tier-badge badge-locked">Locked</div>
+        </div>
+        <div class="tier-desc">
+          Unlimited low-yield tasks. Always available when Tiers 1 & 2 are
+          cooling down.
+        </div>
+        <div class="task-list" id="list-t3">
+          <div class="task-btn" onclick="startTask('popunder', 3)">
+            <div class="task-icon">🚀</div>
+            <div class="task-label">Pop-Under</div>
+            <div class="task-progress">∞</div>
+          </div>
+          <div class="task-btn" onclick="startTask('inpage', 3)">
+            <div class="task-icon">📑</div>
+            <div class="task-label">In-Page</div>
+            <div class="task-progress">∞</div>
+          </div>
+          <div class="task-btn" onclick="startTask('direct', 3)">
+            <div class="task-icon">🔗</div>
+            <div class="task-label">Direct Link</div>
+            <div class="task-progress">∞</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <a href="index.html" class="nav-link">← Back to Dashboard</a>
 
     <!-- Verification Modal -->
     <div id="verify-modal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-title">Task Active</div>
-            <div class="modal-body">
-                Ad opened in new tab.<br>
-                Please view it for <span id="time-req">15</span> seconds.
-            </div>
-
-            <div class="timer-circle" id="modal-spinner">
-                <span id="countdown" class="timer-text" style="animation:none;">15</span>
-            </div>
-
-            <button id="claim-btn" class="btn-claim" disabled onclick="submitClaim()">Wait...</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); margin-top:15px; cursor:pointer; font-size:0.8rem;">Cancel</button>
+      <div class="modal-card">
+        <div class="modal-title">Task Active</div>
+        <div class="modal-body">
+          Ad opened in new tab.<br />
+          Please view it for <span id="time-req">15</span> seconds.
         </div>
+
+        <div class="timer-circle" id="modal-spinner">
+          <span id="countdown" class="timer-text" style="animation: none"
+            >15</span
+          >
+        </div>
+
+        <button
+          id="claim-btn"
+          class="btn-claim"
+          disabled
+          onclick="submitClaim()"
+        >
+          Wait...
+        </button>
+        <button
+          onclick="closeModal()"
+          style="
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 0.8rem;
+          "
+        >
+          Cancel
+        </button>
+      </div>
     </div>
 
     <div id="toast">Reward Claimed!</div>
 
     <script>
-        const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
-        const MISSION_TARGETS = { popunder: 4, inpage: 6, direct: 4 };
+      const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
+      const MISSION_TARGETS = { popunder: 4, inpage: 6, direct: 4 };
 
-        // Ad Links
-        const FALLBACK_LINK = "https://otieu.com/4/10205357"; // Use only if no ad set assigned
+      // Ad Links
+      const FALLBACK_LINK = "https://otieu.com/4/10205357"; // Use only if no ad set assigned
 
-        let currentUser = null;
-        let currentAdSet = null;
-        let activeTask = null; // { type, tier, startTime }
-        let timerInterval = null;
+      let currentUser = null;
+      let currentAdSet = null;
+      let activeTask = null; // { type, tier, startTime }
+      let timerInterval = null;
 
-        function getBaseUrl() {
-            return (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                ? 'http://localhost:8000'
-                : API_URL;
-        }
+      function getBaseUrl() {
+        return window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+          ? "http://localhost:8000"
+          : API_URL;
+      }
 
-        async function init() {
-            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
-            if (!saved) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = JSON.parse(saved);
-
-            try {
-                await refreshProfile();
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('main-content').style.display = 'flex';
-            } catch (e) {
-                document.getElementById('loading').innerText = "Failed to load profile.";
-                console.error(e);
-            }
-        }
-
-        async function refreshProfile() {
-            const res = await fetch(`${getBaseUrl()}/profile?username=${currentUser.username}`);
-            const data = await res.json();
-            if(data.error) throw new Error(data.error);
-
-            currentUser.balance = data.balance;
-                        currentAdSet = data.ad_set;
-
-            updateUI(data);
-        }
-
-        function updateUI(data) {
-            document.getElementById('balance-display').innerText = (data.balance_pending || 0).toFixed(2);
-
-            const r = data.rounds;
-            const current = r.current; // 1, 2, or 3
-
-            // --- Reset States ---
-            const t1 = document.getElementById('tier-1');
-            const t2 = document.getElementById('tier-2');
-            const t3 = document.getElementById('tier-3');
-
-            t1.className = 'tier-card'; t2.className = 'tier-card'; t3.className = 'tier-card';
-            document.getElementById('list-t1').style.pointerEvents = 'none';
-            document.getElementById('list-t2').style.pointerEvents = 'none';
-            document.getElementById('list-t3').style.pointerEvents = 'none';
-
-            // Clear timers
-            ['timer-t1', 'timer-t2'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el.interval) clearInterval(el.interval);
-                el.style.display = 'none';
-            });
-
-
-            // --- TIER 1 ---
-            if (current === 1) {
-                setTierState(1, 'active', 'Active');
-                document.getElementById('list-t1').style.pointerEvents = 'auto';
-                updateProgress(1, r.mission);
-            } else {
-                if (r.r1_cooldown_ms > 0) {
-                    setTierState(1, 'cooldown', 'Resting');
-                    startCooldownTimer('timer-t1', r.r1_cooldown_ms);
-                } else {
-                    setTierState(1, 'locked', 'Complete');
-                }
-            }
-
-            // --- TIER 2 ---
-            if (current === 2) {
-                setTierState(2, 'active', 'Active');
-                document.getElementById('list-t2').style.pointerEvents = 'auto';
-                updateProgress(2, r.mission);
-                // Also show T1 as cooldown
-                if (r.r1_cooldown_ms > 0) {
-                    setTierState(1, 'cooldown', 'Resting');
-                    startCooldownTimer('timer-t1', r.r1_cooldown_ms);
-                }
-            } else if (current === 1) {
-                setTierState(2, 'locked', 'Locked');
-            } else {
-                 if (r.r2_cooldown_ms > 0) {
-                    setTierState(2, 'cooldown', 'Resting');
-                    startCooldownTimer('timer-t2', r.r2_cooldown_ms);
-                 } else {
-                     setTierState(2, 'locked', 'Locked'); // Or Cooldown if R3 active
-                     if(current === 3) setTierState(2, 'cooldown', 'Resting');
-                 }
-            }
-
-            // --- TIER 3 ---
-            if (current === 3) {
-                setTierState(3, 'active', 'Active');
-                document.getElementById('list-t3').style.pointerEvents = 'auto';
-                // Show others as cooldown
-                if (r.r1_cooldown_ms > 0) {
-                    setTierState(1, 'cooldown', 'Resting');
-                    startCooldownTimer('timer-t1', r.r1_cooldown_ms);
-                }
-                if (r.r2_cooldown_ms > 0) {
-                    setTierState(2, 'cooldown', 'Resting');
-                    startCooldownTimer('timer-t2', r.r2_cooldown_ms);
-                }
-            } else {
-                setTierState(3, 'locked', 'Locked');
-            }
-        }
-
-        function setTierState(id, state, label) {
-            const el = document.getElementById(`tier-${id}`);
-            const bad = document.getElementById(`status-t${id}`);
-            el.className = `tier-card ${state}`;
-            if(state === 'active') el.classList.remove('locked');
-            if(state === 'locked') el.classList.add('locked');
-
-            bad.className = `tier-badge badge-${state}`;
-            bad.innerText = label;
-        }
-
-        function updateProgress(tier, mission) {
-            const m = mission || { popunder:0, inpage:0, direct:0 };
-            ['popunder', 'inpage', 'direct'].forEach(type => {
-                const el = document.getElementById(`prog-t${tier}-${type}`);
-                const bar = document.getElementById(`bar-t${tier}-${type}`);
-                const target = MISSION_TARGETS[type];
-                const val = m[type] || 0;
-
-                if(el && bar) {
-                    el.innerText = `${val}/${target}`;
-                    const pct = Math.min(100, (val/target)*100);
-                    bar.style.width = `${pct}%`;
-
-                    if(val >= target) {
-                        el.classList.add('task-done');
-                        el.innerText = 'DONE';
-                        el.parentElement.style.opacity = '0.5';
-                        el.parentElement.style.pointerEvents = 'none';
-                    }
-                }
-            });
-        }
-
-        function startCooldownTimer(elId, ms) {
-            const el = document.getElementById(elId);
-            el.style.display = 'inline';
-            let remain = ms;
-
-            if(el.interval) clearInterval(el.interval);
-
-            el.interval = setInterval(() => {
-                remain -= 1000;
-                if(remain <= 0) {
-                    clearInterval(el.interval);
-                    el.innerText = "READY!";
-                    setTimeout(() => init(), 2000); // Reload
-                    return;
-                }
-                const m = Math.floor(remain / 60000);
-                const s = Math.floor((remain % 60000) / 1000);
-                el.innerText = `Cooldown: ${m}m ${s}s`;
-            }, 1000);
-        }
-
-        function startTask(type, tier) {
-            // Determine Target URL
-            let targetUrl = FALLBACK_LINK;
-
-            if (currentAdSet) {
-                // Priority: Use assigned direct link for both 'direct' and 'popunder' tasks
-                // because popunder tags are script-based and can't be opened via window.open easily.
-                // The backend treats them as separate tasks but the action (click link) is similar.
-                if (currentAdSet.direct) {
-                    targetUrl = currentAdSet.direct;
-                } else if (currentAdSet.popunder && typeof currentAdSet.popunder === 'string' && currentAdSet.popunder.startsWith('http')) {
-                    // Rare case where popunder is a URL
-                    targetUrl = currentAdSet.popunder;
-                }
-            } else {
-                 showToast("No Ad Set Assigned. Using Default.");
-            }
-
-            if (type === 'inpage') {
-                window.location.href = 'berserker_inpage.html';
-                return;
-            }
-
-            activeTask = { type, tier };
-
-            // Open Ad in New Tab
-            const win = window.open(targetUrl, '_blank');
-            if (win) {
-                win.focus();
-            } else {
-                alert("Please allow popups for this site to earn rewards.");
-                return;
-            }
-
-            // Open Modal
-            openModal();
-        }
-
-        function openModal() {
-            const m = document.getElementById('verify-modal');
-            m.style.display = 'flex';
-
-            const btn = document.getElementById('claim-btn');
-            btn.disabled = true;
-            btn.innerText = "Verifying...";
-            btn.style.background = '#1e293b';
-
-            let timeLeft = 15;
-            const counter = document.getElementById('countdown');
-            const spinner = document.getElementById('modal-spinner');
-            counter.innerText = timeLeft;
-            spinner.style.animation = 'spin 1s linear infinite';
-
-            if(timerInterval) clearInterval(timerInterval);
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                counter.innerText = timeLeft;
-                if(timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    spinner.style.animation = 'none';
-                    btn.disabled = false;
-                    btn.innerText = "CLAIM REWARD";
-                    btn.style.background = 'var(--success)';
-                }
-            }, 1000);
-        }
-
-        function closeModal() {
-            document.getElementById('verify-modal').style.display = 'none';
-            if(timerInterval) clearInterval(timerInterval);
-            activeTask = null;
-        }
-
-        async function submitClaim() {
-            if (!activeTask) return;
-
-            const btn = document.getElementById('claim-btn');
-            btn.innerText = "Processing...";
-
-            try {
-                const res = await fetch(`${getBaseUrl()}/add-points`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: currentUser.username,
-                        token: currentUser.token,
-                        type: activeTask.type
-                    })
+      async function init() {
+        let saved =
+          sessionStorage.getItem("ad_user") || localStorage.getItem("ad_user");
+        if (!saved) {
+          // If not saved, try authenticating via Telegram Web App before kicking to index
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+            if (tgUser) {
+              try {
+                const res = await fetch(`${getBaseUrl()}/telegram-auth`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ tgUser: tgUser }),
                 });
                 const data = await res.json();
-
-                if (res.ok) {
-                    showToast(`+R ${data.earned} Added!`);
-                    closeModal();
-                    currentUser.balance_pending = data.balance_pending;
-                    refreshProfile();
-
-                    if (data.mission_complete) {
-                         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                    }
-                } else {
-                    alert(data.error || "Claim failed.");
-                    closeModal();
+                if (res.ok && data.token) {
+                  let currentUser = {
+                    username: data.token.split("-")[0],
+                    balance: data.balance || 0,
+                    history: data.history || [],
+                    token: data.token,
+                    status: data.status,
+                  };
+                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
+                  window.location.reload();
+                  return;
                 }
-            } catch(e) {
-                alert("Network Error");
-                closeModal();
+              } catch (e) {
+                console.error("TG Auth failed", e);
+              }
             }
+          }
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = JSON.parse(saved);
+
+        try {
+          await refreshProfile();
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("main-content").style.display = "flex";
+        } catch (e) {
+          document.getElementById("loading").innerText =
+            "Failed to load profile.";
+          console.error(e);
+        }
+      }
+
+      async function refreshProfile() {
+        const res = await fetch(
+          `${getBaseUrl()}/profile?username=${currentUser.username}`,
+        );
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        currentUser.balance = data.balance;
+        currentAdSet = data.ad_set;
+
+        updateUI(data);
+      }
+
+      function updateUI(data) {
+        document.getElementById("balance-display").innerText = (
+          data.balance_pending || 0
+        ).toFixed(2);
+
+        const r = data.rounds;
+        const current = r.current; // 1, 2, or 3
+
+        // --- Reset States ---
+        const t1 = document.getElementById("tier-1");
+        const t2 = document.getElementById("tier-2");
+        const t3 = document.getElementById("tier-3");
+
+        t1.className = "tier-card";
+        t2.className = "tier-card";
+        t3.className = "tier-card";
+        document.getElementById("list-t1").style.pointerEvents = "none";
+        document.getElementById("list-t2").style.pointerEvents = "none";
+        document.getElementById("list-t3").style.pointerEvents = "none";
+
+        // Clear timers
+        ["timer-t1", "timer-t2"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el.interval) clearInterval(el.interval);
+          el.style.display = "none";
+        });
+
+        // --- TIER 1 ---
+        if (current === 1) {
+          setTierState(1, "active", "Active");
+          document.getElementById("list-t1").style.pointerEvents = "auto";
+          updateProgress(1, r.mission);
+        } else {
+          if (r.r1_cooldown_ms > 0) {
+            setTierState(1, "cooldown", "Resting");
+            startCooldownTimer("timer-t1", r.r1_cooldown_ms);
+          } else {
+            setTierState(1, "locked", "Complete");
+          }
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.opacity = 1;
-            setTimeout(() => t.style.opacity = 0, 3000);
+        // --- TIER 2 ---
+        if (current === 2) {
+          setTierState(2, "active", "Active");
+          document.getElementById("list-t2").style.pointerEvents = "auto";
+          updateProgress(2, r.mission);
+          // Also show T1 as cooldown
+          if (r.r1_cooldown_ms > 0) {
+            setTierState(1, "cooldown", "Resting");
+            startCooldownTimer("timer-t1", r.r1_cooldown_ms);
+          }
+        } else if (current === 1) {
+          setTierState(2, "locked", "Locked");
+        } else {
+          if (r.r2_cooldown_ms > 0) {
+            setTierState(2, "cooldown", "Resting");
+            startCooldownTimer("timer-t2", r.r2_cooldown_ms);
+          } else {
+            setTierState(2, "locked", "Locked"); // Or Cooldown if R3 active
+            if (current === 3) setTierState(2, "cooldown", "Resting");
+          }
         }
 
-        window.addEventListener('DOMContentLoaded', init);
+        // --- TIER 3 ---
+        if (current === 3) {
+          setTierState(3, "active", "Active");
+          document.getElementById("list-t3").style.pointerEvents = "auto";
+          // Show others as cooldown
+          if (r.r1_cooldown_ms > 0) {
+            setTierState(1, "cooldown", "Resting");
+            startCooldownTimer("timer-t1", r.r1_cooldown_ms);
+          }
+          if (r.r2_cooldown_ms > 0) {
+            setTierState(2, "cooldown", "Resting");
+            startCooldownTimer("timer-t2", r.r2_cooldown_ms);
+          }
+        } else {
+          setTierState(3, "locked", "Locked");
+        }
+      }
 
+      function setTierState(id, state, label) {
+        const el = document.getElementById(`tier-${id}`);
+        const bad = document.getElementById(`status-t${id}`);
+        el.className = `tier-card ${state}`;
+        if (state === "active") el.classList.remove("locked");
+        if (state === "locked") el.classList.add("locked");
+
+        bad.className = `tier-badge badge-${state}`;
+        bad.innerText = label;
+      }
+
+      function updateProgress(tier, mission) {
+        const m = mission || { popunder: 0, inpage: 0, direct: 0 };
+        ["popunder", "inpage", "direct"].forEach((type) => {
+          const el = document.getElementById(`prog-t${tier}-${type}`);
+          const bar = document.getElementById(`bar-t${tier}-${type}`);
+          const target = MISSION_TARGETS[type];
+          const val = m[type] || 0;
+
+          if (el && bar) {
+            el.innerText = `${val}/${target}`;
+            const pct = Math.min(100, (val / target) * 100);
+            bar.style.width = `${pct}%`;
+
+            if (val >= target) {
+              el.classList.add("task-done");
+              el.innerText = "DONE";
+              el.parentElement.style.opacity = "0.5";
+              el.parentElement.style.pointerEvents = "none";
+            }
+          }
+        });
+      }
+
+      function startCooldownTimer(elId, ms) {
+        const el = document.getElementById(elId);
+        el.style.display = "inline";
+        let remain = ms;
+
+        if (el.interval) clearInterval(el.interval);
+
+        el.interval = setInterval(() => {
+          remain -= 1000;
+          if (remain <= 0) {
+            clearInterval(el.interval);
+            el.innerText = "READY!";
+            setTimeout(() => init(), 2000); // Reload
+            return;
+          }
+          const m = Math.floor(remain / 60000);
+          const s = Math.floor((remain % 60000) / 1000);
+          el.innerText = `Cooldown: ${m}m ${s}s`;
+        }, 1000);
+      }
+
+      function startTask(type, tier) {
+        // Determine Target URL
+        let targetUrl = FALLBACK_LINK;
+
+        if (currentAdSet) {
+          // Priority: Use assigned direct link for both 'direct' and 'popunder' tasks
+          // because popunder tags are script-based and can't be opened via window.open easily.
+          // The backend treats them as separate tasks but the action (click link) is similar.
+          if (currentAdSet.direct) {
+            targetUrl = currentAdSet.direct;
+          } else if (
+            currentAdSet.popunder &&
+            typeof currentAdSet.popunder === "string" &&
+            currentAdSet.popunder.startsWith("http")
+          ) {
+            // Rare case where popunder is a URL
+            targetUrl = currentAdSet.popunder;
+          }
+        } else {
+          showToast("No Ad Set Assigned. Using Default.");
+        }
+
+        if (type === "inpage") {
+          window.location.href = "berserker_inpage.html";
+          return;
+        }
+
+        activeTask = { type, tier };
+
+        // Open Ad in New Tab
+        const win = window.open(targetUrl, "_blank");
+        if (win) {
+          win.focus();
+        } else {
+          alert("Please allow popups for this site to earn rewards.");
+          return;
+        }
+
+        // Open Modal
+        openModal();
+      }
+
+      function openModal() {
+        const m = document.getElementById("verify-modal");
+        m.style.display = "flex";
+
+        const btn = document.getElementById("claim-btn");
+        btn.disabled = true;
+        btn.innerText = "Verifying...";
+        btn.style.background = "#1e293b";
+
+        let timeLeft = 15;
+        const counter = document.getElementById("countdown");
+        const spinner = document.getElementById("modal-spinner");
+        counter.innerText = timeLeft;
+        spinner.style.animation = "spin 1s linear infinite";
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          counter.innerText = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            spinner.style.animation = "none";
+            btn.disabled = false;
+            btn.innerText = "CLAIM REWARD";
+            btn.style.background = "var(--success)";
+          }
+        }, 1000);
+      }
+
+      function closeModal() {
+        document.getElementById("verify-modal").style.display = "none";
+        if (timerInterval) clearInterval(timerInterval);
+        activeTask = null;
+      }
+
+      async function submitClaim() {
+        if (!activeTask) return;
+
+        const btn = document.getElementById("claim-btn");
+        btn.innerText = "Processing...";
+
+        try {
+          const res = await fetch(`${getBaseUrl()}/add-points`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: currentUser.username,
+              token: currentUser.token,
+              type: activeTask.type,
+            }),
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            showToast(`+R ${data.earned} Added!`);
+            closeModal();
+            currentUser.balance_pending = data.balance_pending;
+            refreshProfile();
+
+            if (data.mission_complete) {
+              confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            }
+          } else {
+            alert(data.error || "Claim failed.");
+            closeModal();
+          }
+        } catch (e) {
+          alert("Network Error");
+          closeModal();
+        }
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.style.opacity = 1;
+        setTimeout(() => (t.style.opacity = 0), 3000);
+      }
+
+      window.addEventListener("DOMContentLoaded", init);
     </script>
-</body>
+  </body>
 </html>
