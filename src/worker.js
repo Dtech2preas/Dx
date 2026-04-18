@@ -409,12 +409,17 @@ async function handleTelegramAuth(request, env) {
 
   const existingUserJson = await env.USERS.get(username);
 
+  const token = `${username}-${Date.now()}`;
+
   if (existingUserJson) {
     // User exists, log them in
     const user = JSON.parse(existingUserJson);
+    user.token = token;
+    await env.USERS.put(username, JSON.stringify(user));
+
     return new Response(JSON.stringify({
       message: 'Login successful',
-      token: `${username}-${Date.now()}`,
+      token: token,
       balance: user.balance || 0,
       history: user.history || [],
       status: user.status || 'active'
@@ -440,7 +445,8 @@ async function handleTelegramAuth(request, env) {
     referral_code: `ref_${username}`,
     referred_by: validReferrer,
     referral_count: 0,
-    registration_date: new Date().toISOString()
+    registration_date: new Date().toISOString(),
+    token: token
   };
 
   await env.USERS.put(username, JSON.stringify(newUser));
@@ -458,7 +464,7 @@ async function handleTelegramAuth(request, env) {
 
   return new Response(JSON.stringify({
       message: 'Registration and login successful',
-      token: `${username}-${Date.now()}`,
+      token: token,
       balance: 0,
       history: [],
       status: 'active'
