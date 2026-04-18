@@ -378,6 +378,14 @@ async function determineRound(user, env) {
     const r1End = user.rounds?.r1_last_completed || 0;
     const r2End = user.rounds?.r2_last_completed || 0;
 
+    if (!user.rounds) {
+        user.rounds = {
+            r1_last_completed: 0,
+            r2_last_completed: 0,
+            mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+        };
+    }
+
     const r1Cooldown = config.cooldowns.r1;
     const r2Cooldown = config.cooldowns.r2;
 
@@ -446,7 +454,15 @@ async function handleTelegramAuth(request, env) {
     referred_by: validReferrer,
     referral_count: 0,
     registration_date: new Date().toISOString(),
-    token: token
+    token: token,
+    rounds: {
+        r1_last_completed: 0,
+        r2_last_completed: 0,
+        mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+    },
+    notification_streak: { last_check: "", days: 0 },
+    daily_stats: {},
+    pending_rewards: []
   };
 
   await env.USERS.put(username, JSON.stringify(newUser));
@@ -510,7 +526,7 @@ async function handleRegister(request, env) {
     rounds: {
         r1_last_completed: 0,
         r2_last_completed: 0,
-        mission_progress: { popunder: 0, inpage: 0, direct: 0 }
+        mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
     },
     notification_streak: { last_check: "", days: 0 },
     daily_stats: {},
@@ -577,7 +593,7 @@ async function handleLogin(request, env) {
       user.rounds = {
           r1_last_completed: 0,
           r2_last_completed: 0,
-          mission_progress: { popunder: 0, inpage: 0, direct: 0 }
+          mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
       };
   }
   if (!user.notification_streak) {
@@ -650,6 +666,15 @@ async function handleAddPoints(request, env) {
   if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
+
+  if (!user.rounds) {
+      user.rounds = {
+          r1_last_completed: 0,
+          r2_last_completed: 0,
+          mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+      };
+  }
+
   if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
   if (user.is_frozen) {
@@ -732,7 +757,7 @@ async function handleAddPoints(request, env) {
                   missionComplete = true;
                   if (currentRound === 1) user.rounds.r1_last_completed = Date.now();
                   if (currentRound === 2) user.rounds.r2_last_completed = Date.now();
-                  user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0 };
+                  user.rounds.mission_progress = { popunder: 0, inpage: 0, direct: 0, push: 0 };
               }
           }
 
@@ -884,6 +909,14 @@ async function handleGetProfile(request, env) {
     if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
     const user = JSON.parse(userJson);
 
+    if (!user.rounds) {
+        user.rounds = {
+            r1_last_completed: 0,
+            r2_last_completed: 0,
+            mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+        };
+    }
+
     // Process Pending Rewards (Lazy Check)
     if (await processPendingRewards(user, env)) {
         await env.USERS.put(username, JSON.stringify(user));
@@ -939,6 +972,14 @@ async function handleGetProfile(request, env) {
     const r1End = user.rounds?.r1_last_completed || 0;
     const r2End = user.rounds?.r2_last_completed || 0;
 
+    if (!user.rounds) {
+        user.rounds = {
+            r1_last_completed: 0,
+            r2_last_completed: 0,
+            mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+        };
+    }
+
     const r1Cooldown = config.cooldowns.r1;
     const r2Cooldown = config.cooldowns.r2;
 
@@ -969,7 +1010,7 @@ async function handleGetProfile(request, env) {
             current: roundInfo.round,
             r1_cooldown_ms: r1Remaining,
             r2_cooldown_ms: r2Remaining,
-            mission: user.rounds?.mission_progress || { popunder: 0, inpage: 0, direct: 0 }
+            mission: user.rounds?.mission_progress || { popunder: 0, inpage: 0, direct: 0, push: 0 }
         }
     }), { status: 200, headers: getCorsHeaders(request) });
 }
@@ -1075,6 +1116,15 @@ async function handleRedeem(request, env) {
   if (!userJson) return new Response(JSON.stringify({ error: 'User not found' }), { status: 404, headers: getCorsHeaders(request) });
 
   const user = JSON.parse(userJson);
+
+  if (!user.rounds) {
+      user.rounds = {
+          r1_last_completed: 0,
+          r2_last_completed: 0,
+          mission_progress: { popunder: 0, inpage: 0, direct: 0, push: 0 }
+      };
+  }
+
   if (user.token !== token) return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403, headers: getCorsHeaders(request) });
 
   if (user.withdrawal_disabled) {

@@ -536,6 +536,8 @@
               }
             }
           }
+          localStorage.removeItem("ad_user");
+          sessionStorage.removeItem("ad_user");
           window.location.href = "index.html";
           return;
         } else {
@@ -560,6 +562,14 @@
           const res = await fetch(
             `${API_URL}/profile?username=${currentUser.username}`,
           );
+          if (!res.ok) {
+            if (res.status === 404 || res.status === 401 || res.status === 403) {
+              localStorage.removeItem("ad_user");
+              sessionStorage.removeItem("ad_user");
+              window.location.href = "index.html";
+            }
+            return;
+          }
           const data = await res.json();
           if (data.balance !== undefined) {
             // Show Main Balance (Approved Funds)
