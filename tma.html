@@ -1,6 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Monetag SDK (Critical for ads) -->
     <script
       src="//libtl.com/sdk.js"
       data-zone="10600930"
@@ -9,561 +10,506 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>D-TECH | Mini App</title>
+    <title>D-TECH | Premium Mini App</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
       rel="stylesheet"
     />
-
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-      :root {
-        --bg: #050617;
-        --surface: #0f172a;
-        --text: #e6eef8;
-        --muted: #94a3b8;
-        --accent: #d4af37;
-        --success: #22c55e;
-        --danger: #ef4444;
-        --radius: 16px;
-      }
-
-      body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: "Inter", sans-serif;
+      * {
         margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
+        padding: 0;
         box-sizing: border-box;
       }
 
-      header {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      :root {
+        --bg-deep: #020617;
+        --bg-surface: #0f172a;
+        --bg-card: rgba(21, 31, 56, 0.75);
+        --bg-card-solid: #111827;
+        --border-glow: rgba(212, 175, 55, 0.25);
+        --accent-gold: #d4af37;
+        --accent-gold-dark: #b8860b;
+        --accent-green: #22c55e;
+        --accent-red: #ef4444;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.4);
+        --shadow-gold: 0 8px 20px rgba(212, 175, 55, 0.2);
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
       }
 
-      .user-info {
-        font-size: 0.9rem;
-        font-weight: 600;
-      }
-      .balance-badge {
-        background: rgba(212, 175, 55, 0.15);
-        color: var(--accent);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: 800;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-      }
-
-      h2 {
-        margin: 0 0 20px 0;
-        font-size: 1.2rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .action-card {
-        background: var(--surface);
-        border-radius: var(--radius);
-        padding: 25px;
-        width: 100%;
-        max-width: 400px;
-        margin-bottom: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+      body {
+        background: radial-gradient(circle at 10% 20%, #0a0f2a, #020617);
+        font-family: "Inter", sans-serif;
+        color: var(--text-primary);
+        padding: 20px 16px 40px;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        text-align: center;
-        transition: transform 0.2s;
       }
 
-      .action-card:active {
-        transform: scale(0.98);
-      }
-
-      .btn-large {
-        background: linear-gradient(135deg, var(--accent), #b8860b);
-        color: #000;
-        border: none;
-        padding: 16px 0;
+      /* Glass header */
+      header {
         width: 100%;
-        border-radius: 12px;
+        max-width: 500px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 18px;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border-radius: 60px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        margin-bottom: 24px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .user-info {
+        font-weight: 600;
+      }
+      .user-greeting {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.5px;
+      }
+      #username-display {
+        font-size: 0.9rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff, #d4af37);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      .balance-badge {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        padding: 6px 16px;
+        border-radius: 40px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        border: 1px solid var(--accent-gold);
+        color: var(--accent-gold);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Pending Rewards Card (TOP PRIORITY) */
+      .pending-hero {
+        width: 100%;
+        max-width: 500px;
+        background: linear-gradient(145deg, #0f172a, #0a0f1f);
+        border-radius: var(--radius-xl);
+        padding: 20px 18px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        box-shadow: var(--shadow-gold);
+        transition: all 0.2s;
+      }
+      .pending-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .pending-header h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        background: linear-gradient(120deg, #ffffff, #d4af37);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      .unclaimed-badge {
+        background: rgba(212, 175, 55, 0.15);
+        padding: 6px 12px;
+        border-radius: 40px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: var(--accent-gold);
+        border: 0.5px solid var(--accent-gold);
+      }
+      .claim-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 20px 0 14px;
+        flex-wrap: wrap;
+      }
+      .btn-claim {
+        background: linear-gradient(95deg, #22c55e, #16a34a);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 48px;
         font-weight: 800;
         font-size: 1rem;
+        color: white;
         cursor: pointer;
-        margin-top: 15px;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-        text-transform: uppercase;
+        transition: transform 0.15s, box-shadow 0.2s;
+        flex: 1;
+        box-shadow: 0 6px 14px rgba(34, 197, 94, 0.25);
       }
-
-      .btn-secondary {
+      .btn-claim:active {
+        transform: scale(0.97);
+      }
+      .btn-claim:disabled {
+        opacity: 0.6;
+        transform: none;
+        cursor: not-allowed;
+      }
+      .auto-claim-timer {
         background: rgba(255, 255, 255, 0.05);
-        color: var(--text);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: none;
+        padding: 10px 16px;
+        border-radius: 48px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        font-family: monospace;
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .countdown-number {
+        color: var(--accent-gold);
+        font-weight: 800;
+      }
+      .info-hint {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-top: 12px;
+        border-top: 1px dashed rgba(212, 175, 55, 0.2);
+        padding-top: 10px;
+        display: flex;
+        justify-content: space-between;
       }
 
-      .desc {
+      /* Cards grid / tasks */
+      .section-label {
         font-size: 0.85rem;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-
-      #toast {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(34, 197, 94, 0.9);
-        color: #fff;
-        padding: 12px 24px;
-        border-radius: 30px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
         font-weight: 600;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-        z-index: 100;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        color: var(--text-secondary);
+        margin: 20px 0 12px 0;
+        align-self: flex-start;
+        max-width: 500px;
+        width: 100%;
       }
-      #toast.error {
-        background: rgba(239, 68, 68, 0.9);
+      .tasks-grid {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 20px;
       }
-
-      .nav-link {
-        margin-top: 30px;
-        color: var(--muted);
-        text-decoration: none;
+      .action-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(8px);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      .action-card:active {
+        transform: scale(0.99);
+      }
+      .card-title {
+        font-weight: 800;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 14px;
+      }
+      .btn-large {
+        background: linear-gradient(135deg, var(--accent-gold), #9c7a2b);
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 40px;
+        font-weight: 800;
         font-size: 0.9rem;
-        border-bottom: 1px dashed var(--muted);
+        color: #010101;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        border: 1px solid rgba(255, 215, 0, 0.3);
+      }
+      .miner-card {
+        background: linear-gradient(145deg, #0c1a2b, #07121f);
+        border-left: 3px solid var(--accent-green);
+      }
+      .miner-timer {
+        font-family: monospace;
+        font-size: 0.75rem;
+        margin-top: 8px;
       }
 
+      /* Withdraw section */
       .withdraw-section {
         width: 100%;
-        max-width: 400px;
-        margin-top: 20px;
+        max-width: 500px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: var(--radius-lg);
         padding: 20px;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: var(--radius);
-        border: 1px dashed rgba(212, 175, 55, 0.3);
-        text-align: center;
+        margin: 16px 0;
+        border: 1px solid rgba(212, 175, 55, 0.2);
       }
-
       .withdraw-section h3 {
-        margin-top: 0;
-        color: var(--accent);
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        text-align: center;
+        color: var(--accent-gold);
+        font-size: 1.2rem;
+        margin-bottom: 8px;
       }
-
       .withdraw-options {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
         gap: 10px;
-        margin-top: 15px;
+        margin: 18px 0;
       }
-
       .withdraw-btn {
-        background: linear-gradient(145deg, #1e293b, #0f172a);
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        color: var(--accent);
-        padding: 12px 5px;
-        border-radius: 12px;
+        background: #0f172a;
+        border: 1px solid rgba(212, 175, 55, 0.5);
+        padding: 10px 5px;
+        border-radius: 20px;
         font-weight: 800;
-        font-size: 1.1rem;
+        font-size: 1rem;
+        color: var(--accent-gold);
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
       }
-
       .withdraw-btn span {
-        font-size: 0.7rem;
-        color: var(--muted);
+        font-size: 0.65rem;
         font-weight: 400;
-        margin-top: 2px;
+        color: var(--text-secondary);
       }
-
-      .withdraw-btn:hover {
-        background: linear-gradient(
-          145deg,
-          rgba(212, 175, 55, 0.2),
-          rgba(212, 175, 55, 0.05)
-        );
-        border-color: var(--accent);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2);
-      }
-
-      .withdraw-btn:active {
-        transform: translateY(1px);
-      }
-
-      /* Voucher Display Styles */
       .voucher-display {
-        margin-top: 20px;
-        background: linear-gradient(135deg, #1e293b, #020617);
-        border: 2px dashed var(--accent);
-        border-radius: 12px;
-        padding: 15px;
+        background: #07121f;
+        border-radius: 20px;
+        padding: 14px;
         text-align: center;
+        margin-top: 15px;
         display: none;
-        position: relative;
+        border: 1px solid var(--accent-gold);
       }
-
       .voucher-display.active {
         display: block;
-        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        animation: fadeUp 0.3s ease;
       }
-
-      @keyframes popIn {
-        0% {
-          transform: scale(0.8);
+      @keyframes fadeUp {
+        from {
           opacity: 0;
+          transform: translateY(10px);
         }
-        100% {
-          transform: scale(1);
+        to {
           opacity: 1;
+          transform: translateY(0);
         }
       }
-
-      .voucher-label {
-        font-size: 0.8rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 5px;
-      }
-
       .voucher-code {
         font-family: monospace;
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: var(--success);
-        letter-spacing: 2px;
-        margin: 10px 0;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
-        user-select: all;
+        font-size: 1.3rem;
+        background: black;
+        padding: 8px;
+        border-radius: 12px;
+        margin: 8px 0;
+        letter-spacing: 1px;
+        color: #22c55e;
       }
-
       .copy-btn {
-        background: var(--accent);
-        color: #000;
+        background: var(--accent-gold);
         border: none;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        transition: background 0.2s;
-      }
-
-      .copy-btn:hover {
-        background: #b8860b;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-weight: bold;
       }
 
       .apps-link-btn {
-        margin-top: 15px;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(59, 130, 246, 0.1);
-        color: #60a5fa;
-        border: 1px solid #3b82f6;
+        gap: 6px;
+        background: rgba(59, 130, 246, 0.15);
+        margin-top: 16px;
+        padding: 10px;
+        border-radius: 40px;
         text-decoration: none;
-        padding: 10px 20px;
-        border-radius: 8px;
+        color: #60a5fa;
         font-weight: 600;
-        font-size: 0.9rem;
-        width: 100%;
-        box-sizing: border-box;
-        transition: all 0.2s;
       }
-
-      .apps-link-btn:hover {
-        background: rgba(59, 130, 246, 0.2);
-      }
-
-      /* Pending List Styles */
       #pending-container {
         width: 100%;
-        max-width: 400px;
-        margin-top: 20px;
-        display: none;
+        max-width: 500px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 20px;
+        padding: 12px;
+        margin-top: 8px;
       }
       .pending-item {
-        background: rgba(255, 255, 255, 0.03);
-        border-left: 3px solid var(--accent);
-        padding: 10px;
+        background: #0f172a;
+        border-left: 3px solid var(--accent-gold);
+        padding: 8px 12px;
+        border-radius: 12px;
         margin-bottom: 8px;
-        border-radius: 4px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+      }
+      .logout-link {
+        margin-top: 24px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border-bottom: 1px dashed;
+      }
+      #toast {
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        backdrop-filter: blur(12px);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 40px;
+        font-weight: 600;
+        z-index: 200;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        border-left: 4px solid var(--accent-gold);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      #toast.error {
+        border-left-color: var(--accent-red);
+      }
+      button {
+        font-family: inherit;
       }
     </style>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <header>
       <div class="user-info">
-        <div style="font-size: 0.75rem; color: var(--muted)">Welcome</div>
+        <div class="user-greeting">WELCOME BACK</div>
         <div id="username-display">...</div>
       </div>
       <div class="balance-badge">R <span id="balance-display">0.00</span></div>
     </header>
 
-    <h2>Earning Tasks</h2>
-
-    <!-- Format 1: Rewarded Interstitial -->
-    <div class="action-card">
-      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
-        High Yield Video
+    <!-- ========= PENDING REWARDS SECTION (MOVED TO TOP) ========= -->
+    <div class="pending-hero">
+      <div class="pending-header">
+        <h3>⚡ PENDING REWARDS</h3>
+        <div class="unclaimed-badge">
+          Unclaimed: <span id="unclaimed-count">0</span>
+        </div>
       </div>
-      <div class="desc">Watch a short video ad to earn maximum rewards.</div>
-      <button class="btn-large" onclick="triggerAd('monetag_interstitial')">
-        Watch Video
-      </button>
-    </div>
-
-    <!-- Format 2: Rewarded Popup -->
-    <div class="action-card">
-      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
-        Quick Popup
+      <div class="claim-action">
+        <button id="claim-batch-btn" class="btn-claim" onclick="claimBatchedRewards()">
+          💰 CLAIM NOW
+        </button>
+        <div class="auto-claim-timer">
+          🔄 AUTO·CLAIM <span id="auto-claim-timer" class="countdown-number">--:--</span>
+        </div>
       </div>
-      <div class="desc">View a quick offer. Instant reward.</div>
-      <button
-        class="btn-large btn-secondary"
-        onclick="triggerAd('monetag_popup')"
-      >
-        View Popup
-      </button>
-    </div>
-
-    <!-- Automated Task Indicator (No Button) -->
-    <div
-      class="action-card"
-      style="
-        border-color: rgba(34, 197, 94, 0.2);
-        background: rgba(34, 197, 94, 0.05);
-      "
-    >
-      <div
-        style="
-          font-weight: 700;
-          font-size: 1.1rem;
-          margin-bottom: 5px;
-          color: var(--success);
-        "
-      >
-        Auto-Miner Active
-      </div>
-      <div class="desc">
-        Background tasks running every 5 minutes. Keep app open.
-      </div>
-      <div
-        style="margin-top: 10px; font-size: 0.75rem; color: var(--muted)"
-        id="auto-timer"
-      >
-        Next task in: ...
+      <div class="info-hint">
+        <span>✅ Tasks stack instantly</span>
+        <span>⏱️ Cooldown: 5 min</span>
       </div>
     </div>
 
-    <!-- Batch Claim Card -->
-    <div class="action-card">
-      <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 5px">
-        Pending Rewards
+    <div class="section-label">💰 EARN INSTANTLY</div>
+    <div class="tasks-grid">
+      <!-- Interstitial -->
+      <div class="action-card">
+        <div class="card-title">🎬 HIGH YIELD VIDEO</div>
+        <div class="desc">Watch rewarded interstitial → maximum payout + pending batch</div>
+        <button class="btn-large" onclick="triggerAd('monetag_interstitial')">▶ WATCH VIDEO</button>
       </div>
-      <div class="desc">
-        Unclaimed tasks:
-        <span
-          id="unclaimed-count"
-          style="color: var(--accent); font-weight: bold"
-          >0</span
-        >
+      <!-- Popup -->
+      <div class="action-card">
+        <div class="card-title">📱 QUICK POPUP</div>
+        <div class="desc">Lightweight offer, instant credit to pending.</div>
+        <button class="btn-large btn-secondary" onclick="triggerAd('monetag_popup')">⚡ VIEW POPUP</button>
       </div>
-      <button
-        id="claim-batch-btn"
-        class="btn-large"
-        style="
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: white;
-        "
-        onclick="claimBatchedRewards()"
-      >
-        Claim Now
-      </button>
-      <div
-        style="margin-top: 10px; font-size: 0.75rem; color: var(--muted)"
-        id="auto-claim-timer"
-      >
-        Next auto-claim in: ...
+      <!-- Auto Miner -->
+      <div class="action-card miner-card">
+        <div class="card-title">⛏️ AUTO-MINER ACTIVE</div>
+        <div class="desc">Background task every 5 min. Keep app open to earn.</div>
+        <div class="miner-timer" id="auto-timer">⏳ Next task in: --:--</div>
       </div>
     </div>
 
-    <!-- Withdraw Vouchers Section -->
+    <!-- Withdraw Section -->
     <div class="withdraw-section">
-      <h3>Withdraw DTECH Voucher</h3>
-      <div class="desc" style="margin-bottom: 15px">
-        Convert your balance to a DTECH voucher.
-      </div>
+      <h3>🎫 WITHDRAW DTECH VOUCHER</h3>
+      <div class="desc" style="text-align: center; margin-bottom: 10px">Convert balance → secure voucher code</div>
       <div class="withdraw-options">
-        <button class="withdraw-btn" onclick="requestVoucher(10)">
-          10 R<span>VOUCHER</span>
-        </button>
-        <button class="withdraw-btn" onclick="requestVoucher(20)">
-          20 R<span>VOUCHER</span>
-        </button>
-        <button class="withdraw-btn" onclick="requestVoucher(30)">
-          30 R<span>VOUCHER</span>
-        </button>
-        <button class="withdraw-btn" onclick="requestVoucher(40)">
-          40 R<span>VOUCHER</span>
-        </button>
-        <button class="withdraw-btn" onclick="requestVoucher(50)">
-          50 R<span>VOUCHER</span>
-        </button>
+        <button class="withdraw-btn" onclick="requestVoucher(10)">10 R<span>VOUCHER</span></button>
+        <button class="withdraw-btn" onclick="requestVoucher(20)">20 R<span>VOUCHER</span></button>
+        <button class="withdraw-btn" onclick="requestVoucher(30)">30 R<span>VOUCHER</span></button>
+        <button class="withdraw-btn" onclick="requestVoucher(40)">40 R<span>VOUCHER</span></button>
+        <button class="withdraw-btn" onclick="requestVoucher(50)">50 R<span>VOUCHER</span></button>
       </div>
-
       <div id="voucher-display" class="voucher-display">
-        <div class="voucher-label">Your Voucher Code</div>
+        <div style="font-size: 0.7rem; opacity: 0.7">YOUR EXCLUSIVE CODE</div>
         <div id="voucher-code" class="voucher-code"></div>
-        <button class="copy-btn" onclick="copyVoucher()">📋 Copy Code</button>
+        <button class="copy-btn" onclick="copyVoucher()">📋 COPY CODE</button>
       </div>
-
-      <a href="apps.html" class="apps-link-btn">
-        View DTECH Apps to Redeem ➔
-      </a>
+      <a href="apps.html" class="apps-link-btn">📲 DTECH REDEEM APPS →</a>
     </div>
 
-    <!-- Pending Rewards Section -->
+    <!-- Pending verification list from backend -->
     <div id="pending-container">
-      <h3 style="font-size: 1rem; color: var(--muted); margin-bottom: 10px">
-        Pending Verification
-      </h3>
+      <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px">⏳ Pending Verification</h3>
       <div id="pending-list"></div>
     </div>
 
-    <a href="#" onclick="logout()" class="nav-link">Log Out</a>
-
-    <div id="toast">Reward Credited!</div>
+    <a href="#" onclick="logout()" class="logout-link">🔒 Log Out</a>
+    <div id="toast">✨ Action completed</div>
 
     <script>
-      // Updated Worker URL
+      // ---------- CONFIG ----------
       const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
       let currentUser = null;
       let isProcessing = false;
-      let autoInterval = null;
-      let nextTaskTime = Date.now() + 300000; // 5 mins
+      let nextTaskTime = Date.now() + 300000;      // 5 min auto-miner
+      let pendingBatch = [];                       // local unclaimed tasks
+      let nextAutoClaimTime = Date.now() + 1200000; // 20 min auto claim
+      let manualClaimCooldown = 0;
 
-      let pendingBatch = [];
-      let nextAutoClaimTime = Date.now() + 1200000; // 20 mins
-      let manualClaimCooldown = 0; // ms when it unlocks
-
-      async function init() {
-        // Load pending batch from localStorage
-        try {
-          const storedBatch = localStorage.getItem("dtech_pending_batch");
-          if (storedBatch) pendingBatch = JSON.parse(storedBatch);
-        } catch (e) {}
-
-        // Load cooldown from localStorage
-        try {
-          const storedCooldown = localStorage.getItem("dtech_claim_cooldown");
-          if (storedCooldown)
-            manualClaimCooldown = parseInt(storedCooldown, 10);
-        } catch (e) {}
-
-        updatePendingUI();
-
-        // Start Auto-Claim timer
-        setInterval(updateClaimTimers, 1000);
-
-        let saved = sessionStorage.getItem("ad_user");
-        if (!saved) {
-          saved = localStorage.getItem("ad_user");
-        }
-
-        if (!saved) {
-          // If not saved, try authenticating via Telegram Web App before kicking to index
-          if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
-            if (tgUser) {
-              try {
-                const res = await fetch(`${API_URL}/telegram-auth`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ tgUser: tgUser }),
-                });
-                const data = await res.json();
-                if (res.ok && data.token) {
-                  currentUser = {
-                    username: data.token.split("-")[0],
-                    balance: data.balance || 0,
-                    history: data.history || [],
-                    token: data.token,
-                    status: data.status,
-                  };
-                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
-                  finishInit();
-                  return;
-                }
-              } catch (e) {
-                console.error("TG Auth failed in tma.html", e);
-              }
-            }
-          }
-          localStorage.removeItem("ad_user");
-          sessionStorage.removeItem("ad_user");
-          window.location.href = "index.html";
-          return;
-        } else {
-          currentUser = JSON.parse(saved);
-          finishInit();
-        }
-      }
-
-      function finishInit() {
-        document.getElementById("username-display").innerText =
-          currentUser.username;
-
-        // Refresh balance & pending
-        fetchProfile();
-
-        // Start Auto-Task Timer
-        startAutoTask();
-      }
-
+      // ---------- HELPERS ----------
       async function fetchProfile() {
+        if (!currentUser) return;
         try {
-          const res = await fetch(
-            `${API_URL}/profile?username=${currentUser.username}`,
-          );
+          const res = await fetch(`${API_URL}/profile?username=${currentUser.username}`);
           if (!res.ok) {
-            if (res.status === 404 || res.status === 401 || res.status === 403) {
+            if ([401, 403, 404].includes(res.status)) {
               localStorage.removeItem("ad_user");
               sessionStorage.removeItem("ad_user");
               window.location.href = "index.html";
@@ -571,16 +517,9 @@
             return;
           }
           const data = await res.json();
-          if (data.balance !== undefined) {
-            // Show Main Balance (Approved Funds)
-            updateBalance(data.balance || 0);
-
-            // Update Pending List
-            renderPending(data.pending_rewards || []);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+          if (data.balance !== undefined) updateBalance(data.balance);
+          renderPending(data.pending_rewards || []);
+        } catch (e) { console.error(e); }
       }
 
       function updateBalance(amt) {
@@ -591,22 +530,14 @@
         const container = document.getElementById("pending-container");
         const listEl = document.getElementById("pending-list");
         listEl.innerHTML = "";
-
         if (list && list.length > 0) {
           container.style.display = "block";
-          // Show last 5
           const recent = list.slice().reverse().slice(0, 5);
-          recent.forEach((item) => {
+          recent.forEach(item => {
             const div = document.createElement("div");
             div.className = "pending-item";
-            const date = new Date(item.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            div.innerHTML = `
-                        <span>Task @ ${date}</span>
-                        <span style="color:var(--accent); font-weight:bold;">R ${parseFloat(item.amount).toFixed(2)}</span>
-                    `;
+            const date = new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `<span>📋 Task @ ${date}</span><span style="color:var(--accent-gold); font-weight:bold;">R ${parseFloat(item.amount).toFixed(2)}</span>`;
             listEl.appendChild(div);
           });
         } else {
@@ -615,268 +546,191 @@
       }
 
       function showToast(msg, isError = false) {
-        const t = document.getElementById("toast");
-        t.innerText = msg;
-        t.className = isError ? "error" : "";
-        t.style.opacity = "1";
-        setTimeout(() => (t.style.opacity = "0"), 3000);
+        const toast = document.getElementById("toast");
+        toast.innerText = msg;
+        toast.classList.toggle("error", isError);
+        toast.style.opacity = "1";
+        setTimeout(() => (toast.style.opacity = "0"), 2800);
       }
 
-      // --- Auto Task Logic ---
+      // Batch & pending UI
       function updatePendingUI() {
-        document.getElementById("unclaimed-count").innerText =
-          pendingBatch.length;
-      }
-
-      function savePendingBatch() {
-        localStorage.setItem(
-          "dtech_pending_batch",
-          JSON.stringify(pendingBatch),
-        );
-      }
-
-      function updateClaimTimers() {
-        const now = Date.now();
-
-        // Auto Claim UI
-        const diffAuto = Math.max(
-          0,
-          Math.ceil((nextAutoClaimTime - now) / 1000),
-        );
-        const minsAuto = Math.floor(diffAuto / 60);
-        const secsAuto = diffAuto % 60;
-        document.getElementById("auto-claim-timer").innerText =
-          `Next auto-claim in: ${minsAuto}m ${secsAuto}s`;
-
-        if (diffAuto <= 0) {
-          claimBatchedRewards();
-          nextAutoClaimTime = Date.now() + 1200000; // Reset 20 mins
-        }
-
-        // Manual Claim Cooldown UI
-        const btn = document.getElementById("claim-batch-btn");
-        if (now < manualClaimCooldown) {
-          const diffCool = Math.ceil((manualClaimCooldown - now) / 1000);
-          const minsCool = Math.floor(diffCool / 60);
-          const secsCool = diffCool % 60;
-          btn.disabled = true;
-          btn.innerText = `Cooldown (${minsCool}:${secsCool < 10 ? "0" : ""}${secsCool})`;
-          btn.style.opacity = "0.5";
-          btn.style.cursor = "not-allowed";
-        } else {
-          btn.disabled = false;
-          btn.innerText = "Claim Now";
-          btn.style.opacity = "1";
-          btn.style.cursor = "pointer";
-        }
-      }
-
-      function startAutoTask() {
-        // Run immediately? Or wait? User said "every 5 mins".
-        // Let's run one now if safe, then interval.
-        // Actually, better to wait to avoid spam on load.
-        // We'll set the timer.
-
-        setInterval(() => {
-          const now = Date.now();
-          const diff = Math.max(0, Math.ceil((nextTaskTime - now) / 1000));
-          const mins = Math.floor(diff / 60);
-          const secs = diff % 60;
-          document.getElementById("auto-timer").innerText =
-            `Next task in: ${mins}m ${secs}s`;
-
-          if (diff <= 0) {
-            triggerAutoAd();
-            nextTaskTime = Date.now() + 300000; // Reset 5 mins
-          }
-        }, 1000);
-      }
-
-      function triggerAutoAd() {
-        if (typeof show_10600930 === "function") {
-          console.log("Triggering Auto Ad...");
-          const ymid = `${currentUser.username}_${Date.now()}`;
-          show_10600930({
-            type: "inApp",
-            inAppSettings: {
-              frequency: 2,
-              capping: 0.1,
-              interval: 30,
-              timeout: 5,
-              everyPage: false,
-            },
-            ymid: ymid,
-            requestVar: currentUser.username,
-          })
-            .then(() => {
-              claimReward("monetag_inapp");
-            })
-            .catch((e) => console.log("Auto ad skipped/failed", e));
-        }
-      }
-
-      // --- Manual Ad Logic ---
-      function triggerAd(type) {
-        if (isProcessing) return;
-
-        if (typeof show_10600930 !== "function") {
-          showToast("Ad SDK not loaded. Please wait.", true);
-          return;
-        }
-
-        isProcessing = true;
-        let adPromise;
-
-        showToast(
-          "IMPORTANT: Click the blue 'Continue' button on the ad to get your reward!",
-          false,
-        );
-
-        // Generate unique YMID (username_timestamp) to support backend fallback
-        const ymid = `${currentUser.username}_${Date.now()}`;
-
-        if (type === "monetag_interstitial") {
-          // Pass YMID and requestVar (username)
-          adPromise = show_10600930({
-            ymid: ymid,
-            requestVar: currentUser.username,
-          });
-        } else if (type === "monetag_popup") {
-          // Use standard call to ensure ymid is passed correctly
-          adPromise = show_10600930({
-            type: "pop",
-            ymid: ymid,
-            requestVar: currentUser.username,
-          });
-        }
-
-        if (adPromise) {
-          adPromise
-            .then(() => {
-              // Ad completed/closed successfully, claim reward immediately
-              claimReward(type);
-            })
-            .catch((e) => {
-              console.error("Ad Error:", e);
-              showToast("Ad closed or failed.", true);
-              isProcessing = false;
-            });
-        } else {
-          isProcessing = false;
-        }
-      }
-
-      async function claimReward(type) {
-        // Instead of sending request, add to local batch
-        pendingBatch.push(type);
+        document.getElementById("unclaimed-count").innerText = pendingBatch.length;
         savePendingBatch();
+      }
+      function savePendingBatch() {
+        localStorage.setItem("dtech_pending_batch", JSON.stringify(pendingBatch));
+      }
+      function loadPendingBatch() {
+        try {
+          const stored = localStorage.getItem("dtech_pending_batch");
+          if (stored) pendingBatch = JSON.parse(stored);
+        } catch(e) {}
         updatePendingUI();
-
-        if (type !== "monetag_inapp") {
-          showToast("Task completed! Reward added to pending batch.");
-        }
-        isProcessing = false;
       }
 
+      // Claim batch (API call)
       async function claimBatchedRewards() {
         if (isProcessing) return;
         if (pendingBatch.length === 0) {
-          showToast("No pending tasks to claim.");
+          showToast("No pending tasks to claim.", true);
           return;
         }
-
-        // Check manual cooldown
         const now = Date.now();
         if (now < manualClaimCooldown) {
-          showToast("Claim is on cooldown.", true);
+          const secLeft = Math.ceil((manualClaimCooldown - now) / 1000);
+          showToast(`Cooldown active (${secLeft}s)`, true);
           return;
         }
-
         isProcessing = true;
-        showToast("Claiming batched rewards...");
-
+        showToast("Claiming rewards...");
         try {
-          const typesToClaim = [...pendingBatch]; // Copy
-
+          const typesToClaim = [...pendingBatch];
           const res = await fetch(`${API_URL}/add-points`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               username: currentUser.username,
               token: currentUser.token,
-              batch: typesToClaim,
-            }),
+              batch: typesToClaim
+            })
           });
-
           const data = await res.json();
-
           if (res.ok) {
-            // Success! Remove only the items we claimed
             pendingBatch.splice(0, typesToClaim.length);
             savePendingBatch();
             updatePendingUI();
-
             if (data.pending_verification) {
-              showToast("Rewards Pending Verification");
-              setTimeout(fetchProfile, 1000);
+              showToast("Rewards under verification (instant pending)");
+              setTimeout(fetchProfile, 800);
             } else {
               updateBalance(data.balance);
-              showToast(`+R ${data.earned} Earned from batch!`);
+              showToast(`+R ${data.earned || "??"} Earned!`);
             }
-
-            // Set manual cooldown for 5 minutes
             manualClaimCooldown = Date.now() + 300000;
             localStorage.setItem("dtech_claim_cooldown", manualClaimCooldown);
           } else {
-            showToast(data.error || "Batch claim failed", true);
+            showToast(data.error || "Claim failed", true);
           }
-        } catch (e) {
-          showToast("Network Error during claim", true);
+        } catch(e) {
+          showToast("Network error while claiming", true);
         }
         isProcessing = false;
       }
 
-      async function requestVoucher(amount) {
+      // Ad triggers (use Monetag SDK)
+      function triggerAd(type) {
         if (isProcessing) return;
-
-        if (
-          !confirm(
-            `Are you sure you want to withdraw ${amount}R as a DTECH voucher?`,
-          )
-        ) {
+        if (typeof show_10600930 !== "function") {
+          showToast("Ad SDK loading, please wait...", true);
           return;
         }
-
         isProcessing = true;
-        showToast("Generating voucher...");
+        const ymid = `${currentUser.username}_${Date.now()}`;
+        showToast("⚠️ Tap blue 'Continue' on ad to get reward!", false);
+        let adPromise;
+        if (type === "monetag_interstitial") {
+          adPromise = show_10600930({ ymid: ymid, requestVar: currentUser.username });
+        } else {
+          adPromise = show_10600930({ type: "pop", ymid: ymid, requestVar: currentUser.username });
+        }
+        adPromise
+          .then(() => claimReward(type))
+          .catch((err) => {
+            console.error(err);
+            showToast("Ad closed early or error", true);
+            isProcessing = false;
+          });
+      }
 
-        const display = document.getElementById("voucher-display");
-        display.classList.remove("active");
+      function claimReward(type) {
+        pendingBatch.push(type);
+        savePendingBatch();
+        updatePendingUI();
+        if (type !== "monetag_inapp") showToast("✅ Task added to pending batch!");
+        isProcessing = false;
+      }
 
+      // Auto Miner (every 5 min)
+      function startAutoTask() {
+        setInterval(() => {
+          const now = Date.now();
+          const diff = Math.max(0, Math.ceil((nextTaskTime - now) / 1000));
+          const mins = Math.floor(diff / 60);
+          const secs = diff % 60;
+          document.getElementById("auto-timer").innerHTML = `⏳ Next task in: ${mins}m ${secs}s`;
+          if (diff <= 0 && typeof show_10600930 === "function") {
+            triggerAutoAd();
+            nextTaskTime = Date.now() + 300000;
+          }
+        }, 1000);
+      }
+
+      function triggerAutoAd() {
+        if (!currentUser) return;
+        const ymid = `auto_${currentUser.username}_${Date.now()}`;
+        if (typeof show_10600930 === "function") {
+          show_10600930({
+            type: "inApp",
+            inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false },
+            ymid: ymid,
+            requestVar: currentUser.username
+          }).then(() => claimReward("monetag_inapp")).catch(e => console.log("auto ad skip"));
+        }
+      }
+
+      // Claim timers & cooldown UI
+      function updateClaimTimers() {
+        const now = Date.now();
+        // Auto claim timer (every 20 min)
+        const diffAuto = Math.max(0, Math.ceil((nextAutoClaimTime - now) / 1000));
+        const minsAuto = Math.floor(diffAuto / 60);
+        const secsAuto = diffAuto % 60;
+        document.getElementById("auto-claim-timer").innerText = `${minsAuto}m ${secsAuto}s`;
+        if (diffAuto <= 0 && pendingBatch.length > 0) {
+          claimBatchedRewards();
+          nextAutoClaimTime = Date.now() + 1200000;
+        }
+
+        // Manual cooldown on claim button
+        const claimBtn = document.getElementById("claim-batch-btn");
+        if (now < manualClaimCooldown) {
+          const cdSec = Math.ceil((manualClaimCooldown - now) / 1000);
+          const minsC = Math.floor(cdSec / 60);
+          const secsC = cdSec % 60;
+          claimBtn.disabled = true;
+          claimBtn.innerText = `⏳ COOLDOWN (${minsC}:${secsC < 10 ? "0" : ""}${secsC})`;
+        } else {
+          claimBtn.disabled = false;
+          claimBtn.innerText = `💰 CLAIM NOW`;
+        }
+      }
+
+      // Voucher logic
+      async function requestVoucher(amount) {
+        if (isProcessing) return;
+        if (!confirm(`Generate ${amount}R DTECH voucher? Balance will be deducted.`)) return;
+        isProcessing = true;
+        showToast("Generating secure voucher...");
+        const displayDiv = document.getElementById("voucher-display");
+        displayDiv.classList.remove("active");
         try {
           const res = await fetch(`${API_URL}/generate-voucher`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              username: currentUser.username,
-              token: currentUser.token,
-              amount: amount,
-            }),
+            body: JSON.stringify({ username: currentUser.username, token: currentUser.token, amount })
           });
-
           const data = await res.json();
-
           if (res.ok) {
-            showToast("Voucher generated!", false);
-            document.getElementById("voucher-code").innerText =
-              data.voucher_code;
-            display.classList.add("active");
+            document.getElementById("voucher-code").innerText = data.voucher_code;
+            displayDiv.classList.add("active");
             updateBalance(data.balance);
+            showToast("Voucher ready! Copy code.");
           } else {
-            showToast(data.error || "Withdrawal failed", true);
+            showToast(data.error || "Insufficient balance or error", true);
           }
-        } catch (e) {
-          showToast("Network Error", true);
+        } catch(e) {
+          showToast("Network error", true);
         }
         isProcessing = false;
       }
@@ -884,20 +738,65 @@
       function copyVoucher() {
         const code = document.getElementById("voucher-code").innerText;
         if (!code) return;
+        navigator.clipboard.writeText(code).then(() => showToast("Voucher copied!")).catch(() => showToast("Manual copy", true));
+      }
 
-        navigator.clipboard
-          .writeText(code)
-          .then(() => {
-            showToast("Voucher code copied!");
-          })
-          .catch((err) => {
-            showToast("Failed to copy code", true);
-          });
+      // Authentication & init
+      async function init() {
+        loadPendingBatch();
+        try {
+          const storedCooldown = localStorage.getItem("dtech_claim_cooldown");
+          if (storedCooldown) manualClaimCooldown = parseInt(storedCooldown, 10);
+        } catch(e) {}
+        let saved = sessionStorage.getItem("ad_user") || localStorage.getItem("ad_user");
+        if (!saved) {
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+            if (tgUser) {
+              try {
+                const res = await fetch(`${API_URL}/telegram-auth`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ tgUser })
+                });
+                const data = await res.json();
+                if (res.ok && data.token) {
+                  currentUser = {
+                    username: data.token.split("-")[0],
+                    balance: data.balance || 0,
+                    history: data.history || [],
+                    token: data.token,
+                    status: data.status
+                  };
+                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
+                  finishInit();
+                  return;
+                }
+              } catch(e) { console.error(e); }
+            }
+          }
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = JSON.parse(saved);
+        finishInit();
+      }
+
+      function finishInit() {
+        document.getElementById("username-display").innerText = currentUser.username;
+        fetchProfile();
+        startAutoTask();
+        setInterval(updateClaimTimers, 1000);
+        setInterval(() => fetchProfile(), 25000);
+        updateClaimTimers();
       }
 
       function logout() {
-        sessionStorage.removeItem("ad_user");
         localStorage.removeItem("ad_user");
+        sessionStorage.removeItem("ad_user");
+        localStorage.removeItem("dtech_pending_batch");
+        localStorage.removeItem("dtech_claim_cooldown");
         window.location.href = "index.html";
       }
 
