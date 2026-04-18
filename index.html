@@ -355,6 +355,8 @@
               document.getElementById("auth-status-text").innerText =
                 "Authentication failed. Please open within Telegram.";
               document.getElementById("loading-spinner").style.display = "none";
+              localStorage.removeItem("ad_user");
+              sessionStorage.removeItem("ad_user");
               return;
             }
 
@@ -394,18 +396,24 @@
               document.getElementById("auth-status-text").innerText =
                 "Authentication failed.";
               document.getElementById("loading-spinner").style.display = "none";
+              localStorage.removeItem("ad_user");
+              sessionStorage.removeItem("ad_user");
             }
           } else {
             showMessage("Telegram Web App SDK not found.", "error");
             document.getElementById("auth-status-text").innerText =
               "Telegram Web App SDK not found.";
             document.getElementById("loading-spinner").style.display = "none";
+            localStorage.removeItem("ad_user");
+            sessionStorage.removeItem("ad_user");
           }
         } catch (err) {
           showMessage("An error occurred during authentication.", "error");
           document.getElementById("auth-status-text").innerText =
             "An error occurred.";
           document.getElementById("loading-spinner").style.display = "none";
+          localStorage.removeItem("ad_user");
+          sessionStorage.removeItem("ad_user");
         }
       }
 
