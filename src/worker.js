@@ -717,11 +717,11 @@ async function handleAddPoints(request, env) {
 
   for (const type of typesToProcess) {
       // Check budget before processing each item, including any pending earnings in this loop
-      const totalCommitment = stats.paid + stats.liability + totalEarnings + totalReferralBonus;
-      if (totalCommitment >= config.monthly_budget) {
-          // Soft break, allow previously processed items in batch to save
-          break;
-      }
+      // const totalCommitment = stats.paid + stats.liability + totalEarnings + totalReferralBonus;
+      // if (totalCommitment >= config.monthly_budget) {
+      //     // Soft break, allow previously processed items in batch to save
+      //     break;
+      // }
 
       let earnings = 0;
       let min = 0.01;
