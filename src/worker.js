@@ -63,7 +63,9 @@ export default {
     const path = url.pathname;
 
     try {
-      if (path === '/register' && request.method === 'POST') {
+      if (path === '/telegram-auth' && request.method === 'POST') {
+        return await handleTelegramAuth(request, env);
+      } else if (path === '/register' && request.method === 'POST') {
         return await handleRegister(request, env);
       } else if (path === '/login' && request.method === 'POST') {
         return await handleLogin(request, env);
@@ -394,6 +396,74 @@ async function determineRound(user, env) {
 }
 
 // --- Handlers ---
+
+async function handleTelegramAuth(request, env) {
+  const { tgUser, referred_by } = await request.json();
+
+  if (!tgUser || (!tgUser.username && !tgUser.id)) {
+    return new Response(JSON.stringify({ error: 'Missing Telegram User Data' }), { status: 400, headers: getCorsHeaders(request) });
+  }
+
+  // Use username if available, otherwise fallback to id
+  const username = (tgUser.username || `tg_${tgUser.id}`).toLowerCase();
+
+  const existingUserJson = await env.USERS.get(username);
+
+  if (existingUserJson) {
+    // User exists, log them in
+    const user = JSON.parse(existingUserJson);
+    return new Response(JSON.stringify({
+      message: 'Login successful',
+      token: `${username}-${Date.now()}`,
+      balance: user.balance || 0,
+      history: user.history || [],
+      status: user.status || 'active'
+    }), { status: 200, headers: getCorsHeaders(request) });
+  }
+
+  // User does not exist, register them
+  // Validate Referrer
+  let validReferrer = null;
+  if (referred_by) {
+      const refUser = await env.USERS.get(referred_by);
+      if (refUser) validReferrer = referred_by;
+  }
+
+  const newUser = {
+    username: username,
+    telegramId: tgUser.id,
+    firstName: tgUser.first_name || '',
+    lastName: tgUser.last_name || '',
+    balance: 0,
+    history: [],
+    status: 'active',
+    referral_code: `ref_${username}`,
+    referred_by: validReferrer,
+    referral_count: 0,
+    registration_date: new Date().toISOString()
+  };
+
+  await env.USERS.put(username, JSON.stringify(newUser));
+
+  // Update Referrer Count
+  if (validReferrer) {
+      const refUserJson = await env.USERS.get(validReferrer);
+      if (refUserJson) {
+          const refUser = JSON.parse(refUserJson);
+          if (!refUser.referral_count) refUser.referral_count = 0;
+          refUser.referral_count += 1;
+          await env.USERS.put(validReferrer, JSON.stringify(refUser));
+      }
+  }
+
+  return new Response(JSON.stringify({
+      message: 'Registration and login successful',
+      token: `${username}-${Date.now()}`,
+      balance: 0,
+      history: [],
+      status: 'active'
+  }), { status: 201, headers: getCorsHeaders(request) });
+}
 
 async function handleRegister(request, env) {
   const { username, password, referred_by, email, whatsapp } = await request.json();

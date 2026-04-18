@@ -1,295 +1,404 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>DTECH Apps & Tools</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
-        :root {
-            --bg: #050617;
-            --surface: #0f172a;
-            --surface-hover: #1e293b;
-            --text: #e6eef8;
-            --muted: #94a3b8;
-            --accent: #d4af37;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --radius: 16px;
-        }
+      :root {
+        --bg: #050617;
+        --surface: #0f172a;
+        --surface-hover: #1e293b;
+        --text: #e6eef8;
+        --muted: #94a3b8;
+        --accent: #d4af37;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --radius: 16px;
+      }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
 
-        header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+      header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-        .header-title {
-            font-weight: 800;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-            color: var(--accent);
-        }
+      .header-title {
+        font-weight: 800;
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+        color: var(--accent);
+      }
 
-        .back-btn {
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            background: rgba(255,255,255,0.05);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
+      .back-btn {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-        .app-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 25px;
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            transition: transform 0.2s, border-color 0.2s;
-        }
+      .app-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 25px;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
 
-        .app-card:hover {
-            border-color: rgba(212, 175, 55, 0.3);
-        }
+      .app-card:hover {
+        border-color: rgba(212, 175, 55, 0.3);
+      }
 
-        .app-title {
-            font-weight: 800;
-            font-size: 1.3rem;
-            color: var(--text);
-            margin-bottom: 5px;
-        }
+      .app-title {
+        font-weight: 800;
+        font-size: 1.3rem;
+        color: var(--text);
+        margin-bottom: 5px;
+      }
 
-        .app-url {
-            color: var(--accent);
-            font-family: monospace;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            display: inline-block;
-            background: rgba(212, 175, 55, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
+      .app-url {
+        color: var(--accent);
+        font-family: monospace;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        display: inline-block;
+        background: rgba(212, 175, 55, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
 
-        .app-desc {
-            font-size: 0.9rem;
-            color: var(--muted);
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
+      .app-desc {
+        font-size: 0.9rem;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
 
-        .view-info-btn {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      .view-info-btn {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
 
-        .view-info-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
+      .view-info-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
 
-        /* Expandable Section */
-        .app-details {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out;
-        }
+      /* Expandable Section */
+      .app-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+      }
 
-        .app-details.expanded {
-            max-height: 2000px; /* arbitrary large value for expansion */
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-            transition: max-height 0.6s ease-in;
-        }
+      .app-details.expanded {
+        max-height: 2000px; /* arbitrary large value for expansion */
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        transition: max-height 0.6s ease-in;
+      }
 
-        .details-title {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--accent);
-            margin-bottom: 15px;
-            text-transform: uppercase;
-        }
+      .details-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--accent);
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
 
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+      }
 
-        .gallery img {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: #1e293b;
-        }
+      .gallery img {
+        width: 100%;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #1e293b;
+      }
 
-        .guide-step {
-            display: flex;
-            margin-bottom: 15px;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 8px;
-        }
+      .guide-step {
+        display: flex;
+        margin-bottom: 15px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+      }
 
-        .step-number {
-            background: var(--accent);
-            color: #000;
-            min-width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.8rem;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
+      .step-number {
+        background: var(--accent);
+        color: #000;
+        min-width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.8rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+      }
 
-        .step-text {
-            font-size: 0.85rem;
-            color: var(--text);
-            line-height: 1.5;
-        }
+      .step-text {
+        font-size: 0.85rem;
+        color: var(--text);
+        line-height: 1.5;
+      }
 
-        .video-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--danger);
-            color: #fff;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            width: 100%;
-            box-sizing: border-box;
-        }
+      .video-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--danger);
+        color: #fff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
 
-        .video-btn span {
-            margin-right: 8px;
-        }
-
+      .video-btn span {
+        margin-right: 8px;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <header>
-        <div class="header-title">DTECH APPS</div>
-        <a href="tma.html" class="back-btn">← Back</a>
+      <div class="header-title">DTECH APPS</div>
+      <a href="tma.html" class="back-btn">← Back</a>
     </header>
 
-    <div style="text-align: center; margin-bottom: 30px; max-width: 400px;">
-        <h1 style="font-size: 1.5rem; margin: 0 0 10px 0;">Redeem Vouchers Here</h1>
-        <p style="color: var(--muted); font-size: 0.9rem; margin: 0;">Explore our ecosystem of apps and tools where you can use your DTECH vouchers for premium features and access.</p>
+    <div style="text-align: center; margin-bottom: 30px; max-width: 400px">
+      <h1 style="font-size: 1.5rem; margin: 0 0 10px 0">
+        Redeem Vouchers Here
+      </h1>
+      <p style="color: var(--muted); font-size: 0.9rem; margin: 0">
+        Explore our ecosystem of apps and tools where you can use your DTECH
+        vouchers for premium features and access.
+      </p>
     </div>
 
     <!-- App Card: DTECH NEW PHISHERS -->
     <div class="app-card">
-        <div class="app-title">DTECH NEW PHISHERS</div>
-        <div class="app-url">new.preasx24.co.za</div>
-        <div class="app-desc">A centralised system that does everything a hunter needs in one places. Use your vouchers here to unlock exclusive tools.</div>
+      <div class="app-title">DTECH NEW PHISHERS</div>
+      <div class="app-url">new.preasx24.co.za</div>
+      <div class="app-desc">
+        A centralised system that does everything a hunter needs in one places.
+        Use your vouchers here to unlock exclusive tools.
+      </div>
 
-        <button class="view-info-btn" onclick="toggleDetails('phishers-details', this)">View Info & Guide</button>
+      <button
+        class="view-info-btn"
+        onclick="toggleDetails('phishers-details', this)"
+      >
+        View Info & Guide
+      </button>
 
-        <!-- Expandable Details -->
-        <div id="phishers-details" class="app-details">
-            <div class="details-title">Screenshots</div>
-            <div class="gallery">
-                <img src="pics/new.png" alt="Screenshot 1" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new.png</text></svg>'">
-                <img src="pics/new1.png" alt="Screenshot 2" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new1.png</text></svg>'">
-                <img src="pics/new2.png" alt="Screenshot 3" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new2.png</text></svg>'">
-                <img src="pics/new3.png" alt="Screenshot 4" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new3.png</text></svg>'">
-                <img src="pics/new4.png" alt="Screenshot 5" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new4.png</text></svg>'">
-            </div>
-
-            <div class="details-title">Step-by-Step Guide</div>
-
-            <div class="guide-step">
-                <div class="step-number">1</div>
-                <div class="step-text"><strong>Register/Login:</strong> Navigate to new.preasx24.co.za and sign into your account.</div>
-            </div>
-
-            <div class="guide-step">
-                <div class="step-number">2</div>
-                <div class="step-text"><strong>Access the Hunter Portal:</strong> Find the tools section where you need access.</div>
-            </div>
-
-            <div class="guide-step">
-                <div class="step-number">3</div>
-                <div class="step-text"><strong>Redeem Voucher:</strong> Enter your DTECH voucher code (e.g., x24-ABCD-1234) into the billing or top-up page.</div>
-            </div>
-
-            <div class="guide-step">
-                <div class="step-number">4</div>
-                <div class="step-text"><strong>Unlock Tools:</strong> Your balance will be credited instantly and tools will be unlocked!</div>
-            </div>
-
-            <a href="https://youtube.com/watch?v=placeholder" target="_blank" class="video-btn">
-                <span>▶</span> Watch Video Tutorial
-            </a>
+      <!-- Expandable Details -->
+      <div id="phishers-details" class="app-details">
+        <div class="details-title">Screenshots</div>
+        <div class="gallery">
+          <img
+            src="pics/new.png"
+            alt="Screenshot 1"
+            onerror="
+              this.src =
+                'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new.png</text></svg>'
+            "
+          />
+          <img
+            src="pics/new1.png"
+            alt="Screenshot 2"
+            onerror="
+              this.src =
+                'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new1.png</text></svg>'
+            "
+          />
+          <img
+            src="pics/new2.png"
+            alt="Screenshot 3"
+            onerror="
+              this.src =
+                'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new2.png</text></svg>'
+            "
+          />
+          <img
+            src="pics/new3.png"
+            alt="Screenshot 4"
+            onerror="
+              this.src =
+                'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new3.png</text></svg>'
+            "
+          />
+          <img
+            src="pics/new4.png"
+            alt="Screenshot 5"
+            onerror="
+              this.src =
+                'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%231e293b\'/><text x=\'50\' y=\'50\' font-family=\'sans-serif\' font-size=\'12\' fill=\'%2394a3b8\' text-anchor=\'middle\' dominant-baseline=\'middle\'>new4.png</text></svg>'
+            "
+          />
         </div>
+
+        <div class="details-title">Step-by-Step Guide</div>
+
+        <div class="guide-step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <strong>Register/Login:</strong> Navigate to new.preasx24.co.za and
+            sign into your account.
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <strong>Access the Hunter Portal:</strong> Find the tools section
+            where you need access.
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <strong>Redeem Voucher:</strong> Enter your DTECH voucher code
+            (e.g., x24-ABCD-1234) into the billing or top-up page.
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-number">4</div>
+          <div class="step-text">
+            <strong>Unlock Tools:</strong> Your balance will be credited
+            instantly and tools will be unlocked!
+          </div>
+        </div>
+
+        <a
+          href="https://youtube.com/watch?v=placeholder"
+          target="_blank"
+          class="video-btn"
+        >
+          <span>▶</span> Watch Video Tutorial
+        </a>
+      </div>
     </div>
 
     <!-- More apps can be added here as cards -->
 
     <script>
-        // Simple authentication check
-        window.addEventListener('DOMContentLoaded', () => {
-            let saved = sessionStorage.getItem('ad_user') || localStorage.getItem('ad_user');
-            if (!saved) {
-                window.location.href = 'index.html';
-            }
-        });
+      const API_URL = "https://dark-mud-87fb.jonasmochebane.workers.dev";
 
-        // Toggle Details
-        function toggleDetails(id, btn) {
-            const details = document.getElementById(id);
-            if (details.classList.contains('expanded')) {
-                details.classList.remove('expanded');
-                btn.innerText = "View Info & Guide";
-            } else {
-                details.classList.add('expanded');
-                btn.innerText = "Hide Info";
+      function getBaseUrl() {
+        return window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+          ? "http://localhost:8000"
+          : API_URL;
+      }
+
+      // Simple authentication check
+      window.addEventListener("DOMContentLoaded", async () => {
+        let saved =
+          sessionStorage.getItem("ad_user") || localStorage.getItem("ad_user");
+        if (!saved) {
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+            if (tgUser) {
+              try {
+                const res = await fetch(`${getBaseUrl()}/telegram-auth`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ tgUser: tgUser }),
+                });
+                const data = await res.json();
+                if (res.ok && data.token) {
+                  let currentUser = {
+                    username: data.token.split("-")[0],
+                    balance: data.balance || 0,
+                    history: data.history || [],
+                    token: data.token,
+                    status: data.status,
+                  };
+                  localStorage.setItem("ad_user", JSON.stringify(currentUser));
+                  window.location.reload();
+                  return;
+                }
+              } catch (e) {
+                console.error("TG Auth failed", e);
+              }
             }
+          }
+          window.location.href = "index.html";
         }
+      });
+
+      // Toggle Details
+      function toggleDetails(id, btn) {
+        const details = document.getElementById(id);
+        if (details.classList.contains("expanded")) {
+          details.classList.remove("expanded");
+          btn.innerText = "View Info & Guide";
+        } else {
+          details.classList.add("expanded");
+          btn.innerText = "Hide Info";
+        }
+      }
     </script>
-</body>
+  </body>
 </html>
