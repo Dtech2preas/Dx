@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Contact TheRealAnonymousRSA."
+    />
+    <meta name="author" content="TheRealAnonymousRSA" />
+    <title>Ping | TRA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #34d399;
+        --accent: #3b82f6;
+        --bg: #020617;
+        --surface: #0f172a;
+        --text-main: #f8fafc;
+        --text-light: #94a3b8;
+        --border: #1e293b;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        --font-mono: 'Fira Code', monospace;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text-main);
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      nav {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        padding: 1rem 0;
+      }
+
+      .nav-container {
+        width: 100%;
+        max-width: 1000px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+
+      .nav-logo {
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: var(--primary);
+        text-decoration: none;
+        letter-spacing: 1px;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 20px;
+      }
+
+      .nav-links a {
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: color 0.3s;
+      }
+
+      .nav-links a:hover, .nav-links a.active {
+        color: var(--primary);
+      }
+
+      .page-header {
+        width: 100%;
+        max-width: 1000px;
+        padding: 40px 20px 20px;
+        box-sizing: border-box;
+      }
+
+      .page-header h1 {
+        font-family: var(--font-mono);
+        color: var(--primary);
+        margin: 0;
+        font-size: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .page-header h1::before {
+        content: "./ping";
+        color: var(--text-light);
+        font-size: 1.5rem;
+        opacity: 0.5;
+      }
+
+      main {
+        width: 100%;
+        max-width: 1000px;
+        padding: 0 20px;
+        box-sizing: border-box;
+        flex-grow: 1;
+        display: flex;
+        gap: 40px;
+      }
+
+      @media (max-width: 768px) {
+        main {
+          flex-direction: column;
+        }
+      }
+
+      .contact-info, .contact-form-container {
+        flex: 1;
+      }
+
+      .content-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 30px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        position: relative;
+      }
+
+      .content-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        opacity: 0.5;
+      }
+
+      .info-item {
+        margin-bottom: 25px;
+      }
+
+      .info-item h3 {
+        color: var(--primary);
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        margin: 0 0 10px 0;
+      }
+
+      .info-item p {
+        color: var(--text-light);
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .info-item a {
+        color: var(--text-main);
+        text-decoration: none;
+        transition: color 0.2s;
+        display: inline-block;
+        padding: 5px 0;
+      }
+
+      .info-item a:hover {
+        color: var(--primary);
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--text-light);
+      }
+
+      input[type="text"],
+      input[type="email"],
+      textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        box-sizing: border-box;
+        background: #1e293b;
+        color: white;
+        transition: all 0.2s;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      input:focus, textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: #0f172a;
+      }
+
+      .submit-btn {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        transition: all 0.2s;
+        width: 100%;
+      }
+
+      .submit-btn:hover {
+        background: var(--primary);
+        color: #000;
+      }
+
+      footer {
+        margin-top: 50px;
+        padding: 30px 20px;
+        text-align: center;
+        color: var(--text-light);
+        border-top: 1px solid var(--border);
+        width: 100%;
+        background: var(--bg);
+      }
+
+      .footer-brand {
+        font-weight: 800;
+        color: var(--text-main);
+        font-size: 1rem;
+        font-family: var(--font-mono);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="anon.html" class="nav-logo">TRA</a>
+        <div class="nav-links">
+          <a href="anon.html">Terminal</a>
+          <a href="anon_about.html">Whoami</a>
+          <a href="anon_projects.html">Projects</a>
+          <a href="anon_contact.html" class="active">Ping</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="page-header">
+      <h1>Establish Connection</h1>
+    </div>
+
+    <main>
+      <div class="contact-info">
+        <div class="content-card" style="height: 100%; box-sizing: border-box;">
+          <h2 style="font-family: var(--font-mono); margin-top: 0; color: var(--text-main);">Communication Channels</h2>
+          <p style="color: var(--text-light); line-height: 1.6; margin-bottom: 30px;">
+            Open to recruitment, freelance contracts, and collaborative partnerships in cybersecurity and software engineering.
+          </p>
+
+          <div class="info-item">
+            <h3>> LOCATION</h3>
+            <p>Mpumalanga, South Africa</p>
+          </div>
+
+          <div class="info-item">
+            <h3>> PROFESSIONAL NETWORK</h3>
+            <a href="#" target="_blank">[ View LinkedIn Profile ]</a>
+          </div>
+
+          <div class="info-item">
+            <h3>> CODE REPOSITORIES</h3>
+            <a href="#" target="_blank">[ Access GitHub ]</a>
+          </div>
+
+          <div class="info-item">
+            <h3>> DIRECT COMMS</h3>
+            <a href="#">[ Request Encrypted Email ]</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-container">
+        <div class="content-card">
+          <form onsubmit="event.preventDefault(); alert('Message sent to the server queue.');">
+            <div class="form-group">
+              <label for="name">Identifier (Name)</label>
+              <input type="text" id="name" placeholder="guest_user" required />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Return Protocol (Email)</label>
+              <input type="email" id="email" placeholder="user@domain.com" required />
+            </div>
+
+            <div class="form-group">
+              <label for="message">Payload (Message)</label>
+              <textarea id="message" placeholder="Enter details regarding collaboration, recruitment, or inquiries..." required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Transmit Data</button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-brand">TheRealAnonymousRSA</div>
+      <div style="font-size: 0.8rem; margin-top: 10px; opacity: 0.7;">
+        Securing the future, one node at a time.
+      </div>
+    </footer>
+  </body>
+</html>
