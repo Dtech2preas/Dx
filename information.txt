@@ -1,0 +1,248 @@
+# DTECH Ecosystem - Full System Architecture & Documentation
+
+## 1. Executive Summary
+DTECH (Dynamic Tech), founded by Seakwa Jonas Mochebane (PREASX24), is a sophisticated digital rewards platform built primarily as a Telegram Mini App. The system allows users to earn monetary rewards by interacting with various ad formats (interstitials, popups, direct links, in-page push, and an auto-miner) powered by the Monetag ad network.
+
+The architecture is highly modernized, leveraging a serverless backend via Cloudflare Workers and Cloudflare KV for high-speed, edge-based storage. Users accumulate a digital balance that can be withdrawn as proprietary "DTECH Vouchers," which are secure, verifiable codes generated natively by the system.
+
+**Core Principles:**
+- **Telegram Native:** Seamless, passwordless authentication using the Telegram WebApp SDK.
+- **Batched Processing:** To optimize database writes and performance, ad claims are batched locally and sent to the backend periodically.
+- **Serverless & Edge-Driven:** The backend (`worker.js`) handles all logic, KV storage, and ad postbacks with zero traditional servers.
+- **Instant Earnings:** Users earn directly to their main balance from Monetag ads, bypassing legacy "pending" verification states.
+
+---
+
+## 2. System Architecture & Data Flow
+
+The system operates on a decoupled frontend/backend model:
+- **Frontend:** Hosted on standard web hosting (accessible via Telegram Mini App interface). Built using pure HTML, CSS, and Vanilla JavaScript. No complex frameworks (like React/Vue) are used, ensuring extremely fast load times.
+- **Backend:** A single Cloudflare Worker (`worker.js`) exposed at `https://dark-mud-87fb.jonasmochebane.workers.dev`.
+- **Database:** Cloudflare KV (Key-Value) store, bound as `USERS` in the Worker.
+
+**Data Flow Example (Claiming a Reward):**
+1. User clicks "Watch Video" in `tma.html`.
+2. Frontend calls Monetag SDK (`show_10600930`), passing a unique `ymid` (tracking ID).
+3. Upon completion, Monetag sends an asynchronous server-to-server webhook (`/monetag-webhook`) to the Worker.
+4. The Worker validates the webhook, calculates the ZAR (Rand) amount, and updates the user's KV record directly.
+5. Simultaneously, the frontend adds the task to a local `pendingBatch` array.
+6. The user clicks "Claim Now" or the auto-timer fires, sending the batch to `/add-points`.
+7. The Worker acknowledges the batch and returns the updated balance.
+
+---
+
+## 3. Core Workflows (Step-by-Step)
+
+### A. Telegram Authentication Flow (`index.html` -> `tma.html`)
+1. User opens the DTECH bot/link in Telegram.
+2. `index.html` loads and initializes `window.Telegram.WebApp`.
+3. Frontend extracts `initDataUnsafe.user` (containing `id`, `first_name`, `username`).
+4. Frontend sends a `POST /telegram-auth` request to the Worker.
+5. **Backend Logic:**
+   - If user exists in KV (keyed by username/id), generate a new session `token` (`username-timestamp`), update KV, and return success.
+   - If user is new, create a robust KV user object, generate a `token`, and return success.
+6. Frontend saves the user object (including token) to `localStorage`/`sessionStorage`.
+7. Frontend redirects to `tma.html` (The primary dashboard).
+
+### B. Ad Integration, Verification, and Earnings Flow (`tma.html`)
+1. **Ad Trigger:** User clicks an ad button or the Auto-Miner interval hits (every 5 mins).
+2. **SDK Call:** Frontend triggers the Monetag SDK: `show_10600930({ type: '...', ymid: '...', requestVar: '...' })`.
+3. **Local Batching:** After the SDK promise resolves, the ad type is pushed to the local `pendingBatch` array stored in `localStorage`.
+4. **Backend Webhook:** Monetag independently pings `GET /monetag-webhook?ymid=...&estimated_price=...&reward_event_type=valued`. The backend credits 100% of the converted USD to ZAR value to the user's main `balance`.
+5. **Claiming:** Every 20 minutes (or manually via the "Claim" button with a 5-min cooldown), the frontend sends `POST /add-points` with the `batch` array.
+6. The backend processes any fallback/web-based rewards if needed, clears the batch, and returns the synced balance.
+
+### C. The Voucher & Withdrawal System
+1. User requests a withdrawal via `tma.html` (e.g., 20R).
+2. Frontend sends `POST /generate-voucher` with amount and token.
+3. **Backend Logic:**
+   - Verify user balance >= requested amount.
+   - Deduct amount from user's `balance`.
+   - Generate a secure code: `x24-{4 random chars}-{4 random chars}`.
+   - Create a new KV entry: `VOUCHER:x24-...` containing worth, usage status, and username.
+   - Log the transaction in the user's `history` array.
+4. Frontend displays the voucher code in a stylized ticket UI with a native "Copy" button.
+5. Vouchers can be redeemed externally or verified via `POST /redeem-voucher`.
+
+---
+
+## 4. Database (Cloudflare KV) Schema
+
+The Cloudflare KV namespace (bound as `USERS`) uses stringified JSON objects.
+
+### 4.1. User Object (Key: `username` or `tg_id`)
+```json
+{
+  "username": "preasx24",
+  "telegramId": 123456789,
+  "balance": 25.50,
+  "balance_pending": 0.00,
+  "status": "active",
+  "token": "preasx24-1715500000000",
+  "referral_count": 5,
+  "referred_by": null,
+  "history": [
+    {
+      "id": "REW-1715500123-456",
+      "amount": 0.35,
+      "date": "2024-05-12T10:00:00.000Z",
+      "status": "approved",
+      "source": "monetag_instant"
+    }
+  ],
+  "rounds": {
+    "r1_last_completed: 0,
+    "r2_last_completed": 0,
+    "mission_progress": { "popunder": 0, "inpage": 0, "direct": 0, "push": 0 }
+  },
+  "processed_postbacks": ["preasx24_1715500000000"],
+  "daily_stats": {
+    "2024-05-12": {
+      "total_approved": 1.50,
+      "total_pending": 0,
+      "status": "active"
+    }
+  }
+}
+```
+
+### 4.2. Global Stats (Key: `GLOBAL_STATS`)
+```json
+{
+  "total_users": 1500,
+  "active_today": 350,
+  "ads_today": 1200,
+  "rewards_today": 450.25,
+  "liability": 1200.50,
+  "paid": 500.00,
+  "month": "2024-05",
+  "last_active_date": "2024-05-12",
+  "system_status": {
+    "freeze_rewards": false,
+    "emergency_cut": false,
+    "withdrawals_enabled": true,
+    "ads_enabled": true
+  }
+}
+```
+
+### 4.3. Voucher Object (Key: `VOUCHER:<voucher_code>`)
+```json
+{
+  "worth": 50.00,
+  "is_used": false,
+  "username": "preasx24",
+  "created_at": "2024-05-12T12:00:00.000Z"
+}
+```
+
+### 4.4. Other System Keys
+- `SYSTEM:CONFIG`: Overrides for the hardcoded `DEFAULT_CONFIG`.
+- `SYSTEM:MOTD`: String containing the "Message of the Day".
+- `SYSTEM:LOGS`: Array of recent admin/system actions.
+- `AD_SETS_INDEX` / `AD_SETS_UNASSIGNED`: Arrays managing legacy Ad Set IDs.
+- `RED_ZONE_USERS`: Array tracking users hitting Round 3 heavily.
+
+---
+
+## 5. API Endpoint Documentation (`worker.js`)
+
+All endpoints are hosted on the Cloudflare Worker. They expect and return `application/json` and handle CORS natively.
+
+### `POST /telegram-auth`
+- **Purpose:** Authenticates or registers a user via Telegram data.
+- **Request:** `{ "tgUser": { "id": 123, "username": "...", "first_name": "..." }, "referred_by": "optional_ref_code" }`
+- **Response:** `{ "message": "Login successful", "token": "...", "balance": 10.5, "status": "active" }`
+
+### `POST /add-points`
+- **Purpose:** Claims a batched list of ad completions.
+- **Request:** `{ "username": "...", "token": "...", "batch": ["monetag_interstitial", "monetag_popup"] }`
+- **Response:** `{ "message": "Earnings credited", "balance": 12.00, "earned": 1.50, "processed": 2 }`
+
+### `POST /generate-voucher`
+- **Purpose:** Converts user balance into a DTECH Voucher code.
+- **Request:** `{ "username": "...", "token": "...", "amount": 20 }` (Amount must be 10, 20, 30, 40, or 50)
+- **Response:** `{ "message": "Voucher generated", "voucher_code": "x24-ABCD-1234", "balance": 5.00 }`
+
+### `GET /profile`
+- **Purpose:** Fetches comprehensive user data for dashboards.
+- **Request Params:** `?username=...`
+- **Response:** Returns balance, referral stats, daily limits, cooldowns (`rounds.r1_cooldown_ms`), and historical stats.
+
+### `GET /monetag-webhook`
+- **Purpose:** S2S callback from Monetag to credit accounts securely.
+- **Request Params:** `?ymid=user_timestamp&estimated_price=0.015&reward_event_type=valued`
+- **Response:** `200 OK` (Always returns 200 to prevent Monetag retries, even if user isn't found).
+
+### `GET /system-status`
+- **Purpose:** Public endpoint to check system health and fetch the MOTD.
+- **Response:** `{ "system_status": { "withdrawals_enabled": true... }, "motd": "Welcome to DTECH!" }`
+
+### Admin Endpoints (Requires `X-Admin-Secret` Header)
+- `GET /admin-stats`: Returns global metrics, pending users, and red zone lists.
+- `POST /admin/user-action`: Perform actions like freeze, shadowban, adjust balance, or approve users.
+- `POST /admin/system-action`: Toggle global settings (freeze rewards, disable withdrawals, set MOTD).
+
+---
+
+## 6. Active Files Breakdown
+
+### `index.html` (Entry Point / Login)
+- **Purpose:** The first page users see. Handles initial loading, gradient background aesthetics, and Telegram authentication.
+- **Key Logic:** Automatically triggers `window.Telegram.WebApp.initDataUnsafe`. If successful, routes to `/telegram-auth`, saves the session, and redirects to `tma.html`.
+
+### `tma.html` (Primary Telegram Mini App Dashboard)
+- **Purpose:** The active, modernized core of the application.
+- **UI:** Features a glassmorphism header, balance display, and a task grid.
+- **Key Logic:**
+  - Integrates the Monetag SDK (`show_10600930`).
+  - Manages the local `pendingBatch` system to minimize API calls.
+  - Features an Auto-Miner that runs in the background every 5 minutes.
+  - Contains the UI for generating and copying DTECH Vouchers.
+
+### `worker.js` (The Brains / Backend)
+- **Purpose:** The entire server infrastructure.
+- **Key Logic:** Handles routing, CORS, Cloudflare KV operations, security (token validation), ad math/logic, ZAR conversions, and Webhook processing.
+
+### `profile.html`
+- **Purpose:** Displays detailed user statistics.
+- **UI:** Shows total balance, pending balance, referral links, notification streaks (7-day tracker), and a transaction history ledger.
+
+### `admin.html` (Admin Console)
+- **Purpose:** Secure portal for system management.
+- **UI:** Mobile-optimized with a bottom navigation bar. Protected by a manual Secret Key overlay.
+- **Key Logic:** Can view global stats, edit user balances, freeze users, manage "Red Zone" abuse, broadcast MOTDs, and toggle system-wide emergency stops.
+
+### `berserker.html` & `berserker_inpage.html` (Unified Task Dashboards)
+- **Purpose:** Houses the "Rounds/Tiers" system (Daily Boost, Standard, Grind).
+- **Key Logic:** Uses a 15-second timer modal (`verify-modal`) for link-clicking tasks. Mostly superseded by `tma.html`'s automated SDK calls, but still functional for manual tasks.
+
+### `apps.html`
+- **Purpose:** An ecosystem hub displaying other DTECH projects (like "DTECH NEW PHISHERS").
+- **UI:** Expandable accordion cards with descriptions and video guides.
+
+---
+
+## 7. Legacy & Secondary Files Breakdown (Obsolete but Retained)
+
+The user explicitly prefers hiding or deprecating code rather than deleting it.
+
+- **`index2.html` (Legacy Web Dashboard):** The old main page featuring a "Bento Grid" layout. Replaced entirely by `tma.html`.
+- **`anon.html`, `anon_about.html`, `anon_contact.html`, `anon_projects.html`:** Secondary portfolio pages for "TheRealAnonymousRSA". Uses the DTECH styling but serves an entirely different purpose (personal portfolio).
+- **`pending.html`:** A waiting room page for manual admin approvals. Obsolete because Telegram Auth auto-approves and registers users instantly.
+- **`payment.html`, `withdraw.html`:** Older withdrawal interfaces utilizing manual bank/cash send inputs. Replaced by the automated Voucher system in `tma.html`.
+
+---
+
+## 8. External Integrations & Dependencies
+
+1. **Monetag Ad SDK (`libtl.com/sdk.js`):**
+   - The primary revenue engine.
+   - Zone ID: `10600930`.
+   - Used for Rewarded Interstitials, Popups, and In-App background ads.
+2. **Telegram WebApp SDK (`telegram.org/js/telegram-web-app.js`):**
+   - Provides native integration within the Telegram client, extracting safe user data for passwordless login.
+3. **Canvas Confetti (`confetti.browser.min.js`):**
+   - Used in `berserker.html` to trigger a visual celebration when a user completes a full round/mission.
+4. **Cloudflare Workers & KV:**
+   - The deployment environment and NoSQL database. Extremely fast, globally distributed edge computing.
